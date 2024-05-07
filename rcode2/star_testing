@@ -1,0 +1,74 @@
+#!/bin/bash
+#SBATCH --job-name=star_loop
+#SBATCH --ntasks=20
+#SBATCH --nodes=1
+#SBATCH --mem=40gb
+#SBATCH --time=24:00:00
+#SBATCH --partition=notchpeak-guest
+#SBATCH --account=owner-guest
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=garrett.otrimski@hci.utah.edu
+
+
+echo "start of script"
+
+
+module load star
+
+# Define the directory path
+cd /uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig/23908R/Fastq/
+
+for f in `ls *1_001.fastq | sed 's/\(1_001.fastq\)*$//'`; 
+
+do echo " working on fasq1" ${f}1_001.fastq "and fastq2" ${f}2_001.fastq;
+
+echo "writing bam file" ${f}.results
+
+    
+STAR \
+    --runThreadN 20 \
+    --genomeDir /uufs/chpc.utah.edu/common/home/holmen-group1/star_ms/starGRCm39 \
+    --readFilesIn ${f}1_001.fastq ${f}2_001.fastq \
+    --outSAMattributes Standard \
+    --outSAMtype BAM SortedByCoordinate \
+    --outFileNamePrefix ${f}.results
+
+
+done
+
+for g in *.bam;
+do mv $g /uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig/23908R/starbam/;
+done 
+
+for h in *.out;
+do mv $h /uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig/23908R/starprogressout/;
+done
+
+for j in *.tab;
+do mv $j /uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig/23908R/starprogressout/;
+done
+
+
+cd /uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig/23908R/starbam/
+
+module load samtools
+
+for b in *.bam;
+do samtools index $b;
+done
+
+
+
+
+
+
+echo "done with script :)"
+
+
+
+
+
+
+
+
+
