@@ -1,0 +1,9 @@
+start of script
+ working on fasq1 23908X10_20240412_LH00227_0067_A22KHYJLT3_S27_L003_R1_001.fastq and fastq2 23908X10_20240412_LH00227_0067_A22KHYJLT3_S27_L003_R2_001.fastq
+writing bam file 23908X10_20240412_LH00227_0067_A22KHYJLT3_S27_L003_R.results
+	STAR --runThreadN 20 --genomeDir /uufs/chpc.utah.edu/common/home/holmen-group1/star_ms/starGRCm39 --readFilesIn 23908X10_20240412_LH00227_0067_A22KHYJLT3_S27_L003_R1_001.fastq 23908X10_20240412_LH00227_0067_A22KHYJLT3_S27_L003_R2_001.fastq --outSAMattributes Standard --outSAMtype BAM SortedByCoordinate --outFileNamePrefix 23908X10_20240412_LH00227_0067_A22KHYJLT3_S27_L003_R.results
+	STAR version: 2.7.10a   compiled: 2022-07-20T09:12:46-06:00 notchpeak1:/uufs/chpc.utah.edu/sys/srcdir/STAR/STAR-2.7.10a/source
+Apr 19 09:46:02 ..... started STAR run
+Apr 19 09:46:02 ..... loading genome
+Apr 19 09:48:12 ..... started mapping
+slurmstepd: error: *** JOB 614636 ON notch080 CANCELLED AT 2024-04-19T09:49:07 ***
