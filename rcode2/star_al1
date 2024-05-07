@@ -1,0 +1,23 @@
+#!/bin/bash
+#SBATCH --job-name=star_1sa
+#SBATCH --ntasks=20
+#SBATCH --nodes=1
+#SBATCH --mem=40gb
+#SBATCH --time=8:00:00
+#SBATCH --partition=notchpeak-guest
+#SBATCH --account=owner-guest
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=garrett.otrimski@hci.utah.edu
+
+
+echo "start of job"
+
+module load star
+
+
+STAR --runThreadN 20 --genomeDir /uufs/chpc.utah.edu/common/home/holmen-group1/star_ms/starGRCm39 --readFilesIn /uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig/23908R/Fastq/23908X10_20240412_LH00227_0067_A22KHYJLT3_S27_L003_R1_001.fastq /uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig/23908R/Fastq/23908X10_20240412_LH00227_0067_A22KHYJLT3_S27_L003_R2_001.fastq --outSAMattributes Standard --outSAMtype BAM SortedByCoordinate --outFileNamePrefix /uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig/starbam/23908X10_20240412_LH00227_0067_A22KHYJLT3_S27_L003.results
+
+
+
+
+echo "end of job :)"

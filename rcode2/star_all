@@ -1,0 +1,61 @@
+#!/bin/bash
+#SBATCH --job-name=star_loop
+#SBATCH --ntasks=20
+#SBATCH --nodes=1
+#SBATCH --mem=40gb
+#SBATCH --time=24:00:00
+#SBATCH --partition=notchpeak-guest
+#SBATCH --account=owner-guest
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=garrett.otrimski@hci.utah.edu
+
+
+echo "start of script"
+
+echo "edited"
+
+module load star
+
+# Define the directory path
+directory="/23908R/Fastq/"
+
+# Loop through all .fastq files in the directory
+for file1 in ${directory}*R1_001.fastq; do
+    # Get the corresponding R2 file
+    file2="${file1/R1/R2}"
+    
+    # Extract the common string
+    common_string=$(basename "$file1" | sed 's/_R1_001\.fastq//')
+
+    # Add ".results" to the end of the common string
+    result_basename="${common_string}.results"
+
+    echo "Processing files:"
+    echo "R1: $file1"
+    echo "R2: $file2"
+    echo "Output will be written to: ${result_basename}"
+
+    # Call the STAR module with the appropriate arguments
+    STAR \
+    --runThreadN 20 \
+    --genomeDir /uufs/chpc.utah.edu/common/home/holmen-group1/star_ms/starGRCm39 \
+    --readFilesIn "$file1" "$file2" \
+    --outSAMattributes Standard \
+    --outSAMtype BAM SortedByCoordinate \
+    --outFileNamePrefix "${result_basename}"
+
+    echo "Finished writing ${result_basename}.bam"
+    echo ""
+done
+
+
+echo "done with script :)"
+
+
+
+
+
+
+
+
+

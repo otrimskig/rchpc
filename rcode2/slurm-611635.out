@@ -1,0 +1,10 @@
+start of job
+	STAR --runThreadN 20 --genomeDir /uufs/chpc.utah.edu/common/home/holmen-group1/star_ms/starGRCm39 --readFilesIn /uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig/23908R/Fastq/23908X10_20240412_LH00227_0067_A22KHYJLT3_S27_L003_R1_001.fastq /uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig/23908R/Fastq/23908X10_20240412_LH00227_0067_A22KHYJLT3_S27_L003_R2_001.fastq --outSAMattributes Standard --outSAMtype BAM SortedByCoordinate --outFileNamePrefix /uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig/starbam/23908X10_20240412_LH00227_0067_A22KHYJLT3_S27_L003.results
+	STAR version: 2.7.10a   compiled: 2022-07-20T09:12:46-06:00 notchpeak1:/uufs/chpc.utah.edu/sys/srcdir/STAR/STAR-2.7.10a/source
+Apr 18 10:31:50 ..... started STAR run
+Apr 18 10:31:50 ..... loading genome
+Apr 18 10:32:30 ..... started mapping
+Apr 18 10:38:32 ..... finished mapping
+Apr 18 10:38:35 ..... started sorting BAM
+Apr 18 10:39:09 ..... finished successfully
+end of job :)
