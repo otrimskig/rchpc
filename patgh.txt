@@ -1,0 +1,7 @@
+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
+
+
+
+git add.
+git commit [message]
+git push
