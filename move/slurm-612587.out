@@ -1,0 +1,12 @@
+start of script
+Processing files:
+R1: /23908R/Fastq/*R1_001.fastq
+R2: /23908R/Fastq/*R2_001.fastq
+Output will be written to: *R1_001.fastq.results
+
+EXITING because of fatal input ERROR: could not open readFilesIn=/23908R/Fastq/*R1_001.fastq
+
+Apr 18 17:19:47 ...... FATAL ERROR, exiting
+Finished writing *R1_001.fastq.results.bam
+
+done with script :)
