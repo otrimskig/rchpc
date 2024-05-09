@@ -1,0 +1,250 @@
+if (!exists("n.cores")) {
+  # Run your code here
+"initilizing cores..."
+n.cores <- parallel::detectCores() - 1
+my.cluster <- parallel::makeCluster(
+  n.cores,
+  type = "PSOCK"
+)
+doParallel::registerDoParallel(cl = my.cluster)
+
+#check if it is registered (optional)
+foreach::getDoParRegistered()
+
+"parallel cores initialized."
+}
+
+library(tidyverse)
+library(EnhancedVolcano)
+library(foreach)
+
+###########################################
+#set threshold values for deexps datasets.
+
+# logfc_threshold<-2
+# fdr_threshold<-.001
+
+#get vector of all .rds files containing dexp analyses.
+all_dexps<-list.files("dexps", full.names = T, pattern="^dexp.*\\.rds$")
+
+#get sample metadata.
+all_sample_info<-readRDS("ds/v07-per_sample_info.rds")
+
+##############################################
+
+# #start paraellized loop to make plot for each deexp dataset.
+# 
+# foreach(i=1:length(all_dexps)) %dopar% {
+# 
+# #for parallel loops, each library needs to be initialized inside the loop.  
+#   library(tidyverse)
+#   library(ComplexHeatmap)
+#   
+# 
+#   
+# 
+# #files have columns with rpkm_[sample_id] and the corresponding rpkm values.
+# #we can use that when we make the matrix for the heatmap - 
+# #but ultimately we want the mouse number as the column labels.
+# #get a vector of the (loaded) column names.
+# sa<-colnames(de_df)
+# 
+# #now use sample metadata to match those column names and create
+# #a vector of mouse_nums in the same order. Will be used for 
+# #labels in the columns of the heatmap.
+# column_labels_mouse_num<-tibble(col_name=sa[grep("^rpkm", sa)])%>%
+#   mutate(sample_id=sub("rpkm_", "", col_name))%>%
+#   left_join(all_sample_info%>%select(sample_id, mouse_num))%>%
+#   arrange(col_name)%>%
+#   pull(mouse_num)
+# 
+# 
+# #get the remaining metadata for those samples
+# #turn the necessary ones into factors.
+# de_samples<-tibble(mouse_num=column_labels_mouse_num)%>%
+#   left_join(all_sample_info)%>%
+#   mutate(patho_cat=as_factor(patho_cat))%>%
+#   mutate(patho_cat2=as_factor(patho_cat2))
+# 
+# 
+# 
+# 
+# # de_samples<-de_df%>%
+# #   colnames()%>%
+# #   as_tibble()%>%
+# #   rename(sample_id=value)%>%
+# #   filter(grepl("^rpkm",sample_id))%>%
+# #   mutate(sample_id=sub("^rpkm_","", sample_id))%>%
+# #   
+# #   left_join(all_sample_info)%>%
+# #   mutate(patho_cat=as_factor(patho_cat))%>%
+# #   mutate(patho_cat2=as_factor(patho_cat2))
+# 
+# 
+# 
+# hm_mat<-de_df%>%
+#   #rename_with(~ sub("^rpkm_", "", .), starts_with("rpkm_"))%>%
+#  
+#   filter(abs(logFC)>=logfc_threshold)%>%
+#   filter(FDR<fdr_threshold)%>%
+#   
+#   select(-c(gene_id:FDR))%>%
+#   column_to_rownames("gene_name")
+# 
+# 
+# 
+# if (nrow(hm_mat) > 500) {
+#   # If true, sample 500 rows
+#   hm_mat_500 <- hm_mat %>% sample_n(500)
+# } else {
+#   # If false, don't sample
+#   hm_mat_500 <- hm_mat
+# }
+# 
+# 
+# scaled_mat<-t(scale(t(hm_mat_500)))
+# 
+# 
+# 
+# anno_color<-readRDS("ds/hm_colors_list.rds")
+# aod_colors = circlize::colorRamp2(c(50, 150), c("navy", "white"))
+# 
+# 
+# anno<-HeatmapAnnotation(df=de_samples%>%select(patho_grade, patho_cat, patho_cat2, patho_cat_det,aod), 
+#                         col=c(anno_color, aod=aod_colors),
+#                         annotation_name_side = "left",
+#                         gp = gpar(col = "black"),
+#                         
+#                         simple_anno_size = unit(.125, "in"))
+# 
+# 
+# 
+# width_scale_factor<-nrow(de_samples)
+# height_scale_factor<-as.numeric(nrow(scaled_mat))
+# 
+# height_scale_factor
+# 
+# 
+# 
+# 
+# h<-Heatmap(scaled_mat,
+#         
+#         #cluster_columns = dendsort(hclust(dist(t(scaled_mat)))),
+#         column_labels = column_labels_mouse_num,
+#         
+#         heatmap_legend_param = list(title = ""),
+#            
+#         column_title = plot_title,
+#         
+#         show_row_names = FALSE,
+#         show_row_dend = FALSE,
+#         top_annotation = anno,
+#         
+#         
+#         heatmap_width = unit(.35*width_scale_factor, "in"),
+#     
+#         height = unit(.03*height_scale_factor, "in"),
+#         column_dend_height = unit(.3, "in")
+# 
+#         
+#         )
+# 
+# gh<-grid.grabExpr(draw(h))
+# 
+# 
+# ggsave(paste0("plots/",fs::path_sanitize(paste0("hm-", file_base, "-rpkm.pdf"))),
+#        plot=gh,
+#        
+#        scale = 1.2,
+#        dpi=600,
+#        width = unit(.35*width_scale_factor+4, "in"),
+#        height = unit(.03*height_scale_factor+3, "in"),
+#        unit="in"
+#        
+#        )
+# 
+# 
+# print(paste(all_dexps[i], "done"))
+# 
+# }
+
+
+########################################
+#volcano plot for same data.
+
+
+foreach(i=1:length(all_dexps)) %dopar% {
+
+  library(tidyverse)
+  library(EnhancedVolcano)
+rds_file_path<-all_dexps[i]
+
+#determine plot title from basic naming pattern of rds file.
+plot_title<-basename(rds_file_path)%>%
+  sub(".rds$", "", .)%>%
+  sub("^dexp-", "", .)%>%
+  sub("-", ": ", .)%>%
+  sub("v", " vs. ", .)
+
+
+#get file base since we will need this later to actually name the file.
+file_base<-basename(rds_file_path)%>%
+  sub(".rds$", "", .)%>%
+  sub("^dexp-", "", .)
+
+
+
+#now load the actual dataset from the predetermined path.
+de_df<-readRDS(rds_file_path)
+
+vdf<-de_df
+
+p<-EnhancedVolcano(vdf, 
+                lab=vdf$gene_name,
+                x="logFC",
+                y="PValue",
+                axisLabSize = 12,
+                labSize = 5.0,
+                drawConnectors = TRUE,
+                boxedLabels = FALSE,
+                colConnectors = "grey50",
+                arrowheads = FALSE,
+                min.segment.length=.3,
+                title=plot_title,
+                subtitle = "",
+                maxoverlaps = 10,
+                #typeConnectors="open",
+                
+                endsConnectors="first",
+                legendPosition = 'right',
+                legendLabSize = 10,
+                legendIconSize = 4.0,
+                col = c('grey', 'light blue', 'light green', 'purple')
+                
+                
+                #selectLab = c("Pten", "Cdkn2a", "Nf1", "Atrx")
+                
+                )
+
+
+ggsave(paste0("plots/",fs::path_sanitize(paste0("vol-", file_base, "-rpkms.pdf"))),
+       plot=p,
+
+       scale = 1.2,
+       dpi=600,
+       width = 10,
+       height = 8,
+       unit="in"
+
+)
+
+
+}
+
+
+
+plots<-list.files("plots", full.names = T, pattern="^vol.*\\.pdf$")
+
+
+
+qpdf::pdf_combine(plots, output = "plots/combined/cvol-1.pdf")
