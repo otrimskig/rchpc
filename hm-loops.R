@@ -1,6 +1,6 @@
 if (!exists("n.cores")) {
   # Run your code here
-
+"initilizing cores..."
 n.cores <- parallel::detectCores() - 1
 my.cluster <- parallel::makeCluster(
   n.cores, 
@@ -11,57 +11,42 @@ doParallel::registerDoParallel(cl = my.cluster)
 #check if it is registered (optional)
 foreach::getDoParRegistered()
 
+"parallel cores initialized."
 }
-
-
 
 library(tidyverse)
 library(ComplexHeatmap)
 library(EnhancedVolcano)
 library(circlize)
-
 library(foreach)
 
 ###########################################
+#set threshold values for deexps datasets.
 
 logfc_threshold<-2
 fdr_threshold<-.001
 
-
-
-
-
+#get vector of all .rds files containing dexp analyses.
 all_dexps<-list.files("dexps", full.names = T, pattern="^dexp.*\\.rds$")
 
-
-
+#get sample metadata.
+all_sample_info<-readRDS("ds/v07-per_sample_info.rds")
 
 ##############################################
 
-
-
+#start paraellized loop to make plot for each deexp dataset.
 
 foreach(i=1:length(all_dexps)) %dopar% {
 
+#for parallel loops, each library needs to be initialized inside the loop.  
   library(tidyverse)
   library(ComplexHeatmap)
   
+
+  
 rds_file_path<-all_dexps[i]
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#determine plot title from basic naming pattern of rds file.
 plot_title<-basename(rds_file_path)%>%
   sub(".rds$", "", .)%>%
   sub("^dexp-", "", .)%>%
@@ -69,19 +54,25 @@ plot_title<-basename(rds_file_path)%>%
   sub("v", " vs. ", .)
 
 
-
+#get file base since we will need this later to actually name the file. 
 file_base<-basename(rds_file_path)%>%
   sub(".rds$", "", .)%>%
   sub("^dexp-", "", .)
 
 
 
-all_sample_info<-readRDS("ds/v07-per_sample_info.rds")
+#now load the actual dataset from the predetermined path.
 de_df<-readRDS(rds_file_path)
 
-
+#files have columns with rpkm_[sample_id] and the corresponding rpkm values.
+#we can use that when we make the matrix for the heatmap - 
+#but ultimately we want the mouse number as the column labels.
+#get a vector of the (loaded) column names.
 sa<-colnames(de_df)
 
+#now use sample metadata to match those column names and create
+#a vector of mouse_nums in the same order. Will be used for 
+#labels in the columns of the heatmap.
 column_labels_mouse_num<-tibble(col_name=sa[grep("^rpkm", sa)])%>%
   mutate(sample_id=sub("rpkm_", "", col_name))%>%
   left_join(all_sample_info%>%select(sample_id, mouse_num))%>%
@@ -89,23 +80,31 @@ column_labels_mouse_num<-tibble(col_name=sa[grep("^rpkm", sa)])%>%
   pull(mouse_num)
 
 
-
-#filter based on only samples included in DE groups.
-de_samples<-de_df%>%
-  colnames()%>%
-  as_tibble()%>%
-  rename(sample_id=value)%>%
-  filter(grepl("^rpkm",sample_id))%>%
-  mutate(sample_id=sub("^rpkm_","", sample_id))%>%
-  
+#get the remaining metadata for those samples
+#turn the necessary ones into factors.
+de_samples<-tibble(mouse_num=column_labels_mouse_num)%>%
   left_join(all_sample_info)%>%
   mutate(patho_cat=as_factor(patho_cat))%>%
   mutate(patho_cat2=as_factor(patho_cat2))
 
 
 
+
+# de_samples<-de_df%>%
+#   colnames()%>%
+#   as_tibble()%>%
+#   rename(sample_id=value)%>%
+#   filter(grepl("^rpkm",sample_id))%>%
+#   mutate(sample_id=sub("^rpkm_","", sample_id))%>%
+#   
+#   left_join(all_sample_info)%>%
+#   mutate(patho_cat=as_factor(patho_cat))%>%
+#   mutate(patho_cat2=as_factor(patho_cat2))
+
+
+
 hm_mat<-de_df%>%
-  rename_with(~ sub("^rpkm_", "", .), starts_with("rpkm_"))%>%
+  #rename_with(~ sub("^rpkm_", "", .), starts_with("rpkm_"))%>%
  
   filter(abs(logFC)>=logfc_threshold)%>%
   filter(FDR<fdr_threshold)%>%
@@ -167,12 +166,7 @@ h<-Heatmap(scaled_mat,
     
         height = unit(.03*height_scale_factor, "in"),
         column_dend_height = unit(.3, "in")
-        
-       
-        
-        
-        
-        
+
         
         )
 
