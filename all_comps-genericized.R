@@ -1,19 +1,26 @@
+#this code allows for easy generation of a diff exp dataset between 2 groups. 
+#use the generated dataset elsewhere for visualisation. 
+#choose the groups and the category and source to generate.
+
 library(tidyverse)
 library(edgeR)
 
-setwd("/uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig")
+#setwd("/uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig")
 
 
 #read in all data. tidy dataframe, with all sample info
 #plus every raw count for each sample and gene.
 #remove 15 and 21 for low quality. 
-all_data<-readRDS("23908R/v06-all_counts_plus_info.rds")
+all_data<-readRDS("ds/v06-all_counts_plus_info.rds")
 
 
 ##########################################################################
+#view all available categories.
+colnames(all_data)
+
 
 #use to determine category for selection of comparison.
-category<-"patho_cat"
+category<-"patho_cat_det"
 
 #view all available types within selected category.
 all_data%>%select(!!sym(category))%>%
@@ -22,8 +29,10 @@ all_data%>%select(!!sym(category))%>%
 
 
 #choose names of groups to compare for diff ex.
-ga<-"NED"
-gb<-"4"
+#against this group:
+ga<-"3.4"
+
+gb<-"3.4.LMG"
 
 
 
