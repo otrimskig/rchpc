@@ -1,21 +1,65 @@
+if (!exists("n.cores")) {
+  # Run your code here
+
+n.cores <- parallel::detectCores() - 1
+my.cluster <- parallel::makeCluster(
+  n.cores, 
+  type = "PSOCK"
+)
+doParallel::registerDoParallel(cl = my.cluster)
+
+#check if it is registered (optional)
+foreach::getDoParRegistered()
+
+}
+
 
 
 library(tidyverse)
 library(ComplexHeatmap)
 library(EnhancedVolcano)
+library(circlize)
+
+library(foreach)
 
 ###########################################
 
 logfc_threshold<-2
 fdr_threshold<-.001
 
-rds_file_path<-"dexps/dexp-patho_cat-NEDv3.rds"
 
+
+
+
+all_dexps<-list.files("dexps", full.names = T, pattern="^dexp.*\\.rds$")
 
 
 
 
 ##############################################
+
+
+
+
+foreach(i=1:length(all_dexps)) %dopar% {
+
+  library(tidyverse)
+  library(ComplexHeatmap)
+  
+rds_file_path<-all_dexps[i]
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 plot_title<-basename(rds_file_path)%>%
@@ -32,10 +76,9 @@ file_base<-basename(rds_file_path)%>%
 
 
 
-
-de_df_a<-readRDS(rds_file_path)
-
 all_sample_info<-readRDS("ds/v07-per_sample_info.rds")
+de_df<-readRDS(rds_file_path)
+
 
 sa<-colnames(de_df)
 
@@ -44,10 +87,6 @@ column_labels_mouse_num<-tibble(col_name=sa[grep("^rpkm", sa)])%>%
   left_join(all_sample_info%>%select(sample_id, mouse_num))%>%
   arrange(col_name)%>%
   pull(mouse_num)
-  
-
-
-
 
 
 
@@ -89,23 +128,34 @@ scaled_mat<-t(scale(t(hm_mat_500)))
 
 
 
+anno_color<-readRDS("ds/hm_colors_list.rds")
+aod_colors = circlize::colorRamp2(c(50, 150), c("navy", "white"))
 
 
 anno<-HeatmapAnnotation(df=de_samples%>%select(patho_grade, patho_cat, patho_cat2, patho_cat_det,aod), 
-                        # col= list(resultant_geno=c("nf1 KO; pten KO; ink KO; atrx KO"="#66c2a5", 
-                        #                            "nf1 KO; pten KO; ink KO; atrx wt"="#fc8d62", 
-                        #                            "nf1 wt; pten KO; ink KO; atrx KO"="navy", 
-                        #                            "nf1 wt; pten wt; ink wt; atrx wt"="#e7298a")
+                        col=c(anno_color, aod=aod_colors),
+                        annotation_name_side = "left",
+                        gp = gpar(col = "black"),
                         
-                        gp = gpar(col = "black"))
+                        simple_anno_size = unit(.125, "in"))
 
 
 
 width_scale_factor<-nrow(de_samples)
-height_scale_factor<-nrow(scaled_mat)
+height_scale_factor<-as.numeric(nrow(scaled_mat))
+
+height_scale_factor
+
+
+
 
 h<-Heatmap(scaled_mat,
         
+        #cluster_columns = dendsort(hclust(dist(t(scaled_mat)))),
+        column_labels = column_labels_mouse_num,
+        
+        heatmap_legend_param = list(title = ""),
+           
         column_title = plot_title,
         
         show_row_names = FALSE,
@@ -114,44 +164,50 @@ h<-Heatmap(scaled_mat,
         
         
         heatmap_width = unit(.35*width_scale_factor, "in"),
-        heatmap_height = unit(.02*height_scale_factor, "in"),
-        column_labels = column_labels_mouse_num
+    
+        height = unit(.03*height_scale_factor, "in"),
+        column_dend_height = unit(.3, "in")
+        
+       
+        
+        
+        
+        
         
         )
 
-
-h
 gh<-grid.grabExpr(draw(h))
 
 
-ggsave(paste0("plots/",fs::path_sanitize(paste0(file_base, "-rpkm-heatmap.pdf"))),
+ggsave(paste0("plots/",fs::path_sanitize(paste0("hm-", file_base, "-rpkm.pdf"))),
        plot=gh,
        
        scale = 1.2,
        dpi=600,
-       width = 10,
-       height = 12,
+       width = unit(.35*width_scale_factor+4, "in"),
+       height = unit(.03*height_scale_factor+3, "in"),
        unit="in"
        
        )
 
-# plot(gh)
+
+print(paste(all_dexps[i], "done"))
+
+}
+
+
+
+plots<-list.files("plots", full.names = T, pattern="^hm.*\\.pdf$")
+
+
+
+qpdf::pdf_combine(plots, output = "plots/combined/chm-1.pdf")
 
 
 
 
-# gb = grid.grabExpr(draw(h))
-# gb
-# is.grob(gb)
-# 
-# 
-# 
-# pushViewport(viewport(width = 1, height = 1))
-# grid.draw(gb)
 
-
-
-
+stop("done with loop")
 ########################################
 #volcano plot for same data.
 
