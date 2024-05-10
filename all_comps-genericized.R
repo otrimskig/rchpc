@@ -1,9 +1,32 @@
+if (!exists("n.cores")) {
+  
+  "initilizing cores..."
+  n.cores <- parallel::detectCores() - 1
+  my.cluster <- parallel::makeCluster(
+    n.cores, 
+    type = "PSOCK"
+  )
+  doParallel::registerDoParallel(cl = my.cluster)
+  
+  #check if it is registered (optional)
+  foreach::getDoParRegistered()
+  
+  "parallel cores initialized."
+  
+}
+
+
+
+
+
+
 #this code allows for easy generation of a diff exp dataset between 2 groups. 
 #use the generated dataset elsewhere for visualisation. 
 #choose the groups and the category and source to generate.
 
 library(tidyverse)
 library(edgeR)
+library(foreach)
 
 #setwd("/uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig")
 
@@ -11,7 +34,8 @@ library(edgeR)
 #read in all data. tidy dataframe, with all sample info
 #plus every raw count for each sample and gene.
 #remove 15 and 21 for low quality. 
-all_data<-readRDS("ds/v06-all_counts_plus_info.rds")
+all_data<-readRDS("ds/v06-all_counts_plus_info.rds")%>%
+  arrange(sample_id)
 
 
 ##########################################################################
@@ -20,23 +44,49 @@ colnames(all_data)
 
 
 #use to determine category for selection of comparison.
-category<-"patho_cat_det"
+category<-"patho_cat"
 
 #view all available types within selected category.
-all_data%>%select(!!sym(category))%>%
-  count(!!sym(category))%>%select(1)
-
-
 
 #choose names of groups to compare for diff ex.
 #against this group:
-ga<-"3.4"
+# ga<-"3.4"
+# 
+# gb<-"3.4.LMG"
 
-gb<-"3.4.LMG"
+
+comp_el<-all_data%>%select(!!sym(category))%>%
+  count(!!sym(category))%>%select(1)%>%
+  pull()
+
+
+if ("NED" %in% comp_el) {
+  # Move "NED" to the first position
+  comp_el <- c("NED", comp_el[comp_el != "NED"])
+}
+
+comb_mat<-combn(comp_el, 2)
 
 
 
 ########################################################################
+
+foreach(c=1:ncol(comb_mat)) %dopar% {  
+  
+  library(tidyverse)
+  library(edgeR)
+
+  
+  all_data<-readRDS("ds/v06-all_counts_plus_info.rds")%>%
+    arrange(sample_id)
+  
+  
+  ##########################################################################
+
+
+ga<-comb_mat[1,c]
+gb<-comb_mat[2,c]
+
 
 #sym() removes quotes. 
 ct<-sym(category)
@@ -78,8 +128,8 @@ c_genes<-comp_counts%>%select(gene_id)
 
 c_group<-comp_info%>%
   select(all_of(ct))%>%
-  mutate(model_bin=if_else(!!ct==ga, 1, 
-         if_else(!!ct==gb, 0, NA_real_)))%>%
+  mutate(model_bin=if_else(!!ct==ga, 0, 
+         if_else(!!ct==gb, 1, NA_real_)))%>%
   pull(model_bin)
 
 
@@ -128,4 +178,4 @@ output2<-output1%>%
 saveRDS(output2, paste0("dexps/", "dexp-", category, "-", ga,  "v", gb, ".rds"))
 
 
-
+}
