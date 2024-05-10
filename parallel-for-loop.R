@@ -1,5 +1,5 @@
 #install.packages("foreach")
-
+library(foreach)
 
 if (!exists("n.cores")) {
 
