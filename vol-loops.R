@@ -14,25 +14,23 @@ foreach::getDoParRegistered()
 "parallel cores initialized."
 }
 
+
 library(tidyverse)
-library(EnhancedVolcano)
-library(foreach)
+# axes<-readRDS("ds/de_axis_lims.rds")
+# axes$pv
+
+# -log10(axes$pv)
+# 
+# -log10(axes$pv)
+
 
 ###########################################
-#set threshold values for deexps datasets.
-
-# logfc_threshold<-2
-# fdr_threshold<-.001
 
 #get vector of all .rds files containing dexp analyses.
 all_dexps<-list.files("dexps", full.names = T, pattern="^dexp.*\\.rds$")
 
-#get sample metadata.
-all_sample_info<-readRDS("ds/v07-per_sample_info.rds")
 
-########################################
-#volcano plot for same data.
-
+library(foreach)
 
 foreach(i=1:length(all_dexps)) %dopar% {
 
@@ -61,6 +59,20 @@ de_df<-readRDS(rds_file_path)
 
 vdf<-de_df
 
+
+axes<-readRDS("ds/de_axis_lims.rds")
+
+
+minpv<-vdf%>%
+  summarise(pv=min(PValue))%>%
+  pull()
+
+
+
+
+y_axis_max<-max(-log10(minpv),  12)
+
+
 p<-EnhancedVolcano(vdf, 
                 lab=vdf$gene_name,
                 x="logFC",
@@ -77,6 +89,9 @@ p<-EnhancedVolcano(vdf,
                 maxoverlaps = 10,
                 #typeConnectors="open",
                 
+                ylim=c(0, y_axis_max),
+                xlim=c(axes$minfc,axes$maxfc),
+                
                 endsConnectors="first",
                 legendPosition = 'right',
                 legendLabSize = 10,
@@ -89,13 +104,15 @@ p<-EnhancedVolcano(vdf,
                 )
 
 
+pdf_height<-y_axis_max/15+2
+
 ggsave(paste0("plots/",fs::path_sanitize(paste0("vol-", file_base, "-rpkms.pdf"))),
        plot=p,
 
        scale = 1.2,
        dpi=600,
        width = 10,
-       height = 8,
+       height =pdf_height,
        unit="in"
 
 )
@@ -109,4 +126,4 @@ plots<-list.files("plots", full.names = T, pattern="^vol.*\\.pdf$")
 
 
 
-qpdf::pdf_combine(plots, output = "plots/combined/cvol-1.pdf")
+qpdf::pdf_combine(plots, output = "plots/combined/cvol-scale_same.pdf")
