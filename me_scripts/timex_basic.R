@@ -6,6 +6,13 @@ library(colorRamp2)
 
 gng <- readr::read_tsv("TPM_dod_grownogrow_for_cibersortx.txt")
 
+
+
+
+
+
+
+
 toMat2 <- function(input){
   genes <- input$Gene
   input <- input[, -1]
