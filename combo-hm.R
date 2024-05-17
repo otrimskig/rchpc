@@ -85,7 +85,7 @@ combo<-hm_u+hm_z
 gh<-grid.grabExpr(draw(combo))
 
 
-ggsave("plots/hm-timex-all-rpkm-combo-clustered_abs.pdf",
+ggsave("plots/hm-timex-all-rpkm-combo-clustered_abs-local.pdf",
        plot=gh,
        
        scale = 1,
@@ -131,25 +131,7 @@ hm_z2 <- Heatmap(gsva_z,
                 
 )
 
-gh2<-grid.grabExpr(draw(hm_z2))
-
-
-
-ggsave("plots/hm-test.pdf",
-       plot=gh2,
-       
-       scale = 1,
-       dpi=600,
-       width = 45,
-       height = 100,
-       unit="in",
-       limitsize = FALSE
-       
-)
-
-
-
-
+row_order(hm_z2)
 
 hm_u2 <- Heatmap(gsva_u,
                 column_title = gt_render(
@@ -159,7 +141,7 @@ hm_u2 <- Heatmap(gsva_u,
                 #column_split = factor(genepuree2$Growth, levels = c("Grow", "nogrow")),
                 cluster_columns= FALSE,
                 column_order=column_order(hm_z2),
-                row_order = row_order(hm_z2),
+                #row_order = row_order(hm_z2),
                 show_column_dend = TRUE,
                 cluster_column_slices = FALSE,
                 
@@ -186,14 +168,14 @@ hm_u2 <- Heatmap(gsva_u,
 
 
 
-combo2<-hm_u2+hm_z2
+combo2<-hm_z2+hm_u2
 
 
 
 gh2<-grid.grabExpr(draw(combo2))
 
 
-ggsave("plots/hm-timex-all-rpkm-combo-clustered_relative.pdf",
+ggsave("plots/hm-timex-all-rpkm-combo-clustered_relative-local.pdf",
        plot=gh2,
        
        scale = 1,
