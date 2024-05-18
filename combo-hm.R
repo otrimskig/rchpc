@@ -5,6 +5,7 @@ library(tidyverse)
 library(dtplyr)
 suppressPackageStartupMessages(library(ComplexHeatmap))
 library(gridtext)
+library(circlize)
 
 
 #load relevant created from gsva analysis. 
@@ -18,10 +19,67 @@ gsva_z<-readRDS("ds/gsva_z.rds")
 
 
 
+anno_color<-readRDS("ds/hm_colors_list.rds")
+aod_colors = circlize::colorRamp2(c(50, 150), c("navy", "white"))
+
+
+de_samples<-readRDS("ds/v07-per_sample_info.rds")%>%
+  mutate(patho_cat=as_factor(patho_cat))%>%
+  mutate(patho_cat2=as_factor(patho_cat2))
+
+
+anno<-HeatmapAnnotation(df=de_samples%>%select(#mouse_num, 
+                                               #patho_grade, 
+                                               patho_cat 
+                                               #patho_cat2, 
+                                               #patho_cat_det, 
+                                               #aod
+                                               ), 
+                        col=c(anno_color, aod=aod_colors),
+                        annotation_name_side = "left",
+                        gp = gpar(col = "black"),
+                        
+                        simple_anno_size = unit(.25, "in"))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 hm_z <- Heatmap(gsva_z,
                 
+                column_dend_height = unit(1, "in"),
+                row_dend_width = unit(2, "in"),
                 
+                
+                top_annotation = anno,
                 column_title = gt_render(
                   paste0("<span style='font-size:25pt'>Expression Levels Normalized per gene <br>(Relative expression)</span>"), 
                   r = unit(2, "pt")),
@@ -34,7 +92,13 @@ hm_z <- Heatmap(gsva_z,
                       "Hallmark",
                       "KEGG",
                       "TIMEx",
-                      "Immune")), #sometimes fails not sure why 
+                      "Immune")),
+                
+                row_gap = unit(1, "in"),
+                
+                
+                
+                #sometimes fails not sure why 
                     #cluster_row_slices = FALSE,
                     #row_names_gp = gpar(fontsize = 6),
                     #column_names_gp = gpar(fontsize =2),
@@ -42,15 +106,27 @@ hm_z <- Heatmap(gsva_z,
                     row_title_gp = gpar(font = 2, fontsize = 40),
                     show_heatmap_legend = FALSE,
                     
+                
+                
+                
+                
+                
                  
-                    width = unit(12, "in"),
+                    width = unit(10, "in"),
                     heatmap_height = unit(65, "in")
 
 )
+
+
 hm_u <- Heatmap(gsva_u,
                 column_title = gt_render(
                   paste0("<span style='font-size:25pt'>Absolute <br>expression</span>"), 
                   r = unit(2, "pt")),
+                
+                column_dend_height = unit(1, "in"),
+                row_dend_width = unit(2, "in"),
+                #col = colorRamp2(seq(min(gsva_u), max(gsva_u), length = 3), c("black", "white", "purple")),
+                
                 #name = "cudcRNAseq",
                 #column_split = factor(genepuree2$Growth, levels = c("Grow", "nogrow")),
                 cluster_columns= FALSE,
@@ -62,7 +138,18 @@ hm_u <- Heatmap(gsva_u,
                   "Hallmark",
                   "KEGG",
                   "TIMEx",
-                  "Immune")), #sometimes fails not sure why 
+                  "Immune")),
+                
+                
+                
+                
+                
+                row_gap = unit(1, "in"),
+                
+                
+                
+                
+                #sometimes fails not sure why 
                 #cluster_row_slices = FALSE,
                 #row_names_gp = gpar(fontsize = 6),
                 #column_names_gp = gpar(fontsize =2),
@@ -71,7 +158,7 @@ hm_u <- Heatmap(gsva_u,
                 show_heatmap_legend = FALSE,
                 
                 
-                width = unit(2, "in"),  
+                width = unit(1.5, "in"),  
                 heatmap_height = unit(65, "in")
                 
 )
@@ -104,7 +191,7 @@ ggsave("plots/hm-timex-all-rpkm-combo-clustered_abs-local.pdf",
 
 hm_z2 <- Heatmap(gsva_z,
                 
-                
+                 top_annotation = anno,
                 column_title = gt_render(
                   paste0("<span style='font-size:25pt'>Expression Levels Normalized per gene <br>(Relative expression)</span>"), 
                   r = unit(2, "pt")),
@@ -117,7 +204,16 @@ hm_z2 <- Heatmap(gsva_z,
                   "Hallmark",
                   "KEGG",
                   "TIMEx",
-                  "Immune")), #sometimes fails not sure why 
+                  "Immune")), 
+                
+                column_dend_height = unit(1, "in"),
+                row_dend_width = unit(2, "in"),
+                
+                row_gap = unit(1, "in"),
+                
+                
+                
+                #sometimes fails not sure why 
                 #cluster_row_slices = FALSE,
                 #row_names_gp = gpar(fontsize = 6),
                 #column_names_gp = gpar(fontsize =2),
@@ -126,7 +222,7 @@ hm_z2 <- Heatmap(gsva_z,
                 show_heatmap_legend = FALSE,
                 
                 
-                width = unit(12, "in"),
+                width = unit(10, "in"),
                 heatmap_height = unit(65, "in")
                 
 )
@@ -152,7 +248,19 @@ hm_u2 <- Heatmap(gsva_u,
                   "Hallmark",
                   "KEGG",
                   "TIMEx",
-                  "Immune")), #sometimes fails not sure why 
+                  "Immune")),
+                
+                
+                column_dend_height = unit(1, "in"),
+                row_dend_width = unit(2, "in"),
+                
+                row_gap = unit(1, "in"),
+                
+                
+                
+                
+                
+                #sometimes fails not sure why 
                 #cluster_row_slices = FALSE,
                 #row_names_gp = gpar(fontsize = 6),
                 #column_names_gp = gpar(fontsize =2),
@@ -161,7 +269,7 @@ hm_u2 <- Heatmap(gsva_u,
                 show_heatmap_legend = FALSE,
                 
                 
-                width = unit(2, "in"),  
+                width = unit(1.5, "in"),  
                 heatmap_height = unit(65, "in")
                 
 )
