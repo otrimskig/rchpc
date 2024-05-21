@@ -1,20 +1,33 @@
-setwd("/uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig")
+library(foreach)
+
+if (!exists("n.cores")) {
+  
+  "initilizing cores..."
+  n.cores <- parallel::detectCores() - 1
+  my.cluster <- parallel::makeCluster(
+    n.cores, 
+    type = "PSOCK"
+  )
+  doParallel::registerDoParallel(cl = my.cluster)
+  
+  #check if it is registered (optional)
+  foreach::getDoParRegistered()
+  
+  "parallel cores initialized."
+  
+}
 
 
-library(tidyverse)
-library(Rsubread)
+bams<-list.files("../exp_data/23908R_merged/", pattern = ".bam$", full.names = TRUE)
 
-
-
-
-
-
-
-bams<-list.files("23908R/starbam", pattern = ".bam$", full.names = TRUE)
-
-bams[1:2]
-
-for (b in 1:length(bams)){
+foreach(b=1:length(bams)) %dopar% {
+  
+  library(tidyverse)
+  library(Rsubread)
+  
+  
+  
+  
   
   reads<-featureCounts(bams[b],
                        
@@ -90,56 +103,33 @@ for (b in 1:length(bams)){
                        reportReadsPath = NULL,
                        
                        # miscellaneous
-                       maxMOp = 10,
+                       # maxMOp = 10,
                        tmpDir = ".",
                        verbose = FALSE)
   
   
-  
+#save counts alignments to txt file.
   
   write.table(
     x=data.frame(reads$annotation[,c("GeneID","Length")],
                  reads$counts,
                  stringsAsFactors=FALSE),
-    file=paste0("23908R/featurecounts/", sub(".out.bam$", ".FeatureCounts.txt", basename(bams[b]))),
+    file=paste0("../exp_data/23908R_merged/featurecounts/", sub(".bam$", ".FeatureCounts.txt", basename(bams[b]))),
+    quote=FALSE,
+    sep="\t",
+    row.names=FALSE)
+  
+#save stats for alignment performance. 
+  write.table(
+    x=data.frame(reads$stat,
+                 stringsAsFactors=FALSE),
+    file=paste0("../exp_data/23908R_merged/featurecounts/", sub(".bam$", ".FeatureCounts_stats.txt", basename(bams[b]))),
     quote=FALSE,
     sep="\t",
     row.names=FALSE)
   
   
-  
-  
-  
-  
-  
 }
-
-
-
-
-
-
-combined_data <- read.table(counts_txts[1], header = TRUE)
-
-
-
-counts_txts<-list.files("23908R/featurecounts", full.names = TRUE)
-
-
-for (t in 2:length(counts_txts)){
-  
-  data <- read.table(counts_txts[t], header = TRUE)
-  
-  combined_data <- full_join(combined_data, data)
-  
-  
-}
-
-
-
-write.table(combined_data, file = "23908R/v01-all_counts.txt", sep = "\t", row.names = FALSE)
-
-
 
 
 

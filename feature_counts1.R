@@ -1,10 +1,8 @@
 setwd("/uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig")
 
-#install.packages("tidyverse")
+
 library(tidyverse)
 
-
-#install.packages("Rsubread")
 library(Rsubread)
 
 
