@@ -26,5 +26,5 @@ all_counts<-cbind(all_counts, counts[,3])
 }
 
 
-saveRDS(all_counts, "all_counts.rds")
+saveRDS(all_counts, "ds/mv00-all_counts.rds")
 
