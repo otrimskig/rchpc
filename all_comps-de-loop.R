@@ -159,7 +159,7 @@ output2<-output1%>%
 
 
 #save output file.
-saveRDS(output2, paste0("m-dexps/", "dexp-", category, "-", ga,  "v", gb, ".rds"))
+saveRDS(output2, paste0("dexps/", "dexp-", category, "-", ga,  "v", gb, ".rds"))
 
 
 }
