@@ -34,8 +34,8 @@ updated_meta<-readRDS("ds/v10-per_sample_updated.rds")%>%
 ud_a<-updated_meta[1:2]%>%unique()
 ud_b<-updated_meta[3:4]%>%unique()
 ud_c<-updated_meta[5:6]%>%unique()
-ud_d<-updated_meta[7:8]%>%unique()
-
+ud_d<-updated_meta[7]%>%unique()
+ud_e<-updated_meta[8:9]%>%unique()
 
 colors<-sheets_df%>%
   pivot_wider(names_from = variable, values_from=condition)%>%
@@ -43,6 +43,7 @@ colors<-sheets_df%>%
   left_join(ud_b)%>%
   left_join(ud_c)%>%
   left_join(ud_d)%>%
+  left_join(ud_e)%>%
   pivot_longer(cols=2:last_col(), names_to="variable", values_to="condition")%>%
   filter(!is.na(condition))
 
