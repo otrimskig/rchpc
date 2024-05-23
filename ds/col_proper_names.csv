@@ -1,15 +1,15 @@
 col_name,proper_name
-sample_id,
-mouse_num,
-total_reads,
-aod,
-patho_cat,
-patho_cat_name,
-patho_cat_det,
-patho_cat_det_name,
-patho_cat2,
-patho_cat2_name,
-patho_grade,
-resultant_geno,
-resultant_geno_name,
-tumor_grouping1,
+sample_id,Sample ID
+mouse_num,Mouse number
+total_reads,Total reads (per sample)
+aod,Age of death
+patho_cat,Pathologist major category (abbr)
+patho_cat_name,Pathologist major category
+patho_cat_det,Pathologist subcategory (abbr)
+patho_cat_det_name,Pathologist subcategory
+patho_cat2,Pathologist category and grade (abbr)
+patho_cat2_name,Pathologist category and grade
+patho_grade,Pathologist grade
+resultant_geno,Resultant genotype
+resultant_geno_name,Cohort and treatment group
+tumor_grouping1,First look assigned tumor grouping
