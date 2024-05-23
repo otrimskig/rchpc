@@ -2,7 +2,7 @@
 #parallel cores if on cluster
 ##########################
 library(foreach)
-if (!exists("n.cores")) {
+# if (!exists("n.cores")) {
 
   "initilizing cores..."
   n.cores <- parallel::detectCores() - 1
@@ -17,7 +17,7 @@ if (!exists("n.cores")) {
 
   "parallel cores initialized."
 
-}
+# }
 
 
 ##########################
@@ -37,37 +37,37 @@ colnames(all_data)
 
 
 #use to determine category for selection of comparison.
-categories<-c("patho_cat_name", "patho_cat2_name", "patho_cat_det_name", "patho_grade", "resultant_geno", "aod")
+categories<-c("patho_cat_name", "patho_cat2_name", "patho_cat_det_name", "patho_grade", "resultant_geno")
 
-categories[2]
-
-foreach(i=1:length(categories))  %:% {  
-
-
+# categories[2]
+tryCatch({
+for(i in 1:length(categories)){  
+# i<-1
 
 category<-categories[i]
-
-
-
-
-
-
-
 
 
 comp_el<-all_data%>%ungroup()%>%select(!!sym(category))%>%
   count(!!sym(category))%>%select(1)%>%
   pull()
+# comp_el
 
+# Assuming comp_el is a factor
+if ("NED" %in% levels(comp_el)) {
+  # Move "NED" to the first position
+  comp_el <- factor(comp_el, levels = c("NED", levels(comp_el)[levels(comp_el) != "NED"]))
+}
 
-if ("NED" %in% comp_el) {
-  # Move "NED" to the first position
-  comp_el <- c("NED", comp_el[comp_el != "NED"])
+if ("No evidence of disease" %in% levels(comp_el)) {
+  # Move "No evidence of disease" to the first position
+  comp_el <- factor(comp_el, levels = c("No evidence of disease", levels(comp_el)[levels(comp_el) != "No evidence of disease"]))
 }
-if ("nf1 wt; pten wt; ink wt; atrx wt" %in% comp_el) {
-  # Move "NED" to the first position
-  comp_el <- c("nf1 wt; pten wt; ink wt; atrx wt", comp_el[comp_el != "nf1 wt; pten wt; ink wt; atrx wt"])
+
+if ("nf1 wt; pten wt; ink wt; atrx wt" %in% levels(comp_el)) {
+  # Move "nf1 wt; pten wt; ink wt; atrx wt" to the first position
+  comp_el <- factor(comp_el, levels = c("nf1 wt; pten wt; ink wt; atrx wt", levels(comp_el)[levels(comp_el) != "nf1 wt; pten wt; ink wt; atrx wt"]))
 }
+
 
 
 
@@ -91,10 +91,10 @@ foreach(c=1:ncol(comb_mat)) %dopar% {
   
 # c<-1 
 
- sample_info<-readRDS("ds/v10-per_sample_updated.rds")
-  read_counts<-readRDS("ds/vm-02-filtered_rpkms.rds")
+sample_info<-readRDS("ds/v10-per_sample_updated.rds")
+read_counts<-readRDS("ds/vm-02-filtered_rpkms.rds")
   
-  all_data<-read_counts%>%left_join(sample_info)%>%ungroup()%>%arrange(sample_id)
+all_data<-read_counts%>%left_join(sample_info)%>%ungroup()%>%arrange(sample_id)
   
   
   ##########################################################################
@@ -103,6 +103,8 @@ foreach(c=1:ncol(comb_mat)) %dopar% {
   ga<-comb_mat[1,c]
   gb<-comb_mat[2,c]
   
+# ga
+# gb
   
   #sym() removes quotes. 
   ct<-sym(category)
@@ -117,8 +119,25 @@ foreach(c=1:ncol(comb_mat)) %dopar% {
     
     filter(!!ct==ga|!!ct==gb)
   
+
+group_a_count<-comp_info%>%
+  filter(!!ct==ga)%>%count()%>%pull()
+
+group_b_count<-comp_info%>%
+  filter(!!ct==gb)%>%
+  count()%>%pull()
+
+tryCatch({
+if (group_a_count>=2) {
   
+  print("group a size checked - moving on.")
   
+  if (group_b_count>=2){
+  print("group b size checked - moving on.")
+
+
+
+
 comp_counts<-all_data%>%
 
     #use sample_ids contained in comp_info to subset all reads to only samples included in comparison. 
@@ -189,15 +208,27 @@ comp_counts<-all_data%>%
     left_join(all_data%>%select(gene_name_ms, rpkm, sample_id)%>%
                 semi_join(comp_info, by="sample_id"))%>%
 
-  
     pivot_wider(values_from = rpkm, names_from = sample_id, names_prefix = "rpkm_")
-  
-  
-  
+
   
   #save output file.
-  saveRDS(output2, paste0("m-dexps/", "dexp-", fs::path_sanitize(paste0(category, "-", ga,  "v. ", gb)), ".rds"))
+  saveRDS(output2, paste0("m-dexps/", "dexp-", fs::path_sanitize(paste0(category, "-", ga,  " v. ", gb)), ".rds"))
   
   
+  
+  } else {
+    print("issue with group b size.")
+  }
+  
+} else {  
+  print("issue with group a size.")
+}  
+})  
+  
+  
+
 }
 }
+  
+}) 
+
