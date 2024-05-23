@@ -37,15 +37,16 @@ all_sample_info<-readRDS("ds/v10-per_sample_updated.rds")
 
 ##############################################
 
-#start paraellized loop to make plot for each deexp dataset.
+#start parallelized loop to make plot for each deexp dataset.
 
-#foreach(i=1:length(all_dexps)) %dopar% {
+foreach(i=1:length(all_dexps)) %dopar% {
 
 #for parallel loops, each library needs to be initialized inside the loop.  
-  library(tidyverse)
+source("libs.R") 
+ library(tidyverse)
   library(ComplexHeatmap)
-  
-i<-3
+#   
+# i<-3
 
 rds_file_path<-all_dexps[i]
 
@@ -122,14 +123,68 @@ scaled_mat<-t(scale(t(hm_mat_500)))
 
 
 
-anno_color<-readRDS("ds/colors_list.rds")
+###now annotation set-up.
+
+#this will be all the annotation information that we will want for 
+#each plot. note that this contains only the information relevant to 
+#each specific plot.
+de_anno_df<-de_samples%>%select(patho_grade, patho_cat_name, patho_cat2_name, patho_cat_det_name, aod, resultant_geno)%>%
+  relocate(aod, .after = last_col())
+
+
+#this is the df list that contains all assigned color values
+#for all potential annotations.
+#the issue is that it also contains colors for things 
+#that WON'T show up in each plot.
+#thus we need to subset it by only the variables we are interested in.
+anno_color_set<-readRDS("ds/colors_list.rds")
+
+
+
+#get the names of the variables that we are interested in filtering. 
+de_anno_colnames<-colnames(de_anno_df)
+
+
+anno_subset<-list()
+
+for (colnum in 1:length(de_anno_colnames)){
+
+#set column num(this wil be dynamic in for loop.)
+# colnum<-1
+
+#get column name as character, from dynamically defined number.
+colname<-de_anno_colnames[colnum]
+
+#from that column name, get all the unique values.
+unique_to_filter<-de_anno_df%>%select(!!sym(colname))%>%unique()%>%pull()%>%as.character()
+
+
+
+
+anno_subset[[colname]]<-anno_color_set[[colname]][c(unique_to_filter)]
+
+
+}
+
+
+
+col_proper_names<-read_csv("ds/col_proper_names.csv")%>%filter(col_name %in% de_anno_colnames)%>%
+  mutate(col_name=factor(col_name, levels=names(anno_subset)))%>%
+  filter(!is.na(col_name))%>%arrange(col_name)%>%pull(proper_name)%>%as.character()
+
+
+
+
 aod_colors = circlize::colorRamp2(c(50, 150), c("navy", "white"))
 
 
-anno<-HeatmapAnnotation(df=de_samples%>%select(patho_grade, patho_cat, patho_cat2, patho_cat_det,aod), 
-                        col=c(anno_color, aod=aod_colors),
-                        annotation_name_side = "left",
-                        gp = gpar(col = "black"),
+anno<-HeatmapAnnotation(df=de_anno_df, 
+                        col=c(anno_subset, aod=aod_colors),
+                        annotation_name_side = "right",
+                        gp = gpar(col = "black", fontsize = 3),
+                       
+                        annotation_label = c(col_proper_names, "Age of Death"),
+                        annotation_name_gp= gpar(fontsize=7),
                         
                         simple_anno_size = unit(.125, "in"))
 
@@ -137,8 +192,6 @@ anno<-HeatmapAnnotation(df=de_samples%>%select(patho_grade, patho_cat, patho_cat
 
 width_scale_factor<-nrow(de_samples)
 height_scale_factor<-as.numeric(nrow(scaled_mat))
-
-height_scale_factor
 
 
 
@@ -174,7 +227,7 @@ ggsave(paste0("plots/",fs::path_sanitize(paste0("hm-", file_base, "-rpkm.pdf")))
        
        scale = 1.2,
        dpi=600,
-       width = unit(.35*width_scale_factor+4, "in"),
+       width = unit(.35*width_scale_factor+10, "in"),
        height = unit(.03*height_scale_factor+3, "in"),
        unit="in"
        
@@ -183,15 +236,15 @@ ggsave(paste0("plots/",fs::path_sanitize(paste0("hm-", file_base, "-rpkm.pdf")))
 
 print(paste(all_dexps[i], "done"))
 
-# }
+}
 
-stop("end of foreach test loop")
+# stop("end of foreach test loop")
 
-plots<-list.files("plots", full.names = T, pattern="^hm.*\\.pdf$")
+plots<-list.files("plots", full.names = T, pattern="^hm.*\\.pdf$", recursive = F)
 
 
 
-qpdf::pdf_combine(plots, output = "plots/combined/chm-1.pdf")
+qpdf::pdf_combine(plots, output = "plots/combined/hm-combined-1.pdf")
 
 
 
