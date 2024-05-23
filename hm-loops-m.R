@@ -28,31 +28,38 @@ logfc_threshold<-2
 fdr_threshold<-.001
 
 #get vector of all .rds files containing dexp analyses.
-all_dexps<-list.files("dexps", full.names = T, pattern="^dexp.*\\.rds$", recursive = F)
+all_dexps<-list.files("m-dexps", full.names = T, pattern="^dexp.*\\.rds$", recursive = F)
+
+
 
 #get sample metadata.
-all_sample_info<-readRDS("ds/v07-per_sample_info.rds")
+all_sample_info<-readRDS("ds/v10-per_sample_updated.rds")
 
 ##############################################
 
 #start paraellized loop to make plot for each deexp dataset.
 
-foreach(i=1:length(all_dexps)) %dopar% {
+#foreach(i=1:length(all_dexps)) %dopar% {
 
 #for parallel loops, each library needs to be initialized inside the loop.  
   library(tidyverse)
   library(ComplexHeatmap)
   
+i<-3
 
-  
 rds_file_path<-all_dexps[i]
+
+
+
+
+
 
 #determine plot title from basic naming pattern of rds file.
 plot_title<-basename(rds_file_path)%>%
   sub(".rds$", "", .)%>%
   sub("^dexp-", "", .)%>%
-  sub("-", ": ", .)%>%
-  sub("v", " vs. ", .)
+  sub(".*-", "", .)%>%
+  sub(" v. ", " vs. ", .)
 
 
 #get file base since we will need this later to actually name the file. 
@@ -74,6 +81,7 @@ sa<-colnames(de_df)
 #now use sample metadata to match those column names and create
 #a vector of mouse_nums in the same order. Will be used for 
 #labels in the columns of the heatmap.
+
 column_labels_mouse_num<-tibble(col_name=sa[grep("^rpkm", sa)])%>%
   mutate(sample_id=sub("rpkm_", "", col_name))%>%
   left_join(all_sample_info%>%select(sample_id, mouse_num))%>%
@@ -82,36 +90,22 @@ column_labels_mouse_num<-tibble(col_name=sa[grep("^rpkm", sa)])%>%
 
 
 #get the remaining metadata for those samples
-#turn the necessary ones into factors.
 de_samples<-tibble(mouse_num=column_labels_mouse_num)%>%
   left_join(all_sample_info)%>%
-  mutate(patho_cat=as_factor(patho_cat))%>%
-  mutate(patho_cat2=as_factor(patho_cat2))
+  mutate(patho_grade=as_factor(patho_grade))
+  # mutate(patho_cat2=as_factor(patho_cat2))
 
 
 
-
-# de_samples<-de_df%>%
-#   colnames()%>%
-#   as_tibble()%>%
-#   rename(sample_id=value)%>%
-#   filter(grepl("^rpkm",sample_id))%>%
-#   mutate(sample_id=sub("^rpkm_","", sample_id))%>%
-#   
-#   left_join(all_sample_info)%>%
-#   mutate(patho_cat=as_factor(patho_cat))%>%
-#   mutate(patho_cat2=as_factor(patho_cat2))
 
 
 
 hm_mat<-de_df%>%
-  #rename_with(~ sub("^rpkm_", "", .), starts_with("rpkm_"))%>%
- 
   filter(abs(logFC)>=logfc_threshold)%>%
   filter(FDR<fdr_threshold)%>%
   
-  select(-c(gene_id:FDR))%>%
-  column_to_rownames("gene_name")
+  select(-c(gene_id_ms:FDR))%>%
+  column_to_rownames("gene_name_ms")
 
 
 
@@ -128,7 +122,7 @@ scaled_mat<-t(scale(t(hm_mat_500)))
 
 
 
-anno_color<-readRDS("ds/hm_colors_list.rds")
+anno_color<-readRDS("ds/colors_list.rds")
 aod_colors = circlize::colorRamp2(c(50, 150), c("navy", "white"))
 
 
@@ -171,6 +165,7 @@ h<-Heatmap(scaled_mat,
         
         )
 
+
 gh<-grid.grabExpr(draw(h))
 
 
@@ -188,9 +183,9 @@ ggsave(paste0("plots/",fs::path_sanitize(paste0("hm-", file_base, "-rpkm.pdf")))
 
 print(paste(all_dexps[i], "done"))
 
-}
+# }
 
-
+stop("end of foreach test loop")
 
 plots<-list.files("plots", full.names = T, pattern="^hm.*\\.pdf$")
 

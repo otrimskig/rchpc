@@ -1,8 +1,14 @@
 library(tidyverse)
 library(readxl)
+library(dtplyr)
+
+#use filtered rpkms to ensure no information is carried over from now-excluded data.
+include<-readRDS("ds/vm-02-filtered_rpkms.rds")%>%group_by(sample_id)%>%slice(1)
+
+sample_info<-readRDS("ds/v07-per_sample_info.rds")%>%
+  semi_join(include, by="sample_id")
 
 
-sample_info<-readRDS("ds/v07-per_sample_info.rds")
 
 xl_path<-"ds/nf1-renaming dataset.xlsx"
 
@@ -42,3 +48,7 @@ sample_info2<-sample_info%>%
 
 
 saveRDS(sample_info2, "ds/v10-per_sample_updated.rds")
+
+
+
+
