@@ -49,6 +49,13 @@ suppressPackageStartupMessages(library(ComplexHeatmap))
 # saveRDS(all2, "ds/v09-hu-gene-rpkms-wide.rds")
 
 #####
+library(tidyverse)
+library(dtplyr)
+data<-readRDS("ds/vm-02-filtered_rpkms.rds")
+
+hu_filtered<-data%>%ungroup()%>%select(gene_name_hu, sample_id, rpkm)%>%
+  group_by(sample_id, gene_name_hu)%>%slice(1)%>%ungroup()
+
 
 mat<-readRDS("ds/v09-hu-gene-rpkms-wide.rds")%>%
   column_to_rownames("gene_name_hu")%>%
