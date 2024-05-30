@@ -39,7 +39,7 @@ summary_stats <- gsva_u%>%as.data.frame()%>%
 saveRDS(summary_stats, "ds/gsva_pathway_stats.rds")
 
 anno_color<-readRDS("ds/colors_list.rds")
-aod_colors = circlize::colorRamp2(c(50, 150), c("navy", "white"))
+#aod_colors = circlize::colorRamp2(c(50, 150), c("navy", "white"))
 
 
 de_samples<-readRDS("ds/v10-per_sample_updated.rds")
@@ -51,8 +51,7 @@ de_samples<-readRDS("ds/v10-per_sample_updated.rds")
 #each specific plot.
 de_anno_df<-de_samples%>%select(patho_grade, patho_cat_name, 
                                 #patho_cat2_name,
-                                patho_cat_det_name, aod, resultant_geno)%>%
-  relocate(aod, .after = last_col())
+                                patho_cat_det_name, resultant_geno)
 
 
 #this is the df list that contains all assigned color values
@@ -98,16 +97,16 @@ col_proper_names<-read_csv("ds/col_proper_names.csv")%>%filter(col_name %in% de_
 
 
 
-aod_colors = circlize::colorRamp2(c(50, 150), c("navy", "white"))
+#aod_colors = circlize::colorRamp2(c(50, 150), c("navy", "white"))
 
 
 anno<-HeatmapAnnotation(df=de_anno_df, 
-                        col=c(anno_subset, aod=aod_colors),
+                        col=c(anno_subset),
                         annotation_name_side = "left",
                         
                         gp = gpar(col = "black", fontsize = 3),
                         
-                        annotation_label = c(col_proper_names, "Age of Death"),
+                        annotation_label = c(col_proper_names),
                         annotation_name_gp= gpar(fontsize=7),
                         
                         simple_anno_size = unit(.125, "in"))
@@ -406,13 +405,13 @@ combo<-draw((hm1), annotation_legend_side = "left")
 
 gh2<-grid.grabExpr(draw(combo))
 
-ggsave(paste0("plots/hm-timex-", subset_factor, "-clustered-relative-summary-stats.pdf"),
+ggsave(paste0("plots/hm-timex-", subset_factor, "-clustered-relative-summary-stats-no-aod.pdf"),
        plot=gh2,
        
        scale = 1,
        dpi=600,
        width = 45,
-       height = 50,
+       height = 100,
        unit="in",
        limitsize = FALSE
        
