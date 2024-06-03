@@ -113,12 +113,72 @@ unmatched%>%
 
 
 
+#manual annotation. 
+gs4_auth(email = "gotrimski@gmail.com")
+unmatched_manual_edits<-read_sheet("https://docs.google.com/spreadsheets/d/1A4wa8WsbsazEfBSndcSqgEk1BMZokdTpIPNKjHV5PWE/edit#gid=378460454",
+           sheet="gns")%>%
+ 
+  mutate(across(everything(), ~ na_if(as.character(.), "")))%>%
+  mutate(across(1:last_col(), function(x){na_if(x, "NULL")}))
+
+unmatched_ids<-unmatched_manual_edits%>%
+  mutate(mgi_id=if_else(!is.na(MGI),paste0("MGI:", MGI), NA))%>%
+
+  select(-MGI)%>%
+  rename(external_synonym=alias,
+         ensembl_gene_id=ens)
+
+
+
 #biomart results
-seq_genes_bm_r2<-getBM(attributes = c("entrezgene_id", "mgi_id",
-                                     "external_synonym", "ensembl_gene_id"),
+seq_genes_bm_r2<-getBM(attributes = c("entrezgene_id", "mgi_id","external_gene_name",
+                                     "external_synonym", "ensembl_gene_id", "hgnc_id"),
                       
                       values = seq_genes$gene_id_ms, 
                       mart = mouse)%>%
   
-  rename(seq_gene_name_ms=external_gene_name)%>%
+  #rename(seq_gene_name_ms=external_gene_name)%>%
+  
+  mutate(across(everything(), ~ na_if(as.character(.), "")))%>%
+  
+  
+  full_join(seq_genes%>%mutate(entrezgene_id=as.character(gene_id_ms)), by="entrezgene_id")
+
+
+
+#now check against all unmatched results for like ids. 
+mgi_matches<-unmatched_ids%>%
+  left_join(seq_genes_bm_r2, na_matches="never", by="mgi_id")%>%
+  filter(!is.na(seq_exp_id))
+
+
+syn_matches_hu<-unmatched_ids%>%
+  filter(is.na(mgi_id))%>%
+  left_join(seq_genes_bm_r2, na_matches ="never", by=c("external_synonym"="gene_name_hu"))%>%
+  filter(!is.na(seq_exp_id))
+
+
+
+name_matches<-unmatched_ids%>%
+  filter(is.na(mgi_id))%>%
+  filter(is.na(external_synonym))%>%
+  left_join(seq_genes_bm_r2, na_matches ="never", by=c("ref_gene_name_ms"="seq_gene_name_ms"))%>%
+  filter(!is.na(seq_exp_id))
+
+
+
+
+
+
+unmatched_bm2<-getBM(attributes = c("entrezgene_id", "mgi_id","external_gene_name",
+                                      "external_synonym", "ensembl_gene_id", "hgnc_id"),
+                       
+                       values = unmatched_ids%>%select(-ref_gene_id), 
+                       mart = mouse)%>%
+  
+  #rename(seq_gene_name_ms=external_gene_name)%>%
+  
   mutate(across(everything(), ~ na_if(as.character(.), "")))
+  
+  
+  full_join(seq_genes%>%mutate(entrezgene_id=as.character(gene_id_ms)), by="entrezgene_id")
