@@ -104,7 +104,7 @@ unmatched<-matches%>%filter(match=="0")%>%
 library(googlesheets4)
 gs4_auth(email = "gotrimski@gmail.com")
 unmatched%>%
-    range_write("https://docs.google.com/spreadsheets/d/1A4wa8WsbsazEfBSndcSqgEk1BMZokdTpIPNKjHV5PWE/edit#gid=378460454",
+    range_write("https://docs.google.com/spreadsheets/d/1SLVQlFHmXIPPRK3RW_1HBGj3587gl1C1TVabwAiiEZo/edit#gid=1592496076",
                 sheet = "gns",
                 .,
                  reformat=FALSE,
@@ -115,7 +115,7 @@ unmatched%>%
 
 #manual annotation. 
 gs4_auth(email = "gotrimski@gmail.com")
-unmatched_manual_edits<-read_sheet("https://docs.google.com/spreadsheets/d/1A4wa8WsbsazEfBSndcSqgEk1BMZokdTpIPNKjHV5PWE/edit#gid=378460454",
+unmatched_manual_edits<-read_sheet("https://docs.google.com/spreadsheets/d/1SLVQlFHmXIPPRK3RW_1HBGj3587gl1C1TVabwAiiEZo/edit#gid=1592496076",
            sheet="gns")%>%
  
   mutate(across(everything(), ~ na_if(as.character(.), "")))%>%
@@ -133,14 +133,89 @@ unmatched_ids<-unmatched_manual_edits%>%
 #biomart results
 seq_genes_bm_r2<-getBM(attributes = c("entrezgene_id", "mgi_id","external_gene_name",
                                      "external_synonym", "ensembl_gene_id", "hgnc_id"),
-                      
+                      filters=c("entrezgene_id"),
                       values = seq_genes$gene_id_ms, 
                       mart = mouse)%>%
   
   #rename(seq_gene_name_ms=external_gene_name)%>%
   
-  mutate(across(everything(), ~ na_if(as.character(.), "")))%>%
+  mutate(across(everything(), ~ na_if(as.character(.), "")))
   
+na.omit(seq_genes_bm_r2$external_synonym)%>%as.character()
+xtable::sanitize(na.omit(seq_genes_bm_r2$external_synonym)%>%as.character())
+
+seq_genes_bm_r3<-getBM(attributes = c("entrezgene_id", "mgi_id","external_gene_name",
+                                      #"external_synonym", 
+                                      "ensembl_gene_id", #"hgnc_id", 
+                                      "hgnc_symbol"),
+                       #filters="external_gene_name",
+                       values = xtable::sanitize(na.omit(seq_genes_bm_r2$external_synonym)%>%as.character(), type="html"), 
+                       mart = mouse)%>%
+  
+  #rename(seq_gene_name_ms=external_gene_name)%>%
+  
+  mutate(across(everything(), ~ na_if(as.character(.), "")))
+
+
+
+
+
+
+
+
+
+
+mouse_attr<-listAttributes(mouse)%>%pull(name)
+mouse_fil<-listFilters(mouse)%>%pull(name)
+
+
+search_query<-"Ighg2c"
+
+a<-tibble(search_term=search_query)
+
+
+
+for (i in 1:length(mouse_attr)){
+
+att<-mouse_attr[i]
+  
+  for (f in 1:length(mouse_fil)){
+
+b<-getBM(attributes = att,
+         filters = mouse_fil[f],
+      values = search_query, 
+      mart = mouse)
+
+
+    
+# c<-b%>%mutate(search_term=search_query)
+#    a<-left_join(a,c) 
+#     
+    
+  }
+
+
+}
+
+
+
+listFilters(mouse)%>%view()
+
+
+
+
+getBM(#filters="external_gene_name",
+      values = "Ighg2c", 
+      mart = mouse)
+  
+listAttributes(mouse)%>%view()
+
+
+
+
+seq_genes_join<-full_join(seq_genes_bm_r2, seq_genes_bm_r3)
+
+
   
   full_join(seq_genes%>%mutate(entrezgene_id=as.character(gene_id_ms)), by="entrezgene_id")
 
@@ -178,7 +253,7 @@ unmatched_bm2<-getBM(attributes = c("entrezgene_id", "mgi_id","external_gene_nam
   
   #rename(seq_gene_name_ms=external_gene_name)%>%
   
-  mutate(across(everything(), ~ na_if(as.character(.), "")))
+  mutate(across(everything(), ~ na_if(as.character(.), "")))%>%
   
   
   full_join(seq_genes%>%mutate(entrezgene_id=as.character(gene_id_ms)), by="entrezgene_id")
