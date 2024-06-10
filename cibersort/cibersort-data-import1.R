@@ -166,8 +166,10 @@ seq_genes_bm_r3<-getBM(attributes = c("entrezgene_id", "mgi_id","external_gene_n
 
 
 mouse_attr<-listAttributes(mouse)%>%pull(name)
-mouse_fil<-listFilters(mouse)%>%pull(name)
-
+mouse_fil<-listFilters(mouse)%>%
+  filter(!grepl("^with_", name))%>%
+  filter(!grepl("_is_", name))%>%
+  filter(!grepl("^is_", name))%>%pull(name)
 
 search_query<-"Ighg2c"
 
@@ -181,12 +183,12 @@ att<-mouse_attr[i]
   
   for (f in 1:length(mouse_fil)){
 
-b<-getBM(attributes = att,
+assign(paste0("result_", "atr_", i, "_fil_", f), getBM(attributes = att,
          filters = mouse_fil[f],
       values = search_query, 
-      mart = mouse)
+      mart = mouse))
 
-
+print(paste0("finished: result_", "atr_", i, "_fil_", f))
     
 # c<-b%>%mutate(search_term=search_query)
 #    a<-left_join(a,c) 
