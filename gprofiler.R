@@ -1,3 +1,5 @@
+source("libs.R")
+
 library(tidyverse)
 library(gprofiler2)
 
@@ -21,9 +23,18 @@ gostplot(gostres, capped = TRUE, interactive = TRUE)
 dexp_files<-list.files(path = "m-dexps", pattern= ".rds$", full.names = TRUE)
 
 
+
+
+
+
+#sub("\\.rds$", ".pdf", dexp_files[1])
+
 for (i in 1:length(dexp_files)){
   
 i<-1
+
+
+html_out_path<-paste0("plots/grof/", "gprof-", basename(sub("\\.rds$", ".html", dexp_files[i])))
 
 d<-readRDS(dexp_files[i])%>%
   filter(FDR<0.01)%>%
@@ -40,13 +51,20 @@ g<- gost(query = d$gene_id_ms,
                numeric_ns = "ENTREZGENE_ACC",
          ordered_query = TRUE)
 
-p<-gostplot(g, capped = TRUE, interactive = F)
+p<-gostplot(g, capped = TRUE, interactive = T)
+
+
+
+
+#save as self-contained html file. 
+htmlwidgets::saveWidget(p, html_out_path)
+
+
 
 }
 
 
-p
 
 
 
-publish_gosttable(g)
+# publish_gosttable(g)
