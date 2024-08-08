@@ -60,7 +60,7 @@ comb_mat<-combn(comp_el, 2)
 
 for(c in 1:ncol(comb_mat)){  
 
-    # c<-1 
+  # c<-1 
   
   sample_info<-readRDS("ds/v10-per_sample_updated.rds")
   read_counts<-readRDS("ds/vm-02-filtered_rpkms.rds")
