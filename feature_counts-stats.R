@@ -4,31 +4,10 @@ library(dtplyr)
 library(janitor)
 
 
+exp_path<-"../exp_data/kircher19"
 
 
-
-
-# stat_file<-"../exp_data/23908R_merged/featurecounts/23908X01_merged.FeatureCounts_stats.txt"
-# 
-# df1<-fread(stat_file)
-# 
-# 
-# sample_id<-basename(stat_file)%>%
-#   substr(1,8)
-# 
-# t(df1)%>%as_tibble()%>%
-#   row_to_names(1)%>%
-#   janitor::clean_names()%>%
-#  
-#   mutate(across(everything(), trimws))%>%
-#   mutate(across(everything(), as.numeric))%>%
-# 
-#   mutate(sample_id=sample_id)%>%
-#   relocate(sample_id)
-
-
-
-files<-list.files(path = "../exp_data/23908R_merged/featurecounts/", pattern = "stats.txt$", full.names = TRUE)
+files<-list.files(path = paste0(exp_path, "/featurecounts"), pattern = "stats.txt$", full.names = TRUE)
 all_stats<-tibble()
 
 for (i in 1:length(files)){
@@ -39,7 +18,7 @@ df1<-fread(stat_file)
 
 
 sample_id<-basename(stat_file)%>%
-  substr(1,8)
+  sub("\\..*", "", .)
 
 bam_stat<-t(df1)%>%as_tibble()%>%
   row_to_names(1)%>%
@@ -74,6 +53,6 @@ combined_perc<-all_stats%>%
 
 
 #
-write_csv(combined_perc, file="../exp_data/23908R_merged/featurecounts/all_sample_stats.csv", na="")
+write_csv(combined_perc, file=paste0(exp_path, "/featurecounts/", basename(exp_path), "-all_sample_fc_stats.csv"), na="")
 
   

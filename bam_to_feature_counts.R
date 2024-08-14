@@ -1,31 +1,46 @@
-library(foreach)
+###note: do not do this in parallel. Do in a sequential loop,
+###using as many cores as possible (16 for interactive R session)
 
-if (!exists("n.cores")) {
-  
-  "initilizing cores..."
-  n.cores <- parallel::detectCores() - 1
-  my.cluster <- parallel::makeCluster(
-    n.cores, 
-    type = "PSOCK"
-  )
-  doParallel::registerDoParallel(cl = my.cluster)
-  
-  #check if it is registered (optional)
-  foreach::getDoParRegistered()
-  
-  "parallel cores initialized."
-  
+
+
+
+###be sure to set the it for paired vs single-end reads. 
+
+library(tidyverse)
+
+
+#set exp path
+exp_path<-"../exp_data/kircher19"
+
+
+
+
+
+
+# add featurecounts folder if it doesn't exist.
+fc_path <- paste0(exp_path, "/featurecounts")
+
+if (!dir.exists(fc_path)) {
+  dir.create(fc_path)
+  cat("output directory created: ", fc_path)
+} else {
+  cat("output directory exists: ", fc_path)
 }
 
 
-bams<-list.files("../exp_data/23908R_merged/", pattern = ".bam$", full.names = TRUE)
 
-foreach(b=1:length(bams)) %dopar% {
+
+
+#gets list of all bam files.
+bams<-list.files(paste0(exp_path, "/bams"), pattern = ".bam$", full.names = TRUE)
+
+
+for(b in 1:length(bams)){
   
   library(tidyverse)
   library(Rsubread)
   
-  
+print(paste0(Sys.time(), ": doing fc for ", bams[b]))
   
   
   
@@ -82,8 +97,14 @@ foreach(b=1:length(bams)) %dopar% {
                        juncCounts = FALSE,
                        genome = NULL,
                        
-                       # parameters specific to paired end reads
-                       isPairedEnd = TRUE,
+                      
+                       
+                       
+                      ########
+                      #set paired vs. single-end reads
+                      
+                      # parameters specific to paired end reads
+                       isPairedEnd = FALSE,
                        countReadPairs = TRUE,
                        requireBothEndsMapped = FALSE,
                        checkFragLength = FALSE,
@@ -93,7 +114,7 @@ foreach(b=1:length(bams)) %dopar% {
                        autosort = TRUE,
                        
                        # number of CPU threads
-                       nthreads = 10,
+                       nthreads = 16,
                        
                        # read group
                        byReadGroup = FALSE,
@@ -108,13 +129,17 @@ foreach(b=1:length(bams)) %dopar% {
                        verbose = FALSE)
   
   
+  print(paste0(Sys.time(), ": writing output for ", bams[b]))
+  
+
+  
 #save counts alignments to txt file.
   
   write.table(
     x=data.frame(reads$annotation[,c("GeneID","Length")],
                  reads$counts,
                  stringsAsFactors=FALSE),
-    file=paste0("../exp_data/23908R_merged/featurecounts/", sub(".bam$", ".FeatureCounts.txt", basename(bams[b]))),
+    file=paste0(paste0(exp_path, "/featurecounts/"), sub(".bam$", ".FeatureCounts.txt", basename(bams[b]))),
     quote=FALSE,
     sep="\t",
     row.names=FALSE)
@@ -123,7 +148,7 @@ foreach(b=1:length(bams)) %dopar% {
   write.table(
     x=data.frame(reads$stat,
                  stringsAsFactors=FALSE),
-    file=paste0("../exp_data/23908R_merged/featurecounts/", sub(".bam$", ".FeatureCounts_stats.txt", basename(bams[b]))),
+    file=paste0(paste0(exp_path, "/featurecounts/"), sub(".bam$", ".FeatureCounts_stats.txt", basename(bams[b]))),
     quote=FALSE,
     sep="\t",
     row.names=FALSE)
