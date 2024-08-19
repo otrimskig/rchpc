@@ -10,7 +10,7 @@ library(tidyverse)
 
 
 #set exp path
-exp_path<-"../exp_data/kircher19"
+exp_path<-"../exp_data/kircher19/50bp/"
 
 
 

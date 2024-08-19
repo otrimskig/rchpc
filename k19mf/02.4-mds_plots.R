@@ -262,16 +262,16 @@ bubble_plot_aod(plot_title = "Pathologist Detailed Categorization",
 
 
 
-bubble_plot(plot_title = "Pathologist Categorization and Grade", 
-            category = "genotype",
-            
-            plot_subtitle = plot_subtitle,
-            set_dim_ratio = set_dim_ratio,
-            
-            point_scaling=2,
-            
-            pdf_width = 40,
-            pdf_height = 7)
+# bubble_plot(plot_title = "Pathologist Categorization and Grade", 
+#             category = "genotype",
+#             
+#             plot_subtitle = plot_subtitle,
+#             set_dim_ratio = set_dim_ratio,
+#             
+#             point_scaling=2,
+#             
+#             pdf_width = 40,
+#             pdf_height = 7)
 
 
 
@@ -288,7 +288,7 @@ bubble_plot(plot_title = "Pathologist Categorization and Grade",
             pdf_width = 40,
             pdf_height = 7)
 
-
+stop()
 #########################################
 #re-run same as above, but with different ratio.
 set_dim_ratio<-1
