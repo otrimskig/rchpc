@@ -4,7 +4,7 @@ library(dtplyr)
 library(janitor)
 
 
-exp_path<-"../exp_data/kircher19"
+exp_path<-"../exp_data/kircher19/50bp/"
 
 
 files<-list.files(path = paste0(exp_path, "/featurecounts"), pattern = "stats.txt$", full.names = TRUE)

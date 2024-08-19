@@ -7,7 +7,7 @@ output_path<-"k19mf/ds/"
 
 
 
-counts_files<-c(list.files(path="../exp_data/kircher19/featurecounts/",  pattern="FeatureCounts.txt$", full.names = TRUE),
+counts_files<-c(list.files(path="../exp_data/kircher19/50bp/featurecounts/",  pattern="FeatureCounts.txt$", full.names = TRUE),
                 list.files(path="../exp_data/24385R/featurecounts/",  pattern="FeatureCounts.txt$", full.names = TRUE)
 )
 

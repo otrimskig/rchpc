@@ -1,9 +1,9 @@
 library(tidyverse)
 library(dtplyr)
 
-k1<-data.table::fread("kircher19/GSE122781_star_counts22.txt")
+k1<-data.table::fread("k19mf/ds/GSE122781_star_counts22.txt")
 
-k2<-data.table::fread("kircher19/GSE122781_series_matrix.txt", fill=TRUE)
+k2<-data.table::fread("k19mf/ds/GSE122781_series_matrix.txt", fill=TRUE)
 
 library(janitor)
 
@@ -18,14 +18,16 @@ meta0<-k2%>%
 rownames(meta0) <-NULL
 
 
-write_csv(meta0, "kircher19/meta.csv")
+write_csv(meta0, "k19mf/ds/meta.csv")
 
 
 ###sample data
 sample0<-k2%>%
   slice(32:n())%>%
   t()%>%as_tibble()%>%
-  row_to_names(1)%>%clean_names()%>%
+  row_to_names(1)%>%clean_names()
+
+sample1<-sample0%>%
   select(-sample_status)%>%
   select(-3)%>%
   select(-3)%>%
@@ -42,7 +44,7 @@ sample0<-k2%>%
   select(-starts_with("sample_type"))%>%
   select(-"sample_characteristics_ch1_2")%>%
   
-  rename(geo_accession = sample_geo_accession)%>%
+  #rename(geo_accession = sample_geo_accession)%>%
   rename(source_type = sample_source_name_ch1)%>%
   
   rename(organism = sample_organism_ch1)%>%
@@ -82,4 +84,4 @@ sample0<-k2%>%
   relocate(genotype, aod, .after = "mouse_num")
 
 
-write_csv(sample0, "kircher19/by_sample.csv")
+write_csv(sample1, "k19mf/ds/by_sample.csv")
