@@ -55,4 +55,3 @@ combined_perc<-all_stats%>%
 #
 write_csv(combined_perc, file=paste0(exp_path, "/featurecounts/", basename(exp_path), "-all_sample_fc_stats.csv"), na="")
 
-  

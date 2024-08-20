@@ -15,7 +15,9 @@ all_info<-read_csv("k19mf/ds/all_by_sample_stats.csv")%>%
   mutate(genotype=if_else(genotype=="DCT-TVA::Brafca/ca;Ptenf/f;Cdkn2af/f", 
                           "Dct::TVA; BRAFV600E;Cdkn2a-/-;Pten-/-",
                           genotype))%>%
-  mutate(sample_id=paste0("x", tolower(sample_id)))
+  mutate(sample_id=paste0("x", tolower(sample_id)))%>%
+  filter(genotype!="Dct::TVA; BRAFV600E;Cdkn2a-/-")%>%
+  mutate(tumor_type=if_else(!is.na(sra_id), "subq", "foot pad"))
 
 
 saveRDS(all_info,"k19mf/ds/vm-00-sample_info.rds")
@@ -34,16 +36,15 @@ y_dim<-round(mds[["var.explained"]][2]*100, 1)
 dim_ratio<-round(y_dim/x_dim, 2)
 
 #join mds coordinates to sample info.
-dfp<-mds_coords%>%left_join(all_info)
+dfp<-mds_coords%>%left_join(all_info)%>%
+  filter(!is.na(tumor_type))
+
 
 
 
 #source("colors_input_from_gsheets.R")
 
-
-
 #colors<-readRDS("k19mf/colors_list.rds")
-
 
 #make colors darker (depends on colorspace)
 # sapply(colors$patho_cat_name, function(x) colorspace::darken(x, 0.5))
@@ -113,7 +114,7 @@ plot_to_save<-ggplot(dfp, aes(x, y))+
   #scale_color_manual(values=sapply(colors[[category]],function(x) colorspace::darken(x, 0.3)))+
 
   #remove legend for size
-  guides(size="none")+
+  #guides(size="none")+
   
   #change y and x axes labels to include percent difference in MDS dimension.
   labs(x=paste0("Dim X (", x_dim, "% of difference)"))+
@@ -123,7 +124,6 @@ plot_to_save<-ggplot(dfp, aes(x, y))+
   coord_fixed(ratio=set_dim_ratio)+
   theme_classic()
 
-# plot_to_save
 
 
 object<-plot_to_save
@@ -140,7 +140,92 @@ ggsave(paste0("k19mf/plots/",fs::path_sanitize(paste0("mds-", category, set_dim_
 
 }
 
+bubble_plot_size_scaled<-function(plot_title, plot_subtitle, category, set_dim_ratio, pdf_width, pdf_height, size_scale_var){
+  plot_to_save<-ggplot(dfp, aes(x, y))+
+    
+    ggtitle(plot_title)+
+    labs(subtitle = plot_subtitle)+
+    
+    
+    #layer1
+    #sets bubble inside colors
+    geom_point(aes(color=!!sym(category), size=!!sym(size_scale_var)), shape=16, alpha=.5)+
+    #sets scale based on color mapping df. 
+    
+    ####
+    #scale_color_manual(values=colors[[category]])+
+    
+    #set up legend prior to resetting color scale.
 
+    guides(color = guide_legend(override.aes = list(size = 5),
+                                title=""))+
+    
+    new_scale_color()+
+    
+    #layer2
+    #sets bubble outline colors
+    geom_point(aes(color=!!sym(category), size=!!sym(size_scale_var)), shape=1)+
+    #sets scale based on color mapping df, and darkens. 
+    
+    
+    
+    ####
+    #scale_color_manual(values=sapply(colors[[category]],function(x) colorspace::darken(x, 0.2)))+
+    
+    #set up legend, prior to resetting color scale. Must match above legend otherwise
+    #legend will split. 
+    guides(color = guide_legend(title=""))+
+    
+    new_scale_color()+
+    
+    #set size scale for bubbles
+    scale_size(range = c(2,10))+
+    
+    
+    
+    
+    
+    #add text labels for points, by mouse number.
+    geom_text_repel(aes(label = mouse_num, color=!!sym(category)),
+                    min.segment.length = 0,
+                    segment.color = "grey80",
+                    force=20,
+                    point.padding=15,
+                    show.legend = FALSE) +
+    #set color of text to be slightly darker than that of bubble. 
+    
+    
+    
+    ########
+  #scale_color_manual(values=sapply(colors[[category]],function(x) colorspace::darken(x, 0.3)))+
+  
+  #remove legend for size
+  #guides(size="none")+
+    
+    #change y and x axes labels to include percent difference in MDS dimension.
+    labs(x=paste0("Dim X (", x_dim, "% of difference)"))+
+    labs(y=paste0("Dim Y (", y_dim, "% of difference)"))+
+    
+    #set aspect ratio - (probably either 1:1 or scale to %diff).
+    coord_fixed(ratio=set_dim_ratio)+
+    theme_classic()
+  
+  # plot_to_save
+  
+  
+  object<-plot_to_save
+  
+  ggsave(paste0("k19mf/plots/",fs::path_sanitize(paste0("mds-", category, "-", plot_subtitle, "-", set_dim_ratio, "ratio", "-m.pdf"))),
+         plot=object,
+         
+         scale = .75,
+         dpi=600,
+         width = pdf_width,
+         height = pdf_height,
+         unit="in")
+  
+  
+}
 
 bubble_plot<-function(plot_title, plot_subtitle, category, point_scaling, set_dim_ratio, pdf_width, pdf_height){
   plot_to_save<-ggplot(dfp, aes(x, y))+
@@ -247,8 +332,8 @@ bubble_plot_aod(plot_title = "Pathologist Major Categorization",
             pdf_width = 40,
             pdf_height = 7)
 
-bubble_plot_aod(plot_title = "Pathologist Detailed Categorization", 
-            category = "genotype",
+bubble_plot_aod(plot_title = "By Tumor/Injection Site", 
+            category = "tumor_type",
             
             plot_subtitle = plot_subtitle,
             set_dim_ratio = set_dim_ratio,
@@ -257,10 +342,32 @@ bubble_plot_aod(plot_title = "Pathologist Detailed Categorization",
             pdf_height = 7)
 
 
+bubble_plot_size_scaled(plot_title = "Tumor/Injection Site", 
+                category = "tumor_type",
+                
+                plot_subtitle = "Scaled by Percent Read Assignment",
+                set_dim_ratio = set_dim_ratio,
+                
+                size_scale_var = "assigned_percent",
+                
+                pdf_width = 40,
+                pdf_height = 7)
 
 
 
 
+
+
+bubble_plot_size_scaled(plot_title = "Tumor/Injection Site", 
+                        category = "tumor_type",
+                        
+                        plot_subtitle = "Scaled by Read Assignment Totals",
+                        set_dim_ratio = set_dim_ratio,
+                        
+                        size_scale_var = "assigned_reads_m",
+                        
+                        pdf_width = 40,
+                        pdf_height = 7)
 
 # bubble_plot(plot_title = "Pathologist Categorization and Grade", 
 #             category = "genotype",
