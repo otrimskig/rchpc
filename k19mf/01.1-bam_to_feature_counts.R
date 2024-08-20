@@ -1,7 +1,8 @@
 ###note: do not do this in parallel. Do in a sequential loop,
 ###using as many cores as possible (16 for interactive R session)
+source("libs.R")
 
-
+setwd(here::here())
 
 
 ###be sure to set the it for paired vs single-end reads. 
@@ -10,7 +11,7 @@ library(tidyverse)
 
 
 #set exp path
-exp_path<-"../exp_data/kircher19/50bp/"
+exp_path<-"../exp_data/kircher19/50bp"
 
 
 
@@ -59,7 +60,7 @@ print(paste0(Sys.time(), ": doing fc for ", bams[b]))
                        useMetaFeatures = TRUE,
                        
                        # overlap between reads and features
-                       allowMultiOverlap = FALSE,
+                       allowMultiOverlap = TRUE,
                        minOverlap = 1,
                        fracOverlap = 0,
                        fracOverlapFeature = 0,
@@ -68,7 +69,7 @@ print(paste0(Sys.time(), ": doing fc for ", bams[b]))
                        nonOverlapFeature = NULL,
                        
                        # Read shift, extension and reduction
-                       readShiftType = "upstream",
+                       readShiftType = NULL,
                        readShiftSize = 0,
                        readExtension5 = 0,
                        readExtension3 = 0,
@@ -78,7 +79,7 @@ print(paste0(Sys.time(), ": doing fc for ", bams[b]))
                        countMultiMappingReads = TRUE,
                        
                        # fractional counting
-                       fraction = FALSE,
+                       fraction = TRUE,
                        
                        # long reads
                        isLongRead = FALSE,
@@ -94,7 +95,7 @@ print(paste0(Sys.time(), ": doing fc for ", bams[b]))
                        strandSpecific = 0,
                        
                        # exon-exon junctions
-                       juncCounts = FALSE,
+                       juncCounts = TRUE,
                        genome = NULL,
                        
                       
@@ -105,16 +106,16 @@ print(paste0(Sys.time(), ": doing fc for ", bams[b]))
                       
                       # parameters specific to paired end reads
                        isPairedEnd = FALSE,
-                       countReadPairs = TRUE,
+                       countReadPairs = FALSE,
                        requireBothEndsMapped = FALSE,
                        checkFragLength = FALSE,
-                       minFragLength = 50,
+                       minFragLength = 30,
                        maxFragLength = 600,
                        countChimericFragments = TRUE,
                        autosort = TRUE,
                        
                        # number of CPU threads
-                       nthreads = 16,
+                       nthreads = 40,
                        
                        # read group
                        byReadGroup = FALSE,
