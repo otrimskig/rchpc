@@ -6,23 +6,7 @@ library(ggnewscale)
 
 
 #get all sample metadata
-
-###re-do this.
-prev_info<-readRDS("nf1g/ds/v10-per_sample_updated.rds")%>%head()
-
-
-all_info<-read_csv("k19mf/ds/all_by_sample_stats.csv")%>%
-  mutate(genotype=if_else(genotype=="DCT-TVA::Brafca/ca;Ptenf/f;Cdkn2af/f", 
-                          "Dct::TVA; BRAFV600E;Cdkn2a-/-;Pten-/-",
-                          genotype))%>%
-  mutate(sample_id=paste0("x", tolower(sample_id)))%>%
-  filter(genotype!="Dct::TVA; BRAFV600E;Cdkn2a-/-")%>%
-  mutate(tumor_type=if_else(!is.na(sra_id), "subq", "foot pad"))
-
-
-saveRDS(all_info,"k19mf/ds/vm-00-sample_info.rds")
-
-
+all_info<-readRDS("k19mf/ds/vm-00-sample_info.rds")
 
 
 #get coordinates from plot-mds analysis, and dimension length.

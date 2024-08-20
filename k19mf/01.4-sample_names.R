@@ -8,12 +8,12 @@ exp_dir<-"k19mf/"
 
 all_counts<-readRDS("k19mf/ds/mv00-all_counts.rds")%>%head()
 
-tibble(a=colnames(all_counts)[3:ncol(all_counts)], b=NA)%>%
-  arrange(a)%>%
-  write_csv("a.csv")
+# tibble(a=colnames(all_counts)[3:ncol(all_counts)], b=NA)%>%
+#   arrange(a)%>%
+#   write_csv("k19mf/ds/a.csv")
 
 
-b<-read_csv("b.csv")
+b<-read_csv("k19mf/ds/b.csv")
 
 
 rename_columns <- function(df, rename_table) {
@@ -31,7 +31,8 @@ rename_columns <- function(df, rename_table) {
 all_counts<-readRDS("k19mf/ds/mv00-all_counts.rds")
 
 all_counts2 <- rename_columns(all_counts, b)%>%
-  janitor::clean_names()
+  janitor::clean_names()%>%
+  relocate(mouse_num, genotype, tumor_type)
 
 
 saveRDS(all_counts2, "k19mf/ds/vm-00-all_counts_sample_names_fixed.rds")
