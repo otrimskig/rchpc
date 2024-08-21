@@ -4,10 +4,14 @@ library(tidyverse)
 library(edgeR)
 library(dtplyr)
 
-sample_info<-readRDS("ds/v10-per_sample_updated.rds")
-read_counts<-readRDS("ds/vm-02-filtered_rpkms.rds")
+sample_info<-readRDS("k19mf/ds/vm-00-sample_info.rds")%>%
+  select(1:5, total_reads)
+read_counts<-readRDS("k19mf/ds/vm-02-filtered_rpkms.rds")
 
-all_data<-read_counts%>%left_join(sample_info)%>%ungroup()%>%arrange(sample_id)
+all_data<-read_counts%>%left_join(sample_info)%>%ungroup()%>%arrange(sample_id)%>%
+  
+  filter(mouse_num!="3126")%>%
+  filter(mouse_num!="3971")
 
 
 #view all available categories.
@@ -15,7 +19,7 @@ colnames(all_data)
 
 
 #use to determine category for selection of comparison.
-categories<-c("patho_cat_name", "patho_cat2_name", "patho_cat_det_name", "patho_grade", "resultant_geno")
+categories<-c("tumor_type")
 
 # categories[2]
 tryCatch({
@@ -28,27 +32,6 @@ category<-categories[i]
 comp_el<-all_data%>%ungroup()%>%select(!!sym(category))%>%
   count(!!sym(category))%>%select(1)%>%
   pull()
-# comp_el
-
-# Assuming comp_el is a factor
-if ("NED" %in% levels(comp_el)) {
-  # Move "NED" to the first position
-  comp_el <- factor(comp_el, levels = c("NED", levels(comp_el)[levels(comp_el) != "NED"]))
-}
-
-if ("No evidence of disease" %in% levels(comp_el)) {
-  # Move "No evidence of disease" to the first position
-  comp_el <- factor(comp_el, levels = c("No evidence of disease", levels(comp_el)[levels(comp_el) != "No evidence of disease"]))
-}
-
-if ("nf1 wt; pten wt; ink wt; atrx wt" %in% levels(comp_el)) {
-  # Move "nf1 wt; pten wt; ink wt; atrx wt" to the first position
-  comp_el <- factor(comp_el, levels = c("nf1 wt; pten wt; ink wt; atrx wt", levels(comp_el)[levels(comp_el) != "nf1 wt; pten wt; ink wt; atrx wt"]))
-}
-
-
-
-
 
 comb_mat<-combn(comp_el, 2)
 
@@ -59,20 +42,14 @@ comb_mat<-combn(comp_el, 2)
 
 
 
-foreach(c=1:ncol(comb_mat)) %dopar% {  
-# for(c in 1:ncol(comb_mat)){  
- 
-  source("libs.R")
-  library(tidyverse)
-  library(edgeR)
-  library(dtplyr)
-  
+for (c in 1:ncol(comb_mat)){  
+
 # c<-1 
 
-sample_info<-readRDS("ds/v10-per_sample_updated.rds")
-read_counts<-readRDS("ds/vm-02-filtered_rpkms.rds")
-  
-all_data<-read_counts%>%left_join(sample_info)%>%ungroup()%>%arrange(sample_id)
+# sample_info<-readRDS("ds/v10-per_sample_updated.rds")
+# read_counts<-readRDS("ds/vm-02-filtered_rpkms.rds")
+#   
+# all_data<-read_counts%>%left_join(sample_info)%>%ungroup()%>%arrange(sample_id)
   
   
   ##########################################################################
@@ -190,7 +167,7 @@ comp_counts<-all_data%>%
 
   
   #save output file.
-  saveRDS(output2, paste0("m-dexps/", "dexp-", fs::path_sanitize(paste0(category, "-", ga,  " v. ", gb)), ".rds"))
+  saveRDS(output2, paste0("k19mf/dexps/", "dexp-", fs::path_sanitize(paste0(category, "-", ga,  " v. ", gb, "excluded2s")), ".rds"))
   
   
   

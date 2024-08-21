@@ -211,7 +211,7 @@ bubble_plot_size_scaled<-function(plot_title, plot_subtitle, category, set_dim_r
   
 }
 
-bubble_plot<-function(plot_title, plot_subtitle, category, point_scaling, set_dim_ratio, pdf_width, pdf_height){
+bubble_plot<-function(plot_title, plot_subtitle, category, set_dim_ratio, pdf_width, pdf_height){
   plot_to_save<-ggplot(dfp, aes(x, y))+
     
     ggtitle(plot_title)+
@@ -221,7 +221,7 @@ bubble_plot<-function(plot_title, plot_subtitle, category, point_scaling, set_di
     
     #layer1
     #sets bubble inside colors
-    geom_point(aes(color=!!sym(category), size=!!sym(point_scaling)), shape=16, alpha=.5)+
+    geom_point(aes(color=!!sym(category), size=7), shape=16, alpha=.5)+
     #sets scale based on color mapping df. 
     
     ####
@@ -231,14 +231,14 @@ bubble_plot<-function(plot_title, plot_subtitle, category, point_scaling, set_di
     
     
     
-    guides(color = guide_legend(override.aes = list(size = 5),
+    guides(color = guide_legend(override.aes = list(size = 7),
                                 title=""))+
     
     new_scale_color()+
     
     #layer2
     #sets bubble outline colors
-    geom_point(aes(color=!!sym(category), size=!!sym(point_scaling)), shape=1)+
+    geom_point(aes(color=!!sym(category), size=7), shape=1)+
     #sets scale based on color mapping df, and darkens. 
     
     
@@ -289,7 +289,7 @@ bubble_plot<-function(plot_title, plot_subtitle, category, point_scaling, set_di
   
   object<-plot_to_save
   
-  ggsave(paste0("k19mf/plots/",fs::path_sanitize(paste0("mds-", category, ".", point_scaling, ".", set_dim_ratio, "ratio", "-m.pdf"))),
+  ggsave(paste0("k19mf/plots/",fs::path_sanitize(paste0("mds-", category, "unscaled", ".", set_dim_ratio, "ratio", "-m.pdf"))),
          plot=object,
          
          scale = .75,
@@ -368,13 +368,13 @@ bubble_plot_size_scaled(plot_title = "Tumor/Injection Site",
 
 
 
-bubble_plot(plot_title = "Pathologist Categorization and Grade", 
-            category = "genotype",
+bubble_plot(plot_title = "By Tumor/injection sit", 
+            category = "tumor_type",
             
             plot_subtitle = plot_subtitle,
             set_dim_ratio = set_dim_ratio,
             
-            point_scaling="assigned_percent",
+         
             
             pdf_width = 40,
             pdf_height = 7)

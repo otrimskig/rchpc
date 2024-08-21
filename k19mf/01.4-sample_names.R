@@ -31,8 +31,7 @@ rename_columns <- function(df, rename_table) {
 all_counts<-readRDS("k19mf/ds/mv00-all_counts.rds")
 
 all_counts2 <- rename_columns(all_counts, b)%>%
-  janitor::clean_names()%>%
-  relocate(mouse_num, genotype, tumor_type)
+  janitor::clean_names()
 
 
 saveRDS(all_counts2, "k19mf/ds/vm-00-all_counts_sample_names_fixed.rds")
