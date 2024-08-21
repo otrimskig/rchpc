@@ -79,7 +79,7 @@ print(paste0(Sys.time(), ": doing fc for ", bams[b]))
                        countMultiMappingReads = TRUE,
                        
                        # fractional counting
-                       fraction = TRUE,
+                       fraction = FALSE,
                        
                        # long reads
                        isLongRead = FALSE,

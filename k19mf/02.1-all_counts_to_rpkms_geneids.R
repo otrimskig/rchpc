@@ -58,7 +58,7 @@ unique_genes<-gene_info%>%
 
 
 df2<-df%>%
-  left_join(unique_genes)%>%
+  left_join(unique_genes, relationship = "many-to-many")%>%
   relocate(gene_id_ms, gene_len_ms, gene_name_ms, gene_name_hu)%>%
   
   # pivot_longer(cols=contains("X23908"), names_to="sample_id", values_to="read_count")%>%
