@@ -127,6 +127,11 @@ summary_stats_subset2<-summary_stats_subset[,c(1,2,3)]
 
 
 
+
+row_labels<- structure(pathways$pathway_name_clean, names = pathways$gsva_name)
+
+
+
 ###################################################################
 
 ha3 = rowAnnotation(a=anno_points(summary_stats_subset[,3],
@@ -152,6 +157,9 @@ hm1<- Heatmap(gsva_subset,
                 row_dend_width = unit(2, "in"),
                 row_names_side = "right",
                 row_gap = unit(1, "in"),
+                row_labels = row_labels[rownames(gsva_subset)],
+              
+              
                 
                 column_title_gp = gpar(font = 2, fontsize = 60),
                 row_title_gp = gpar(font = 2, fontsize = 40),
