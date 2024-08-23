@@ -102,7 +102,7 @@ gene_lists<-unique(pathways$list_name)
 # subset_factor<-gene_lists[i]
 
 # pathways_to_include<-pathways%>%filter(list_name==subset_factor)%>%pull(gsva_name)%>%as.character()
-pathways_to_include<-pathways
+pathways_to_include<-pathways%>%pull(gsva_name)%>%as.character()
 
 gsva_subset<-gsva_z%>%as.data.frame()%>%
   rownames_to_column("pathway")%>%
@@ -145,7 +145,7 @@ hm1<- Heatmap(gsva_subset,
                 right_annotation = ha3,
                  top_annotation = anno,
                 column_title = gt_render(
-                  paste0("<span style='font-size:25pt'>","Pathway Group: ", subset_factor, "</span><br><span style='font-size:15pt'>expression levels normalized per row (pathway)</span>"), 
+                  paste0("<span style='font-size:25pt'>","Pathway Group: ", "</span><br><span style='font-size:15pt'>expression levels normalized per row (pathway)</span>"), 
                   r = unit(2, "pt")),
               
                 column_dend_height = unit(1, "in"),
@@ -157,7 +157,7 @@ hm1<- Heatmap(gsva_subset,
                 row_title_gp = gpar(font = 2, fontsize = 40),
                 show_heatmap_legend = FALSE,
 
-                width = unit(10, "in"),
+                width = unit(7, "in"),
                 heatmap_height = unit(nrow(gsva_subset)*.3, "in")
                 
 )
@@ -175,10 +175,10 @@ gh2<-grid.grabExpr(draw(combo))
 ggsave(paste0("k19mf/plots/hm-pathways-pvsubset01", "-clustered-relative-summary-stats-no-aod.pdf"),
        plot=gh2,
        
-       scale = 1,
+       scale = .8,
        dpi=600,
-       width = 45,
-       height = 100,
+       width = 30,
+       height = 30,
        unit="in",
        limitsize = FALSE
        
