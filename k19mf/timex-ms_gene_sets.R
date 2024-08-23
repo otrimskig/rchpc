@@ -12,7 +12,8 @@ library(GSVA)
 
 #read in data to be used. format such that is in a wide data matrix,
 #with rpkms as values, sample names as column titles,
-#and rownames as unique, human(!) gene names. 
+#and rownames as unique, gene names. 
+#will use MS
 
 
 
@@ -25,14 +26,8 @@ mat<-readRDS("k19mf/ds/vm-h-01-rpkms_wide_human.rds")%>%
 
 
 
+ms_pathways<-qusage::read.gmt("timex/ds/m8.all.v2024.1.Mm.entrez.gmt")
 
-#get, as a named list, all the gene signatures.
-#they are named list of pathway genes.
-
-load("timex/ds/allSignatures.rda")  
-
-onco<-qusage::read.gmt("timex/ds/c6.all.v2024.1.Hs.symbols.gmt")
-names(onco) <- paste0("onco_", names(onco))
 
 
 mhc2<-Signature_list$MHC_II
