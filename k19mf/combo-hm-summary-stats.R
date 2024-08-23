@@ -81,3 +81,5 @@ all_ps<-bind_rows(all_ps, tibble(pn, pv))
 
 all_ps<-all_ps%>%
   filter(!is.na(pv))
+
+saveRDS(all_ps, "k19mf/ds/pathway_comps_pv.rds")

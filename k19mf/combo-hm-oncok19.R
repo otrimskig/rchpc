@@ -11,9 +11,20 @@ library(purrr)
 
 
 #load relevant created from gsva analysis. 
-pathways<-readRDS("k19mf/ds/gsva_pathway_names.rds")
+pathway_comps<-readRDS("k19mf/ds/pathway_comps_pv.rds")%>%
+  rename(gsva_name=pn)%>%
+  filter(pv<.01)
+
+
+
+pathways<-readRDS("k19mf/ds/gsva_pathway_names.rds")%>%
+  semi_join(pathway_comps)
+
+
 gsva_u<-readRDS("k19mf/ds/gsva_u-onco.rds")
 gsva_z<-readRDS("k19mf/ds/gsva_z-onco.rds")
+
+
 
 
 summary_stats<-readRDS("k19mf/ds/gsva_pathway_stats-onco.rds")
@@ -65,15 +76,8 @@ for (colnum in 1:length(de_anno_colnames)){
 }
 
 
-
-# col_proper_names<-read_csv("nf1g/ds/col_proper_names.csv")%>%filter(col_name %in% de_anno_colnames)%>%
-#   mutate(col_name=factor(col_name, levels=names(anno_subset)))%>%
-#   filter(!is.na(col_name))%>%arrange(col_name)%>%pull(proper_name)%>%as.character()
-
-
 col_proper_names<-c("Tumor type/location")
 
-#aod_colors = circlize::colorRamp2(c(50, 150), c("navy", "white"))
 
 
 anno<-HeatmapAnnotation(df=de_anno_df, 
@@ -89,159 +93,16 @@ anno<-HeatmapAnnotation(df=de_anno_df,
 
 
 
-# anno<-HeatmapAnnotation(df=de_anno_df, 
-#                         col=c(anno_color, aod=aod_colors),
-#                         annotation_name_side = "left",
-#                         gp = gpar(col = "black"),
-#                         annotation_label = c(col_proper_names, "Age of Death"),
-#                         annotation_name_gp= gpar(fontsize=7),
-#                         simple_anno_size = unit(.25, "in"))
-
-###########################################
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# 
-# 
-# 
-# 
-# hm_z <- Heatmap(gsva_z,
-#                 
-#                 column_dend_height = unit(1, "in"),
-#                 row_dend_width = unit(2, "in"),
-#                 
-#                 
-#                 top_annotation = anno,
-#                 column_title = gt_render(
-#                   paste0("<span style='font-size:25pt'>Expression Levels Normalized per gene <br>(Relative expression)</span>"), 
-#                   r = unit(2, "pt")),
-#                     #name = "cudcRNAseq",
-#                     #column_split = factor(genepuree2$Growth, levels = c("Grow", "nogrow")),
-#                     #cluster_columns= FALSE,
-#                     cluster_column_slices = FALSE,
-#                     #top_annotation=genepuree3,
-#                     row_split = factor(gsva_z_sig$Set, levels = c(
-#                       "Hallmark",
-#                       "KEGG",
-#                       "TIMEx",
-#                       "Immune")),
-#                 
-#                 row_gap = unit(1, "in"),
-#                 
-#                 
-#                 
-#                 #sometimes fails not sure why 
-#                     #cluster_row_slices = FALSE,
-#                     #row_names_gp = gpar(fontsize = 6),
-#                     #column_names_gp = gpar(fontsize =2),
-#                     column_title_gp = gpar(font = 2, fontsize = 60),
-#                     row_title_gp = gpar(font = 2, fontsize = 40),
-#                     show_heatmap_legend = FALSE,
-#                     
-# 
-#                  
-#                     width = unit(10, "in"),
-#                     heatmap_height = unit(65, "in"))
-# 
-# 
-# hm_u <- Heatmap(gsva_u,
-#                 column_title = gt_render(
-#                   paste0("<span style='font-size:25pt'>Absolute <br>expression</span>"), 
-#                   r = unit(2, "pt")),
-#                 
-#                 column_dend_height = unit(1, "in"),
-#                 row_dend_width = unit(2, "in"),
-#                 #col = colorRamp2(seq(min(gsva_u), max(gsva_u), length = 3), c("black", "white", "purple")),
-#                 
-#                 #name = "cudcRNAseq",
-#                 #column_split = factor(genepuree2$Growth, levels = c("Grow", "nogrow")),
-#                 cluster_columns= FALSE,
-#                 column_order=column_order(hm_z),
-#                 show_column_dend = TRUE,
-#                 cluster_column_slices = FALSE,
-#                 #top_annotation=genepuree3,
-#                 row_split = factor(gsva_u_sig$Set, levels = c(
-#                   "Hallmark",
-#                   "KEGG",
-#                   "TIMEx",
-#                   "Immune")),
-#                 
-#                 
-#                 
-#                 
-#                 
-#                 row_gap = unit(1, "in"),
-#                 
-#                 
-#                 
-#                 
-#                 #sometimes fails not sure why 
-#                 #cluster_row_slices = FALSE,
-#                 #row_names_gp = gpar(fontsize = 6),
-#                 #column_names_gp = gpar(fontsize =2),
-#                 column_title_gp = gpar(font = 2, fontsize = 60),
-#                 row_title_gp = gpar(font = 2, fontsize = 40),
-#                 show_heatmap_legend = FALSE,
-#                 
-#                 
-#                 width = unit(1.5, "in"),  
-#                 heatmap_height = unit(65, "in")
-#                 
-# )
-# 
-# str(hm_u)
-# 
-# combo<-draw((hm_u+hm_z),annotation_legend_side = "left")
-# 
-# 
-# 
-# gh<-grid.grabExpr(draw(combo))
-# 
-# 
-# ggsave("plots/hm-timex-all-rpkm-combo-clustered_abs-local.pdf",
-#        plot=gh,
-#        
-#        scale = 1,
-#        dpi=600,
-#        width = 45,
-#        height = 100,
-#        unit="in",
-#        limitsize = FALSE
-#        
-# )
-
-
-#######################################################################
+##########################################################
 
 gene_lists<-unique(pathways$list_name)
 
 # i<-1
-for (i in 1:length(gene_lists)){
-subset_factor<-gene_lists[i]
+#for (i in 1:length(gene_lists)){
+# subset_factor<-gene_lists[i]
 
-pathways_to_include<-pathways%>%filter(list_name==subset_factor)
-
-%>%pull(gsva_name)%>%as.character()
-
+# pathways_to_include<-pathways%>%filter(list_name==subset_factor)%>%pull(gsva_name)%>%as.character()
+pathways_to_include<-pathways
 
 gsva_subset<-gsva_z%>%as.data.frame()%>%
   rownames_to_column("pathway")%>%
@@ -265,43 +126,8 @@ summary_stats_subset<-summary_stats%>%as.data.frame()%>%
 summary_stats_subset2<-summary_stats_subset[,c(1,2,3)]
 
 
-# ha = rowAnnotation(foo = anno_points(summary_stats_subset2,
-#                                      width = unit(2, "cm"),
-#                                      axis_param = list(
-#                                        side = "bottom",
-#                                        at = c(0, 0.5, 1), 
-#                                        labels = c("zero", "half", "one"),
-#                                        labels_rot = 45
-#                                      ))
-# )
-# 
-# ha2 = rowAnnotation(foo = anno_points(summary_stats_subset2[,2],
-#                                       anno_simple(2, pch = 1), 
-#                                       #gp = gpar(col = 2:3))
-#                                        #joyplot_scale = 5,
-#                                        width = unit(2, "cm"),
-#                                      axis_param = list(
-#                                        side = "bottom"
-#                                   
-#                                      ))
-# )
 
-
-
-
-# ha4 = rowAnnotation(foo = anno_density(gsva_subset2,
-#                                        type="heatmap",
-#                                        heatmap_colors = c("white","black"),
-#                                       
-#                                       width = unit(2, "cm"),
-#                                       axis_param = list(
-#                                         side = "bottom"
-#                                       
-#                                       )))
-
-# 
-# draw(ha3)
-# draw(ha4)
+###################################################################
 
 ha3 = rowAnnotation(a=anno_points(summary_stats_subset[,3],
                                   pch = c("|"), 
@@ -338,40 +164,7 @@ hm1<- Heatmap(gsva_subset,
 
 
 
-
-
-
-
-########################################
-
-# hm2 <- Heatmap(gsva_subset2,
-#                 column_title = gt_render(
-#                   paste0("<span style='font-size:25pt'>Absolute <br>expression</span>"),
-#                   r = unit(2, "pt")),
-#                
-#                 cluster_columns= FALSE,
-#                 column_order=column_order(hm_init),
-#                
-#                 show_column_dend = TRUE,
-#                 cluster_column_slices = FALSE,
-#                 cluster_rows=FALSE,
-# 
-#                 column_dend_height = unit(1, "in"),
-#                 row_dend_width = unit(2, "in"),
-# 
-#                 row_gap = unit(1, "in"),
-#                
-#                 column_title_gp = gpar(font = 2, fontsize = 60),
-#                 row_title_gp = gpar(font = 2, fontsize = 40),
-#                 show_heatmap_legend = FALSE,
-# 
-#                 width = unit(1.5, "in"),
-#                 heatmap_height = unit(nrow(gsva_subset)*.3, "in")
-# )
-# 
-
-
-#####################################################
+####################################
 
 
 
@@ -379,7 +172,7 @@ combo<-draw((hm1), annotation_legend_side = "left")
 
 gh2<-grid.grabExpr(draw(combo))
 
-ggsave(paste0("k19mf/plots/hm-timex-onco", subset_factor, "-clustered-relative-summary-stats-no-aod.pdf"),
+ggsave(paste0("k19mf/plots/hm-pathways-pvsubset01", "-clustered-relative-summary-stats-no-aod.pdf"),
        plot=gh2,
        
        scale = 1,
@@ -393,4 +186,4 @@ ggsave(paste0("k19mf/plots/hm-timex-onco", subset_factor, "-clustered-relative-s
 
 
 
-}
+
