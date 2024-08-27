@@ -401,10 +401,10 @@ hm1<- Heatmap(gsva_subset,
 #####################################################
 
 
+# 
+# combo<-draw((hm1), annotation_legend_side = "left")
 
-combo<-draw((hm1), annotation_legend_side = "left")
-
-gh2<-grid.grabExpr(draw(combo))
+gh2<-grid.grabExpr(draw(draw((hm1), annotation_legend_side = "left")))
 
 ggsave(paste0("nf1g/plots/hm-timex-", subset_factor, "-clustered-relative-summary-stats-no-aod.pdf"),
        plot=gh2,
@@ -419,5 +419,5 @@ ggsave(paste0("nf1g/plots/hm-timex-", subset_factor, "-clustered-relative-summar
 )
 
 
-
 }
+
