@@ -20,16 +20,9 @@ mat<-readRDS("nf1g/ds/vm-h-01-rpkms_wide_human.rds")%>%
 
 gsea_all_sets<-qusage::read.gmt("timex/ds/msigdb.v2024.1.Hs.symbols.gmt")
 
-
-
-
 Signature_list <- c(gsea_all_sets)
 
-
-
-
 ssgeaP<-ssgseaParam(mat, Signature_list)
-
 
 
 
