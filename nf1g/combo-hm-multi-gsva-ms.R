@@ -1,5 +1,4 @@
 source("libs.R")
-######################################################
 library(tidyverse)
 library(dtplyr)
 library(gridtext)
@@ -8,21 +7,91 @@ library(purrr)
 suppressPackageStartupMessages(library(ComplexHeatmap))
 suppressPackageStartupMessages(library(circlize))
 ht_opt$message = FALSE
-######################################################
+# 
+# if (!exists("n.cores")) {
+#   # Run your code here
+#   "initilizing cores..."
+#   n.cores <- parallel::detectCores() - 1
+#   my.cluster <- parallel::makeCluster(
+#     n.cores, 
+#     type = "PSOCK"
+#   )
+#   doParallel::registerDoParallel(cl = my.cluster)
+#   
+#   #check if it is registered (optional)
+#   foreach::getDoParRegistered()
+#   
+#   "parallel cores initialized."
+# }
+
+
+# foreach(i=1:length(gsva_analysed)) %dopar% {
+
+
 
 
 
 gsva_analysed<-readRDS("nf1g/ds/gsva_analysis_ds_list_ms.rds")
 
-
-
-for (i in 1:length(gsva_analysed)){
-
-analysis_name<-names(gsva_analysed[i])
-hm_name_pdf<-paste0("nf1g/plots/gsva_hms/hm-", analysis_name, ".pdf")
-
-
 de_samples<-readRDS("nf1g/ds/v10-per_sample_updated.rds")
+
+
+  
+ 
+  
+  
+  
+  
+for (i in 1:length(gsva_analysed)){
+  
+  
+  
+  
+analysis_name<-names(gsva_analysed[i])
+
+  
+  gsva_u<-readRDS(gsva_analysed[[i]][["u"]][[1]])
+  gsva_z<-readRDS(gsva_analysed[[i]][["z"]][[1]])
+  
+  
+  uro<-gsva_u[order(rownames(gsva_u)), ]
+  zro<-gsva_z[order(rownames(gsva_z)), ]
+  
+  num_rows<-nrow(uro)
+
+  
+  
+if (num_rows>0){
+  
+
+
+  
+  split_matrix <- function(matrix, segment_size) {
+    # Create a sequence of indices for each segment
+    split_indices <- split(seq_len(num_rows), ceiling(seq_len(num_rows) / segment_size))
+    
+    # Use these indices to split the matrix into a list of data frames
+    split_list <- lapply(split_indices, function(indices) matrix[indices, , drop = FALSE])
+    
+    return(split_list)
+  }
+
+
+
+
+split_segments <- split_matrix(uro, 100)
+segments_nums<-names(split_segments)
+
+
+for (seg in 1:length(segments_nums)){
+
+seg_num<-sprintf("%03d", seg)
+keep_signatures<-rownames(split_segments[[seg]])
+  
+gsva_u<-uro[keep_signatures,]
+gsva_z<-zro[keep_signatures,]
+
+hm_name_pdf<-paste0("nf1g/plots/gsva_hms/hm-", analysis_name, "segment-", seg_num, ".pdf")
 
 old_names<-de_samples$sample_id
 new_names<-de_samples$mouse_num
@@ -30,12 +99,6 @@ name_mapping <- setNames(new_names, old_names)
 
 # check name lengths.
 length(old_names)==length(new_names)
-
-
-gsva_u<-readRDS(gsva_analysed[[i]][["u"]][[1]])
-gsva_z<-readRDS(gsva_analysed[[i]][["z"]][[1]])
-
-
 
 
 # filter matrix for nf1g samples that should be kept,
@@ -47,13 +110,6 @@ colnames(gsva_u) <- name_mapping[colnames(gsva_u)]
 #repeat for gsva_z
 gsva_z<-gsva_z[, colnames(gsva_z) %in% old_names]
 colnames(gsva_z) <- name_mapping[colnames(gsva_z)]
-
-
-if (nrow(gsva_u)<=2000){
- 
-
-   
-
 
 
 
@@ -126,7 +182,7 @@ for (colnum in 1:length(de_anno_colnames)){
 
 
 
-col_proper_names<-read_csv("nf1g/ds/col_proper_names.csv")%>%filter(col_name %in% de_anno_colnames)%>%
+col_proper_names<-suppressMessages(read_csv("nf1g/ds/col_proper_names.csv"))%>%filter(col_name %in% de_anno_colnames)%>%
   mutate(col_name=factor(col_name, levels=names(anno_subset)))%>%
   filter(!is.na(col_name))%>%arrange(col_name)%>%pull(proper_name)%>%as.character()
 
@@ -178,7 +234,7 @@ hm1<- Heatmap(gsva_subset,
                 right_annotation = ha3,
                  top_annotation = anno,
                 column_title = gt_render(
-                  paste0("<span style='font-size:25pt'>","Pathway Group: ", analysis_name, "</span><br><span style='font-size:15pt'>expression levels normalized per row (pathway)</span>"), 
+                  paste0("<span style='font-size:25pt'>","Pathway Group: ", analysis_name, " subset", seg_num, "</span><br><span style='font-size:15pt'>expression levels normalized per row (pathway)</span>"), 
                   r = unit(2, "pt")),
               
                 column_dend_height = unit(1, "in"),
@@ -191,7 +247,7 @@ hm1<- Heatmap(gsva_subset,
                 show_heatmap_legend = FALSE,
 
                 width = unit(10, "in"),
-                heatmap_height = unit(nrow(gsva_subset)*.3, "in")
+                heatmap_height = unit(nrow(gsva_subset)*.3+1, "in")
                 
 )
 
@@ -202,7 +258,7 @@ hm2<- Heatmap(gsva_subset,
               right_annotation = ha3,
               top_annotation = anno,
               column_title = gt_render(
-                paste0("<span style='font-size:25pt'>","Pathway Group: ", analysis_name, "</span><br><span style='font-size:15pt'>expression levels normalized per row (pathway)</span>"), 
+                paste0("<span style='font-size:25pt'>","Pathway Group: ", analysis_name, " subset", seg_num, "</span><br><span style='font-size:15pt'>expression levels normalized per row (pathway)</span>"), 
                 r = unit(2, "pt")),
               
               column_dend_height = unit(1, "in"),
@@ -219,7 +275,7 @@ hm2<- Heatmap(gsva_subset,
               show_heatmap_legend = FALSE,
               
               width = unit(10, "in"),
-              heatmap_height = unit(nrow(gsva_subset)*.3, "in")
+              heatmap_height = unit(nrow(gsva_subset)*.3+1, "in")
               
 )
 
@@ -235,9 +291,9 @@ hm2<- Heatmap(gsva_subset,
 
 #####################################################
 
-combo<-draw((hm1), annotation_legend_side = "left")
+# combo<-draw((hm1), annotation_legend_side = "left")
 
-gh2<-grid.grabExpr(draw(combo))
+gh2<-grid.grabExpr(draw(draw((hm1), annotation_legend_side = "left")))
 
 ggsave(hm_name_pdf,
        
@@ -246,7 +302,7 @@ ggsave(hm_name_pdf,
        scale = 1,
        dpi=600,
        width = 45,
-       height = 200,
+       height = 50,
        unit="in",
        limitsize = FALSE
        
@@ -255,9 +311,9 @@ ggsave(hm_name_pdf,
 
 
 
-combo<-draw((hm2), annotation_legend_side = "left")
+# combo<-draw((hm1), annotation_legend_side = "left")
 
-gh2<-grid.grabExpr(draw(combo))
+gh2<-grid.grabExpr(draw(draw((hm2), annotation_legend_side = "left")))
 
 ggsave(sub(".pdf$", "-rows_unclustered.pdf", hm_name_pdf), 
        
@@ -266,7 +322,7 @@ ggsave(sub(".pdf$", "-rows_unclustered.pdf", hm_name_pdf),
        scale = 1,
        dpi=600,
        width = 45,
-       height = 200,
+       height = 50,
        unit="in",
        limitsize = FALSE
        
@@ -274,11 +330,26 @@ ggsave(sub(".pdf$", "-rows_unclustered.pdf", hm_name_pdf),
 
 
 
+
+  
+  
+}
 }else{
   
-  paste0(analysis_name, " exceeds 2000 rows")
-  
-  
-  
+print("no obs.")  
 }
 }
+  
+  
+  
+
+library(tidyverse)
+
+
+plots<-fs::dir_info("nf1g/plots/gsva_hms", full.names = T, pattern="^hm.*\\.pdf$", recurse = F)%>%tibble()%>%
+  filter(modification_time>Sys.time()-lubridate::hours(4))%>%
+  pull(path)
+
+
+
+qpdf::pdf_combine(plots, output = "nf1g/plots/combined/hm-gsva-combined-1.pdf")
