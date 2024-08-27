@@ -1,44 +1,72 @@
 source("libs.R")
 
-#cudc rna seq timex analysis 
-#timex does not care about comparisons, so any group loaded is fine 
-#needs RPKM data in a format where the rownames are the gene names (gene symbol) and the rpkms are a matrix 
-
-
 library(tidyverse)
 library(dtplyr)
 library(GSVA)
 
 
-readRDS("nf1g/ds/v10-per_sample_updated.rds")
 
-ms_mat<-readRDS("nf1g/ds/vm-02-filtered_rpkms.rds")%>%
-  select(gene_id_ms, sample_id, rpkm)%>%
-  pivot_wider(names_from = sample_id, values_from = rpkm)%>%
-  column_to_rownames("gene_id_ms")%>%
-  data.matrix()
+mat<-readRDS("nf1g/ds/ms_ens_rpkms_wide.rds")
 
-ms_pathways<-qusage::read.gmt("timex/ds/m8.all.v2024.1.Mm.entrez-celltypesig.gmt")
+list_of_signature_lists<-list.files(path = "timex/ds_ms", full.names = TRUE)
 
-gng_ssgsea<-gsva(ssgseaParam(ms_mat, ms_pathways))%>%
-  suppressWarnings()
+
+for (i in 1:length(list_of_signature_lists)){
+
+
+signatures<-qusage::read.gmt(list_of_signature_lists[i])
 
 
 
-gng_ssgsea_u <- t(t(gng_ssgsea))
-gng_ssgsea_z <- t(scale(t(gng_ssgsea)))
+#make parameters list.
+ssGSVA_par<-ssgseaParam(mat, signatures)
 
-
-namesGSEA<-as.list(rownames(gng_ssgsea_u))
-gseavector<-unlist(namesGSEA)
-
-
-signaturevector<-unlist(names(ms_pathways))
-
-
-notincluded<-setdiff(signaturevector, gseavector)
+#calculate scores
+#suppress warnings to ignore errors on sets that are only 1 gene. 
+suppressWarnings(ssGSVA_scores<- gsva(ssGSVA_par))
 
 
 
-saveRDS(gng_ssgsea_u, "nf1g/ds/gsva_u_celltypes.rds")
-saveRDS(gng_ssgsea_z, "nf1g/ds/gsva_z_celltypes.rds")
+#create unscaled scored object
+ssGSVA_u <- t(t(ssGSVA_scores))
+
+saveRDS(ssGSVA_u, 
+        paste0("nf1g/ds/gsva/gsva-u-", sub("\\.gmt$", "", basename(list_of_signature_lists[i])), ".rds"))
+
+
+#create scaled scored object
+ssGSVA_z <- t(scale(t(ssGSVA_scores)))
+
+saveRDS(ssGSVA_z, 
+        paste0("nf1g/ds/gsva/gsva-z-", sub("\\.gmt$", "", basename(list_of_signature_lists[i])), ".rds"))
+
+
+
+
+}
+
+
+
+
+
+
+tb<-tibble(f=list.files("nf1g/ds/gsva", full.names = T))%>%
+  mutate(b=basename(f))%>%
+  
+  mutate(uz=substr(b, 6,6))%>%
+  mutate(s=substr(b, 8, nchar(b)))%>%
+  mutate(s=sub("\\.rds$", "", s))%>%
+  arrange(s)
+
+
+
+nested_list <- tb %>%
+  group_by(s, uz) %>%
+  summarise(f_values = list(f), .groups = 'drop') %>%
+  pivot_wider(names_from = uz, values_from = f_values) %>%
+  split(.$s) %>%
+  map(~ .x %>% select(-s) %>% as.list())
+
+
+saveRDS(nested_list, "nf1g/ds/gsva_analysis_ds_list_ms.rds")
+
