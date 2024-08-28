@@ -8,163 +8,173 @@ suppressPackageStartupMessages(library(ComplexHeatmap))
 suppressPackageStartupMessages(library(circlize))
 ht_opt$message = FALSE
 
-# if (!exists("n.cores")) {
-#   # Run your code here
-#   "initilizing cores..."
-#   n.cores <- parallel::detectCores() - 1
-#   my.cluster <- parallel::makeCluster(
-#     n.cores,
-#     type = "PSOCK"
-#   )
-#   doParallel::registerDoParallel(cl = my.cluster)
-# 
-#   #check if it is registered (optional)
-#   foreach::getDoParRegistered()
-# 
-#   "parallel cores initialized."
-# }
-
-# 
-# foreach(i=1:length(gsva_analysed)) %dopar% {
-
-
-
-
-
-gsva_analysed<-readRDS("nf1g/ds/gsva_analysis_ds_list_ms.rds")
-
-de_samples<-readRDS("nf1g/ds/v10-per_sample_updated.rds")
-
-#cut to check loop. 
-gsva_analysed<-gsva_analysed[1]
+#custom functions split_matrix and standard error.
+split_matrix <- function(matrix, segment_size) {
   
-#   
-for (i in 1:length(gsva_analysed)){
+  # Create a sequence of indices for each segment
+  split_indices <- split(seq_len(num_rows), ceiling(seq_len(num_rows) / segment_size))
   
+  # Use these indices to split the matrix into a list of data frames
+  split_list <- lapply(split_indices, function(indices) matrix[indices, , drop = FALSE])
   
-  
-  
-analysis_name<-names(gsva_analysed[i])
-
-  
-  gsva_u<-readRDS(gsva_analysed[[i]][["u"]][[1]])
-  gsva_z<-readRDS(gsva_analysed[[i]][["z"]][[1]])
-  
-  
-  uro<-gsva_u[order(rownames(gsva_u)), ]
-  zro<-gsva_z[order(rownames(gsva_z)), ]
-  
-  num_rows<-nrow(uro)
-
-  
-  
-if (num_rows>0){
-  
-
-
-  
-  split_matrix <- function(matrix, segment_size) {
-    # Create a sequence of indices for each segment
-    split_indices <- split(seq_len(num_rows), ceiling(seq_len(num_rows) / segment_size))
-    
-    # Use these indices to split the matrix into a list of data frames
-    split_list <- lapply(split_indices, function(indices) matrix[indices, , drop = FALSE])
-    
-    return(split_list)
-  }
-
-
-
-
-split_segments <- split_matrix(uro, 100)
-segments_nums<-names(split_segments)
-
-
-for (seg in 1:length(segments_nums)){
-
-seg_num<-sprintf("%03d", seg)
-keep_signatures<-rownames(split_segments[[seg]])
-  
-gsva_u<-uro[keep_signatures,]
-gsva_z<-zro[keep_signatures,]
-
-
-
-
-
-hm_name_pdf<-paste0("nf1g/plots/gsva_hms/hm-", analysis_name, "-2-segment-", seg_num, ".pdf")
-
-
-
-
-old_names<-de_samples$sample_id
-new_names<-de_samples$mouse_num
-name_mapping <- setNames(new_names, old_names)
-
-# check name lengths.
-length(old_names)==length(new_names)
-
-
-# filter matrix for nf1g samples that should be kept,
-#and change from sampleids to mouse_nums, for 
-#gsva_u. 
-gsva_u<-gsva_u[, colnames(gsva_u) %in% old_names]
-colnames(gsva_u) <- name_mapping[colnames(gsva_u)]
-
-#repeat for gsva_z
-gsva_z<-gsva_z[, colnames(gsva_z) %in% old_names]
-colnames(gsva_z) <- name_mapping[colnames(gsva_z)]
-
-
-
+  return(split_list)
+}
 
 
 standard_error <- function(x) {
   sd(x) / sqrt(length(x))
 }
 
-summary_stats_u <- gsva_u%>%as.data.frame()%>%
-  rownames_to_column("pathway")%>%
-  rowwise()
 
-columns_to_select_for_stats<-colnames(summary_stats_u)[2:length(colnames(summary_stats_u))]
+#datasets to be used in all loops.
+gsva_analysed<-readRDS("nf1g/ds/gsva_analysis_ds_list_ms.rds")
+de_samples<-readRDS("nf1g/ds/v10-per_sample_updated.rds")
 
-summary_stats_u<-summary_stats_u%>%
-  mutate(min_value = min(c_across(all_of(columns_to_select_for_stats))),
-         max_value = max(c_across(all_of(columns_to_select_for_stats))),
-         mean_value = mean(c_across(all_of(columns_to_select_for_stats))),
-         sd_value = sd(c_across(all_of(columns_to_select_for_stats))),
-         se_value = standard_error(c_across(all_of(columns_to_select_for_stats)))
-  )%>%
-  select(-all_of(columns_to_select_for_stats))%>%
-  ungroup()%>%
-  column_to_rownames("pathway")%>%
-  as.matrix.data.frame()
-
-
-
-
-summary_stats_z <- gsva_z%>%as.data.frame()%>%
-  rownames_to_column("pathway")%>%
-  rowwise()
-
-columns_to_select_for_stats<-colnames(summary_stats_z)[2:length(colnames(summary_stats_z))]
-
-summary_stats_z<-summary_stats_z%>%
-  mutate(min_value = min(c_across(all_of(columns_to_select_for_stats))),
-         max_value = max(c_across(all_of(columns_to_select_for_stats))),
-         mean_value = mean(c_across(all_of(columns_to_select_for_stats))),
-         sd_value = sd(c_across(all_of(columns_to_select_for_stats))),
-         se_value = standard_error(c_across(all_of(columns_to_select_for_stats)))
-  )%>%
-  select(-all_of(columns_to_select_for_stats))%>%
-  ungroup()%>%
+####################################
+#cut to check loop. 
+# gsva_analysed<-gsva_analysed[1]
   
-  mutate(diff=max_value-min_value)%>%
+  
+for (i in 1:length(gsva_analysed)){
+  
+  
+#PART 1: get in unscaled matrix and clean. Calculate scaled matrix. 
+  
+#get name of analysis performed (which large signature list used.)  
+analysis_name<-names(gsva_analysed[i])
+
+
+#get unscaled signature scores for all samples.  
+gsva_u<-readRDS(gsva_analysed[[i]][["u"]][[1]])
+  
+#some quick fixing to ensure sample_ids are changed to mouse_nums
+#and to only include proper samples. 
+old_names<-de_samples$sample_id
+new_names<-de_samples$mouse_num
+name_mapping <- setNames(new_names, old_names)
+  
+# check name lengths.
+length(old_names)==length(new_names)
+  
+# filter matrix for nf1g samples that should be kept,
+#and change from sampleids to mouse_nums, for gsva_u. 
+gsva_u<-gsva_u[, colnames(gsva_u) %in% old_names]
+colnames(gsva_u) <- name_mapping[colnames(gsva_u)]
+  
+  
+#after cleaning unsclaed matrix and excluding proper samples, THEN scale by row. 
+gsva_z<-t(scale(t(gsva_u)))
+
+
+  
+#PART 2a: calculate stats for scaled (z-score) df. Exclude ones with smaller differences. (filter(diff>=..))
+
+#get name of columns to stat on
+columns_to_select_for_stats1<-colnames(gsva_z)
+
+#find difference between max and min values,
+#subset based on calculated differences.
+large_diffs<-gsva_z%>%as.data.frame()%>%
+    rownames_to_column("pathway")%>%
+    rowwise()%>%
+    mutate(min_value = min(across(all_of(columns_to_select_for_stats1))),
+           max_value = max(across(all_of(columns_to_select_for_stats1)))
+    )%>%
+    ungroup()%>%
+    mutate(diff=max_value-min_value)%>%
+    
+  
+  #filter(diff>=5)%>%
+    
+  pull("pathway")
+  
+#sort rownames in calculated dataset alphabetically,
+#and subset by calculated threshold.
+uro<-gsva_u[order(rownames(gsva_u)), ][large_diffs,]
+zro<-gsva_z[order(rownames(gsva_z)), ][large_diffs,]
+
+
+
+#PART 2b: calculate stats for unscaled df. A subset of this will be used to make the side plot on the hms.
+
+#make a summary dataframe 
+summary_stats_u<-gsva_u%>%as.data.frame()%>%
+  rownames_to_column("pathway")%>%
+  rowwise()
+
+#you have to redefine the column subset - otherwise mean() won't work. 
+columns_to_select_for_stats2 <- colnames(summary_stats_u)[colnames(summary_stats_u) != "pathway"]
+  
+summary_stats_u<-summary_stats_u%>%
+  mutate(min_value = min(across(all_of(columns_to_select_for_stats2))),
+         max_value = max(across(all_of(columns_to_select_for_stats2))))%>%
+  
+  rowwise() %>%
+  mutate(
+    mean_value = mean(c_across(all_of(columns_to_select_for_stats2)), na.rm = TRUE),
+    sd_value = sd(c_across(all_of(columns_to_select_for_stats2)), na.rm = TRUE),
+         sd_value = sd(across(all_of(columns_to_select_for_stats2))),
+         se_value = standard_error(across(all_of(columns_to_select_for_stats2)))
+  )%>%
+  select(-all_of(columns_to_select_for_stats1))%>%
+  ungroup()%>%
   column_to_rownames("pathway")%>%
   as.matrix.data.frame()
 
 
+
+
+
+
+#PART 3: Split matrix into manageable chunks. 
+#Based on that, subset all necessary data and pass to build hms.
+
+#first check that the dataset after filtering still retains data.
+#otherwise, building heatmap will fail. 
+
+
+
+if (is.null(nrow(uro))==FALSE){
+
+num_rows<-nrow(uro)
+#creates splitting method.
+split_segments <- split_matrix(uro, 100)
+#gets the numbers (how many split exist). Use for indexing in passing to loop.
+segments_nums<-names(split_segments)
+
+
+###################################
+#remove when doing loop.s
+# segments_nums<-segments_nums[1]
+
+
+
+
+for (seg in 1:length(segments_nums)){
+
+seg_num<-sprintf("%03d", seg)  
+  
+  
+#based on split matrix, get signatures to keep.
+keep_signatures<-rownames(split_segments[[seg]])
+  
+#subset the data based on keeping signatures. 
+gsva_u_seg<-uro[keep_signatures,]
+gsva_z_seg<-zro[keep_signatures,]
+
+pathways_to_include<-rownames(gsva_u_seg)
+
+gsva_subset<-gsva_z%>%as.data.frame()%>%
+  rownames_to_column("pathway")%>%
+  filter(pathway %in% c(pathways_to_include))%>%
+  column_to_rownames("pathway")%>%
+  as.matrix.data.frame()
+
+summary_stats_subset<-summary_stats_u%>%as.data.frame()%>%
+  rownames_to_column("pathway")%>%
+  filter(pathway %in% c(pathways_to_include))%>%
+  column_to_rownames("pathway")%>%
+  as.matrix.data.frame()
 
 
 
@@ -174,8 +184,8 @@ summary_stats_z<-summary_stats_z%>%
 #each plot. note that this contains only the information relevant to 
 #each specific plot.
 de_anno_df<-de_samples%>%select(patho_grade, patho_cat_name, 
-                                #patho_cat2_name,
-                                patho_cat_det_name, resultant_geno)
+                                # patho_cat_det_name, 
+                                resultant_geno)
 
 
 #this is the df list that contains all assigned color values
@@ -227,34 +237,6 @@ anno<-HeatmapAnnotation(df=de_anno_df,
 #######################################################################
 
 
-pathways_to_include<-rownames(gsva_u)
-
-gsva_subset<-gsva_z%>%as.data.frame()%>%
-  rownames_to_column("pathway")%>%
-  filter(pathway %in% c(pathways_to_include))%>%
-  column_to_rownames("pathway")%>%
-  as.matrix.data.frame()
-
-
-
-
-# gsva_subset<-gsva_u%>%as.data.frame()%>%
-#   rownames_to_column("pathway")%>%
-#   filter(pathway %in% c(pathways_to_include))%>%
-#   column_to_rownames("pathway")%>%
-#   as.matrix.data.frame()
-
-
-
-
-
-
-
-summary_stats_subset<-summary_stats_u%>%as.data.frame()%>%
-  rownames_to_column("pathway")%>%
-  filter(pathway %in% c(pathways_to_include))%>%
-  column_to_rownames("pathway")%>%
-  as.matrix.data.frame()
 
 
 
@@ -286,7 +268,7 @@ hm1<- Heatmap(gsva_subset,
                 show_heatmap_legend = FALSE,
 
                 width = unit(10, "in"),
-                heatmap_height = unit(nrow(gsva_subset)*.3+1, "in")
+                heatmap_height = unit(nrow(gsva_subset)*.3+5, "in")
                 
 )
 
@@ -302,7 +284,7 @@ hm2<- Heatmap(gsva_subset,
               
               column_dend_height = unit(1, "in"),
               
-              row_order = sort(rownames(gsva_u)), 
+              row_order = sort(rownames(gsva_subset)), 
               
               
               
@@ -314,7 +296,7 @@ hm2<- Heatmap(gsva_subset,
               show_heatmap_legend = FALSE,
               
               width = unit(10, "in"),
-              heatmap_height = unit(nrow(gsva_subset)*.3+1, "in")
+              heatmap_height = unit(nrow(gsva_subset)*.3+5, "in")
               
 )
 
@@ -330,7 +312,9 @@ hm2<- Heatmap(gsva_subset,
 
 #####################################################
 
-# combo<-draw((hm1), annotation_legend_side = "left")
+
+hm_name_pdf<-paste0("nf1g/plots/gsva_hms/hm-high_diffs-", analysis_name, "-segment-", seg_num, ".pdf")
+
 
 gh2<-grid.grabExpr(draw(draw((hm1), annotation_legend_side = "left")))
 
@@ -341,7 +325,7 @@ ggsave(hm_name_pdf,
        scale = 1,
        dpi=600,
        width = 45,
-       height = 50,
+       height = 40,
        unit="in",
        limitsize = FALSE
        
@@ -363,7 +347,7 @@ ggsave(sub(".pdf$", "-rows_unclustered.pdf", hm_name_pdf),
        scale = 1,
        dpi=600,
        width = 45,
-       height = 50,
+       height = 40,
        unit="in",
        limitsize = FALSE
        
@@ -375,10 +359,12 @@ print(paste0(round(Sys.time()), " : ", sub(".pdf$", "-rows_unclustered.pdf", hm_
   
   
 }
+
 }else{
   
 print("no obs.")  
-}
+
+  }
 }
   
   
