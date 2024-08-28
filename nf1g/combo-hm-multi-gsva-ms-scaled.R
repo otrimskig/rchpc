@@ -7,24 +7,24 @@ library(purrr)
 suppressPackageStartupMessages(library(ComplexHeatmap))
 suppressPackageStartupMessages(library(circlize))
 ht_opt$message = FALSE
-# 
+
 # if (!exists("n.cores")) {
 #   # Run your code here
 #   "initilizing cores..."
 #   n.cores <- parallel::detectCores() - 1
 #   my.cluster <- parallel::makeCluster(
-#     n.cores, 
+#     n.cores,
 #     type = "PSOCK"
 #   )
 #   doParallel::registerDoParallel(cl = my.cluster)
-#   
+# 
 #   #check if it is registered (optional)
 #   foreach::getDoParRegistered()
-#   
+# 
 #   "parallel cores initialized."
 # }
 
-
+# 
 # foreach(i=1:length(gsva_analysed)) %dopar% {
 
 
@@ -35,13 +35,10 @@ gsva_analysed<-readRDS("nf1g/ds/gsva_analysis_ds_list_ms.rds")
 
 de_samples<-readRDS("nf1g/ds/v10-per_sample_updated.rds")
 
-
+#cut to check loop. 
+gsva_analysed<-gsva_analysed[1]
   
- 
-  
-  
-  
-  
+#   
 for (i in 1:length(gsva_analysed)){
   
   
@@ -91,7 +88,14 @@ keep_signatures<-rownames(split_segments[[seg]])
 gsva_u<-uro[keep_signatures,]
 gsva_z<-zro[keep_signatures,]
 
-hm_name_pdf<-paste0("nf1g/plots/gsva_hms/hm-", analysis_name, "segment-", seg_num, ".pdf")
+
+
+
+
+hm_name_pdf<-paste0("nf1g/plots/gsva_hms/hm-", analysis_name, "-2-segment-", seg_num, ".pdf")
+
+
+
 
 old_names<-de_samples$sample_id
 new_names<-de_samples$mouse_num
@@ -119,13 +123,13 @@ standard_error <- function(x) {
   sd(x) / sqrt(length(x))
 }
 
-summary_stats_a <- gsva_u%>%as.data.frame()%>%
+summary_stats_u <- gsva_u%>%as.data.frame()%>%
   rownames_to_column("pathway")%>%
   rowwise()
 
-columns_to_select_for_stats<-colnames(summary_stats_a)[2:length(colnames(summary_stats_a))]
+columns_to_select_for_stats<-colnames(summary_stats_u)[2:length(colnames(summary_stats_u))]
 
-summary_stats<-summary_stats_a%>%
+summary_stats_u<-summary_stats_u%>%
   mutate(min_value = min(c_across(all_of(columns_to_select_for_stats))),
          max_value = max(c_across(all_of(columns_to_select_for_stats))),
          mean_value = mean(c_across(all_of(columns_to_select_for_stats))),
@@ -138,6 +142,27 @@ summary_stats<-summary_stats_a%>%
   as.matrix.data.frame()
 
 
+
+
+summary_stats_z <- gsva_z%>%as.data.frame()%>%
+  rownames_to_column("pathway")%>%
+  rowwise()
+
+columns_to_select_for_stats<-colnames(summary_stats_z)[2:length(colnames(summary_stats_z))]
+
+summary_stats_z<-summary_stats_z%>%
+  mutate(min_value = min(c_across(all_of(columns_to_select_for_stats))),
+         max_value = max(c_across(all_of(columns_to_select_for_stats))),
+         mean_value = mean(c_across(all_of(columns_to_select_for_stats))),
+         sd_value = sd(c_across(all_of(columns_to_select_for_stats))),
+         se_value = standard_error(c_across(all_of(columns_to_select_for_stats)))
+  )%>%
+  select(-all_of(columns_to_select_for_stats))%>%
+  ungroup()%>%
+  
+  mutate(diff=max_value-min_value)%>%
+  column_to_rownames("pathway")%>%
+  as.matrix.data.frame()
 
 
 
@@ -211,7 +236,21 @@ gsva_subset<-gsva_z%>%as.data.frame()%>%
   as.matrix.data.frame()
 
 
-summary_stats_subset<-summary_stats%>%as.data.frame()%>%
+
+
+# gsva_subset<-gsva_u%>%as.data.frame()%>%
+#   rownames_to_column("pathway")%>%
+#   filter(pathway %in% c(pathways_to_include))%>%
+#   column_to_rownames("pathway")%>%
+#   as.matrix.data.frame()
+
+
+
+
+
+
+
+summary_stats_subset<-summary_stats_u%>%as.data.frame()%>%
   rownames_to_column("pathway")%>%
   filter(pathway %in% c(pathways_to_include))%>%
   column_to_rownames("pathway")%>%
@@ -308,6 +347,8 @@ ggsave(hm_name_pdf,
        
 )
 
+#status update
+print(paste0(round(Sys.time()), " : ", hm_name_pdf, " written"))
 
 
 
@@ -328,8 +369,8 @@ ggsave(sub(".pdf$", "-rows_unclustered.pdf", hm_name_pdf),
        
 )
 
-
-
+#status update
+print(paste0(round(Sys.time()), " : ", sub(".pdf$", "-rows_unclustered.pdf", hm_name_pdf), " written"))
 
   
   
@@ -342,8 +383,8 @@ print("no obs.")
   
   
   
+stop("end of maker loops. to compile pdfs finish code.")
 
-library(tidyverse)
 
 
 plots<-fs::dir_info("nf1g/plots/gsva_hms", full.names = T, pattern="^hm.*\\.pdf$", recurse = F)%>%tibble()%>%
