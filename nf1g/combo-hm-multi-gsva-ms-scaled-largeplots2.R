@@ -251,6 +251,16 @@ ha3 = rowAnnotation(a=anno_points(summary_stats_subset[,3],
                                   
 
 
+patho_cat_splits<-colnames(gsva_subset)%>%
+  as_tibble()%>%
+  rename(mouse_num=value)%>%
+  mutate(index=1:n())%>%
+  left_join(de_samples%>%select(mouse_num, patho_cat))%>%
+  pull(patho_cat)
+
+# 
+# patho_cat_splits
+
 hm1<- Heatmap(gsva_subset,
                 right_annotation = ha3,
                  top_annotation = anno,
@@ -262,6 +272,10 @@ hm1<- Heatmap(gsva_subset,
                 row_dend_width = unit(2, "in"),
                 row_names_side = "right",
                 row_gap = unit(1, "in"),
+              
+              
+                column_split=patho_cat_splits,
+              
                 
                 column_title_gp = gpar(font = 2, fontsize = 60),
                 row_title_gp = gpar(font = 2, fontsize = 40),
@@ -273,36 +287,32 @@ hm1<- Heatmap(gsva_subset,
 )
 
 
-
-
-hm2<- Heatmap(gsva_subset,
-              right_annotation = ha3,
-              top_annotation = anno,
-              column_title = gt_render(
-                paste0("<span style='font-size:25pt'>","Pathway Group: ", analysis_name, " subset", seg_num, "</span><br><span style='font-size:15pt'>expression levels normalized per row (pathway)</span>"), 
-                r = unit(2, "pt")),
-              
-              column_dend_height = unit(1, "in"),
-              
-              row_order = sort(rownames(gsva_subset)), 
-              
-              
-              
-              row_names_side = "right",
-              row_gap = unit(1, "in"),
-              
-              column_title_gp = gpar(font = 2, fontsize = 60),
-              row_title_gp = gpar(font = 2, fontsize = 40),
-              show_heatmap_legend = FALSE,
-              
-              width = unit(10, "in"),
-              heatmap_height = unit(nrow(gsva_subset)*.3+5, "in")
-              
-)
-
-
-
-
+# 
+# 
+# hm2<- Heatmap(gsva_subset,
+#               right_annotation = ha3,
+#               top_annotation = anno,
+#               column_title = gt_render(
+#                 paste0("<span style='font-size:25pt'>","Pathway Group: ", analysis_name, " subset", seg_num, "</span><br><span style='font-size:15pt'>expression levels normalized per row (pathway)</span>"), 
+#                 r = unit(2, "pt")),
+#               
+#               column_dend_height = unit(1, "in"),
+#               
+#               row_order = sort(rownames(gsva_subset)), 
+#               
+#               
+#               
+#               row_names_side = "right",
+#               row_gap = unit(1, "in"),
+#               
+#               column_title_gp = gpar(font = 2, fontsize = 60),
+#               row_title_gp = gpar(font = 2, fontsize = 40),
+#               show_heatmap_legend = FALSE,
+#               
+#               width = unit(10, "in"),
+#               heatmap_height = unit(nrow(gsva_subset)*.3+5, "in")
+#               
+# )
 
 
 
@@ -313,7 +323,7 @@ hm2<- Heatmap(gsva_subset,
 #####################################################
 
 
-hm_name_pdf<-paste0("nf1g/plots/gsva_hms/hm-largeplots-disease-groups", analysis_name, "-segment-", seg_num, ".pdf")
+hm_name_pdf<-paste0("nf1g/plots/gsva_hms/hm-largeplots2-disease-groups", analysis_name, "-segment-", seg_num, ".pdf")
 
 
 gh2<-grid.grabExpr(draw(draw((hm1), annotation_legend_side = "left")))
@@ -335,26 +345,26 @@ ggsave(hm_name_pdf,
 print(paste0(round(Sys.time()), " : ", hm_name_pdf, " written"))
 
 
-
-# combo<-draw((hm1), annotation_legend_side = "left")
-
-gh2<-grid.grabExpr(draw(draw((hm2), annotation_legend_side = "left")))
-
-ggsave(sub(".pdf$", "-rows_unclustered.pdf", hm_name_pdf), 
-       
-       plot=gh2,
-       
-       scale = 1,
-       dpi=600,
-       width = 45,
-       height = 600,
-       unit="in",
-       limitsize = FALSE
-       
-)
-
-#status update
-print(paste0(round(Sys.time()), " : ", sub(".pdf$", "-rows_unclustered.pdf", hm_name_pdf), " written"))
+# 
+# # combo<-draw((hm1), annotation_legend_side = "left")
+# 
+# gh2<-grid.grabExpr(draw(draw((hm2), annotation_legend_side = "left")))
+# 
+# ggsave(sub(".pdf$", "-rows_unclustered.pdf", hm_name_pdf), 
+#        
+#        plot=gh2,
+#        
+#        scale = 1,
+#        dpi=600,
+#        width = 45,
+#        height = 600,
+#        unit="in",
+#        limitsize = FALSE
+#        
+# )
+# 
+# #status update
+# print(paste0(round(Sys.time()), " : ", sub(".pdf$", "-rows_unclustered.pdf", hm_name_pdf), " written"))
 
   
   
