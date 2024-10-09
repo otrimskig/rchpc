@@ -30,7 +30,8 @@ standard_error <- function(x) {
 
 #datasets to be used in all loops.
 gsva_analysed<-readRDS("nf1g/ds/gsva_analysis_ds_list_ms.rds")
-de_samples<-readRDS("nf1g/ds/v10-per_sample_updated.rds")
+de_samples<-readRDS("nf1g/ds/v10-per_sample_updated.rds")%>%
+  filter(patho_grade!="NED")
 
 ####################################
 #cut to check loop. 
@@ -359,7 +360,7 @@ analysis_name<-names(gsva_analysed[i])
 analysis_name
 seg_num
 
-hm_pdf_name<-paste0("nf1g/plots/gsva_hms/hm-disease-groups-clus-", analysis_name, "-segment-", seg_num, ".pdf")
+hm_pdf_name<-paste0("nf1g/plots/gsva_hms/hm-disease-groups-clus-nowt-", analysis_name, "-segment-", seg_num, ".pdf")
 
 
 
@@ -401,7 +402,7 @@ plots<-fs::dir_info("nf1g/plots/gsva_hms", full.names = T, pattern="^hm.*\\.pdf$
 
 
 
-qpdf::pdf_combine(plots, output = "nf1g/plots/combined/hm-disease-group01.pdf")
+qpdf::pdf_combine(plots, output = "nf1g/plots/combined/hm-disease-group01-nowt.pdf")
 
 
 
