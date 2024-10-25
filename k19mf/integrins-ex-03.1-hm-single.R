@@ -24,6 +24,10 @@ int_mat<-reads%>%
   select(gene_name_ms, mouse_num, rpkm)%>%
   
   
+
+    filter(mouse_num!="3126")%>%
+  
+  
   pivot_wider(names_from = mouse_num, values_from = rpkm)%>%
   column_to_rownames("gene_name_ms")%>%
   as.matrix.data.frame()
@@ -43,7 +47,9 @@ int_mat_z<-t(scale(t(int_mat)))
 
 
 
-anno<-HeatmapAnnotation(df=all_sample_info%>%select(tumor_type)%>%mutate(tumor_type=gsub("foot pad", "acral", tumor_type)),
+anno<-HeatmapAnnotation(df=all_sample_info%>%  
+                          filter(mouse_num!="3126")%>%
+                          select(tumor_type)%>%mutate(tumor_type=gsub("foot pad", "acral", tumor_type)),
 
                         col=list(tumor_type=c("subq" = "#fffa99", "acral"="#99fff6")),
 
@@ -101,7 +107,7 @@ h1
 gh<-grid.grabExpr(draw(h1))
 
 
-ggsave(paste0("k19mf/plots/", "hm-integrins.pdf"),
+ggsave(paste0("k19mf/plots/", "integrins-hm-ex.pdf"),
        plot=gh,
        
        scale = 2,
