@@ -176,7 +176,7 @@ ggsave(paste0("k19mf/plots/", "immune2-dotplots-", group_name, ".pdf"),
 
 
 
-plots<-fs::dir_info("k19mf/plots", full.names = T, pattern="*\\.pdf$", recurse = F)%>%tibble()%>%
+plots<-fs::dir_info("k19mf/plots", full.names = T, pattern="^immune.*\\.pdf$", recurse = F)%>%tibble()%>%
   filter(modification_time>Sys.time()-lubridate::minutes(5))%>%
   arrange(path)%>%
   filter(type=="file")%>%

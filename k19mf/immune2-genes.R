@@ -40,7 +40,7 @@ genes_to_include1<-gs%>%
 # 
 # #set vector of pattern of interests (mouse gene names start with...)
 interests<-c("^Il",
-             "^Int",
+             "^Itg",
              "^Ifn",
              "^Cxcl",
              "^Ccl",
@@ -72,7 +72,7 @@ all_relevent_genes<-tibble("gene_name_ms"=genes_to_include)%>%left_join(sheets_d
   mutate(group=if_else(is.na(group)&grepl("^Cxcl", gene_name_ms), "CXCR Chemokines and Receptors", group))%>%
   
   mutate(group=if_else(grepl("^Ccr", gene_name_ms), "CCL Chemokine Receptors", group))%>%
-  mutate(group=if_else(grepl("^Int", gene_name_ms), "Integrins", group))%>%
+  mutate(group=if_else(grepl("^Itg", gene_name_ms), "Integrins", group))%>%
   
   mutate(group=if_else(grepl("^Irf", gene_name_ms), "Interferon Regulatory Factors", group))%>%
   
