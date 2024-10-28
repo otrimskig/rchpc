@@ -1,0 +1,93 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Collapse  
+
+```{r}
+interests<-c("^Il",
+"^Ifn",
+"^Cxcl",
+"^Ccl",
+"^Cd274",
+"^Pdcd")
+
+
+
+paste(interests, collapse = "|")
+
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+```{r}
+  group_by(gene_name_ms,tumor_type) %>%
+
+    summarise(n=n(),
+            
+            mean=mean(rpkm),
+            sd=sd(rpkm),
+            
+            se=sd/sqrt(n))
+```
+
+
+
+
+
+
+
+#perform t-tests with data in tidy format. Requires broom and tidyverse
+Also get summary stats for each group you want. You can then join that
+to the p-values after if you want for a slightly data-duplicated 
+df, but most useful format.
+
+```{r}
+library(broom)
+
+
+results1 <- immune_data_plus_tumor_type %>%
+  group_by(gene_name_ms,tumor_type) %>%
+
+  summarise(n=n(),
+            
+            mean=mean(rpkm),
+            sd=sd(rpkm),
+            
+            se=sd/sqrt(n))
+
+
+
+
+results2<-immune_data_plus_tumor_type%>%
+  
+  group_by(gene_name_ms)%>%
+    
+    summarise(
+    
+      ######### value ~ group ####
+      t_test = list(t.test(rpkm ~ tumor_type))) %>%
+  
+  mutate(p_unadjusted = map_dbl(t_test, ~ .x$p.value)) %>%
+  mutate(p_adj_bonferroni = p.adjust(p_unadjusted, method = "bonferroni"),  # Bonferroni correction
+         p_adj_fdr = p.adjust(p_unadjusted, method = "fdr"))%>%
+  
+  select(-t_test)
+
+
+
+
+
+
+
+
+
+results3<-results1%>%
+  left_join(results2)
+  
+```
+
