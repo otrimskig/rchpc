@@ -91,3 +91,32 @@ results3<-results1%>%
   
 ```
 
+
+
+
+capture plot as ggplot.
+capture multiple plots into grid.
+save plot as pdf. 
+
+```{r}
+gh<-grid.grabExpr(draw(h1))
+
+
+ggsave(paste0("k19mf/plots/", "immune-hm-", group_name, ".pdf"),
+       plot=gh,
+       
+       scale = 1,
+       dpi=600,
+       
+       height=.5*nrow(int_mat_z)+8,
+       width =.7*ncol(int_mat_z)+10,
+       units = "cm",
+       
+       limitsize = FALSE
+       
+       )
+```
+
+
+
+
