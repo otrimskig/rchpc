@@ -146,7 +146,6 @@ ggsave(paste0("k19mf/plots/", "immune-hm-", group_name, ".pdf"),
 
 
 
-
 plots<-fs::dir_info("k19mf/plots", full.names = T, pattern="^hm.*\\.pdf$", recurse = F)%>%tibble()%>%
   filter(modification_time>Sys.time()-lubridate::minutes(5))%>%
   arrange(path)%>%
@@ -156,3 +155,5 @@ plots<-fs::dir_info("k19mf/plots", full.names = T, pattern="^hm.*\\.pdf$", recur
 
 
 qpdf::pdf_combine(plots, output = "k19mf/plots/combined/immune-hms2.pdf")
+
+

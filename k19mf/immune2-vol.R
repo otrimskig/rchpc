@@ -13,7 +13,7 @@ voldf<-df%>%filter(tumor_type=="acral")%>%
 
 
 
-EnhancedVolcano(voldf,
+p<-EnhancedVolcano(voldf,
                 lab = rownames(voldf),
                 pCutoff = 10e-3,
                 
@@ -36,3 +36,27 @@ EnhancedVolcano(voldf,
                 
                 
                 col = c('#757575', "#6188ff", 'purple', 'red3'))
+
+
+
+
+
+
+
+
+ggsave(paste0("k19mf/plots/", "immune2-vol01-", ".pdf"),
+       plot=p,
+       
+       scale = 1,
+       dpi=600,
+       
+       height=10,
+       width=12,
+       
+       limitsize = FALSE
+       
+)
+
+
+
+
