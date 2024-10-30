@@ -3,7 +3,7 @@ library(tidyverse)
 library(dtplyr)
 library(openxlsx)
 
-stats<-readRDS("k19mf/ds/immune2-acral-v-subq-stats.rds")
+stats<-readRDS("k19mf/ds/immune-acral-v-subq-stats.rds")
 
 
 rpkms<-readRDS("k19mf/ds/immune2_rpkms.rds")%>%
