@@ -6,14 +6,15 @@ library(gridtext)
 
 
 #set list of gene names of interest (mouse format) in dataset.
-gene_names<-c("Mdm2", "Cdk4", "Cdkn2a", "Pten", "Atrx", "Nf1")
+gene_names<-c("Trp53", "Rb1", "Mdm2", "Cdk4", "Cdkn2a", "Cdkn2b", "Pten", "Atrx", "Nf1", "Fat1", "Hdlbp")
 
 
 
 
 #read in full rpkm dataset. Filter by specified gene names. 
 rpkms<-readRDS("nf1g/ds/vm-02-filtered_rpkms.rds")%>%
-  filter(gene_name_ms %in% gene_names)
+  mutate(gene_name_lower=tolower(gene_name_ms))%>%
+  filter(gene_name_lower %in% tolower(gene_names))
 
 
 
@@ -30,7 +31,12 @@ match_check<-tibble("gene_name" = gene_names)%>%
 if(nrow(match_check%>%filter(is.na(matched)))==0){
 "no unmatched genes. hooray"
 }else{
-  stop("unmatched genes found")
+  
+  no_matches<-match_check%>%
+    filter(is.na(matched))%>%
+    pull(gene_name)
+  
+  stop(paste0("unmatched genes found: ", no_matches))
 }
   
 
@@ -86,18 +92,121 @@ hmz <- Heatmap(zmat,
                 # 
                 # 
                 
-                
+               height=unit(1*nrow(zmat),"cm"),
              
                 column_title_gp = gpar(font = 2, fontsize = 60),
                 row_title_gp = gpar(font = 2, fontsize = 40),
-                show_heatmap_legend = FALSE,
+                show_heatmap_legend = FALSE
                 
                 
               
                 
 )
 
-hmz
+# hmz
 
 
 
+gh<-grid.grabExpr(draw(hmz))
+
+
+# ggsave(paste0("nf1g/plots/", "hm-single-genes.pdf"),
+#        plot=gh,
+#        
+#        scale = 1,
+#        dpi=600,
+#        
+#        height=.5*nrow(zmat)+8,
+#        width =.7*ncol(zmat)+10,
+#        units = "cm",
+#        
+#        limitsize = FALSE
+#        
+# )
+
+
+
+
+hm_list<-c("Combined" = hmz)
+
+
+single_genes<-rownames(zmat)
+
+
+
+
+for (sg in 1:length(single_genes)){
+
+  
+sgn<-single_genes[sg]  
+
+
+zmat_single<-zmat[sgn, ,drop = FALSE]
+
+
+hm_list[[sgn]] <- Heatmap(zmat_single,
+               
+               top_annotation = anno,
+               # column_title = gt_render(
+               #   paste0("<span style='font-size:25pt'>Expression Levels Normalized per gene <br>(Relative expression)</span>"), 
+               #   r = unit(2, "pt")),
+               # 
+               # 
+               height=unit(1,"cm"),
+               
+               
+               column_title_gp = gpar(font = 2, fontsize = 60),
+               row_title_gp = gpar(font = 2, fontsize = 40),
+               show_heatmap_legend = FALSE
+               
+               
+               
+               
+)
+
+  
+}
+
+
+
+
+
+
+
+
+library(ComplexHeatmap)
+library(grid)
+library(cowplot)
+
+# Assuming hm_list is your list of ComplexHeatmap objects
+# Capture each heatmap in hm_list as a grob
+plot_grid_list <- lapply(hm_list, function(hm) {
+  grid.grabExpr(draw(hm))
+})
+
+
+final_plot <- plot_grid(
+  plotlist = plot_grid_list, 
+  ncol = 1, 
+  align = "v",
+  rel_heights = rep(1, length(plot_grid_list))  # Adjust this vector to fine-tune spacing
+)
+
+
+output_loc<-paste0("nf1g/plots/", "hm-single-genes.pdf")
+
+ggsave(output_loc,
+       plot=final_plot,
+       height=100,
+       width=30,
+       scale = 1,
+       dpi=600,
+       limitsize = FALSE
+)
+
+Cairo::CairoPDF(file = output_loc, 
+         title = "Selected genes from NF1 glioma RNA seq",
+         height=100,
+         width=30)
+print(final_plot)
+dev.off()
