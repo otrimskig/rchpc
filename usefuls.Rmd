@@ -8,10 +8,6 @@ editor_options:
     wrap: 72
 ---
 
-
-
-
-
 ```{r}
 source("libs.R")
 library(tidyverse)
@@ -130,8 +126,5 @@ plots<-fs::dir_info("k19mf/plots", full.names = T, pattern="^hm.*\\.pdf$", recur
 qpdf::pdf_combine(plots, output = "k19mf/plots/combined/immune-hms2.pdf")
 
 ```
-
-
-
 
 ---end
