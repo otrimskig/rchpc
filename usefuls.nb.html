@@ -1754,41 +1754,60 @@ display: none;
 <!-- rnb-text-begin -->
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<p>Collapse</p>
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuaW50ZXJlc3RzPC1jKFwiXklsXCIsXG5cIl5JZm5cIixcblwiXkN4Y2xcIixcblwiXkNjbFwiLFxuXCJeQ2QyNzRcIixcblwiXlBkY2RcIilcblxuXG5cbnBhc3RlKGludGVyZXN0cywgY29sbGFwc2UgPSBcInxcIilcbmBgYCJ9 -->
-<pre class="r"><code>interests&lt;-c(&quot;^Il&quot;,
-&quot;^Ifn&quot;,
-&quot;^Cxcl&quot;,
-&quot;^Ccl&quot;,
-&quot;^Cd274&quot;,
-&quot;^Pdcd&quot;)
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuaW50ZXJlc3RzPC1jKFxcXklsXFwsXG5cXF5JZm5cXCxcblxcXkN4Y2xcXCxcblxcXkNjbFxcLFxuXFxeQ2QyNzRcXCxcblxcXlBkY2RcXClcblxuXG5cbnBhc3RlKGludGVyZXN0cywgY29sbGFwc2UgPSBcXHxcXClcbmBgYFxuYGBgIn0= -->
+<pre class="r"><code>```r
+interests&lt;-c(\^Il\,
+\^Ifn\,
+\^Cxcl\,
+\^Ccl\,
+\^Cd274\,
+\^Pdcd\)
 
 
 
-paste(interests, collapse = &quot;|&quot;)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiWzFdIFwiXklsfF5JZm58XkN4Y2x8XkNjbHxeQ2QyNzR8XlBkY2RcIlxuIn0= -->
-<pre><code>[1] &quot;^Il|^Ifn|^Cxcl|^Ccl|^Cd274|^Pdcd&quot;</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<p>Add a new chunk by clicking the <em>Insert Chunk</em> button on the
-toolbar or by pressing <em>Ctrl+Alt+I</em>.</p>
-<p>When you save the notebook, an HTML file containing the code and
-output will be saved alongside it (click the <em>Preview</em> button or
-press <em>Ctrl+Shift+K</em> to preview the HTML file).</p>
-<p>The preview shows you a rendered HTML copy of the contents of the
-editor. Consequently, unlike <em>Knit</em>, <em>Preview</em> does not
-run any R code chunks. Instead, the output of the chunk when it was last
-run in the editor is displayed.</p>
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuICBncm91cF9ieShnZW5lX25hbWVfbXMsdHVtb3JfdHlwZSkgJT4lXG5cbiAgICBzdW1tYXJpc2Uobj1uKCksXG4gICAgICAgICAgICBcbiAgICAgICAgICAgIG1lYW49bWVhbihycGttKSxcbiAgICAgICAgICAgIHNkPXNkKHJwa20pLFxuICAgICAgICAgICAgXG4gICAgICAgICAgICBzZT1zZC9zcXJ0KG4pKVxuYGBgIn0= -->
-<pre class="r"><code>  group_by(gene_name_ms,tumor_type) %&gt;%
+paste(interests, collapse = \|\)</code></pre>
+<pre><code>
+&lt;!-- rnb-source-end --&gt;
+
+&lt;!-- rnb-output-begin eyJkYXRhIjoiWzFdIFxcXklsfF5JZm58XkN4Y2x8XkNjbHxeQ2QyNzR8XlBkY2RcXFxuIn0= --&gt;
+</code></pre>
+<p>[1] ^Il|<sup>Ifn|</sup>Cxcl|<sup>Ccl|</sup>Cd274|^Pdcd<br />
+</p>
+<pre><code>
+
+
+&lt;!-- rnb-output-end --&gt;
+
+&lt;!-- rnb-chunk-end --&gt;
+
+
+&lt;!-- rnb-text-begin --&gt;
+
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or
+by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output
+will be saved alongside it (click the *Preview* button or press
+*Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the
+editor. Consequently, unlike *Knit*, *Preview* does not run any R code
+chunks. Instead, the output of the chunk when it was last run in the
+editor is displayed.
+
+
+&lt;!-- rnb-text-end --&gt;
+
+
+&lt;!-- rnb-chunk-begin --&gt;
+
+
+&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuICBncm91cF9ieShnZW5lX25hbWVfbXMsdHVtb3JfdHlwZSkgJT4lXG5cbiAgICBzdW1tYXJpc2Uobj1uKCksXG4gICAgICAgICAgICBcbiAgICAgICAgICAgIG1lYW49bWVhbihycGttKSxcbiAgICAgICAgICAgIHNkPXNkKHJwa20pLFxuICAgICAgICAgICAgXG4gICAgICAgICAgICBzZT1zZC9zcXJ0KG4pKVxuYGBgXG5gYGAifQ== --&gt;
+
+```r
+```r
+  group_by(gene_name_ms,tumor_type) %&gt;%
 
     summarise(n=n(),
             
@@ -1796,17 +1815,32 @@ run in the editor is displayed.</p>
             sd=sd(rpkm),
             
             se=sd/sqrt(n))</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<p>#perform t-tests with data in tidy format. Requires broom and
-tidyverse Also get summary stats for each group you want. You can then
-join that to the p-values after if you want for a slightly
-data-duplicated df, but most useful format.</p>
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShicm9vbSlcblxuXG5yZXN1bHRzMSA8LSBpbW11bmVfZGF0YV9wbHVzX3R1bW9yX3R5cGUgJT4lXG4gIGdyb3VwX2J5KGdlbmVfbmFtZV9tcyx0dW1vcl90eXBlKSAlPiVcblxuICBzdW1tYXJpc2Uobj1uKCksXG4gICAgICAgICAgICBcbiAgICAgICAgICAgIG1lYW49bWVhbihycGttKSxcbiAgICAgICAgICAgIHNkPXNkKHJwa20pLFxuICAgICAgICAgICAgXG4gICAgICAgICAgICBzZT1zZC9zcXJ0KG4pKVxuXG5cblxuXG5yZXN1bHRzMjwtaW1tdW5lX2RhdGFfcGx1c190dW1vcl90eXBlJT4lXG4gIFxuICBncm91cF9ieShnZW5lX25hbWVfbXMpJT4lXG4gICAgXG4gICAgc3VtbWFyaXNlKFxuICAgIFxuICAgICAgIyMjIyMjIyMjIHZhbHVlIH4gZ3JvdXAgIyMjI1xuICAgICAgdF90ZXN0ID0gbGlzdCh0LnRlc3QocnBrbSB+IHR1bW9yX3R5cGUpKSkgJT4lXG4gIFxuICBtdXRhdGUocF91bmFkanVzdGVkID0gbWFwX2RibCh0X3Rlc3QsIH4gLngkcC52YWx1ZSkpICU+JVxuICBtdXRhdGUocF9hZGpfYm9uZmVycm9uaSA9IHAuYWRqdXN0KHBfdW5hZGp1c3RlZCwgbWV0aG9kID0gXCJib25mZXJyb25pXCIpLCAgIyBCb25mZXJyb25pIGNvcnJlY3Rpb25cbiAgICAgICAgIHBfYWRqX2ZkciA9IHAuYWRqdXN0KHBfdW5hZGp1c3RlZCwgbWV0aG9kID0gXCJmZHJcIikpJT4lXG4gIFxuICBzZWxlY3QoLXRfdGVzdClcblxuXG5cblxuXG5cblxuXG5cbnJlc3VsdHMzPC1yZXN1bHRzMSU+JVxuICBsZWZ0X2pvaW4ocmVzdWx0czIpXG4gIFxuYGBgIn0= -->
-<pre class="r"><code>library(broom)
+<pre><code>
+&lt;!-- rnb-source-end --&gt;
+
+&lt;!-- rnb-chunk-end --&gt;
+
+
+&lt;!-- rnb-text-begin --&gt;
+
+
+#perform t-tests with data in tidy format. Requires broom and tidyverse
+Also get summary stats for each group you want. You can then join that
+to the p-values after if you want for a slightly data-duplicated df, but
+most useful format.
+
+
+&lt;!-- rnb-text-end --&gt;
+
+
+&lt;!-- rnb-chunk-begin --&gt;
+
+
+&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxubGlicmFyeShicm9vbSlcblxuXG5yZXN1bHRzMSA8LSBpbW11bmVfZGF0YV9wbHVzX3R1bW9yX3R5cGUgJT4lXG4gIGdyb3VwX2J5KGdlbmVfbmFtZV9tcyx0dW1vcl90eXBlKSAlPiVcblxuICBzdW1tYXJpc2Uobj1uKCksXG4gICAgICAgICAgICBcbiAgICAgICAgICAgIG1lYW49bWVhbihycGttKSxcbiAgICAgICAgICAgIHNkPXNkKHJwa20pLFxuICAgICAgICAgICAgXG4gICAgICAgICAgICBzZT1zZC9zcXJ0KG4pKVxuXG5cblxuXG5yZXN1bHRzMjwtaW1tdW5lX2RhdGFfcGx1c190dW1vcl90eXBlJT4lXG4gIFxuICBncm91cF9ieShnZW5lX25hbWVfbXMpJT4lXG4gICAgXG4gICAgc3VtbWFyaXNlKFxuICAgIFxuICAgICAgIyMjIyMjIyMjIHZhbHVlIH4gZ3JvdXAgIyMjI1xuICAgICAgdF90ZXN0ID0gbGlzdCh0LnRlc3QocnBrbSB+IHR1bW9yX3R5cGUpKSkgJT4lXG4gIFxuICBtdXRhdGUocF91bmFkanVzdGVkID0gbWFwX2RibCh0X3Rlc3QsIH4gLngkcC52YWx1ZSkpICU+JVxuICBtdXRhdGUocF9hZGpfYm9uZmVycm9uaSA9IHAuYWRqdXN0KHBfdW5hZGp1c3RlZCwgbWV0aG9kID0gXFxib25mZXJyb25pXFwpLCAgIyBCb25mZXJyb25pIGNvcnJlY3Rpb25cbiAgICAgICAgIHBfYWRqX2ZkciA9IHAuYWRqdXN0KHBfdW5hZGp1c3RlZCwgbWV0aG9kID0gXFxmZHJcXCkpJT4lXG4gIFxuICBzZWxlY3QoLXRfdGVzdClcblxuXG5cblxuXG5cblxuXG5cbnJlc3VsdHMzPC1yZXN1bHRzMSU+JVxuICBsZWZ0X2pvaW4ocmVzdWx0czIpXG4gIFxuYGBgXG5gYGAifQ== --&gt;
+
+```r
+```r
+library(broom)
 
 
 results1 &lt;- immune_data_plus_tumor_type %&gt;%
@@ -1832,8 +1866,8 @@ results2&lt;-immune_data_plus_tumor_type%&gt;%
       t_test = list(t.test(rpkm ~ tumor_type))) %&gt;%
   
   mutate(p_unadjusted = map_dbl(t_test, ~ .x$p.value)) %&gt;%
-  mutate(p_adj_bonferroni = p.adjust(p_unadjusted, method = &quot;bonferroni&quot;),  # Bonferroni correction
-         p_adj_fdr = p.adjust(p_unadjusted, method = &quot;fdr&quot;))%&gt;%
+  mutate(p_adj_bonferroni = p.adjust(p_unadjusted, method = \bonferroni\),  # Bonferroni correction
+         p_adj_fdr = p.adjust(p_unadjusted, method = \fdr\))%&gt;%
   
   select(-t_test)
 
@@ -1848,18 +1882,33 @@ results2&lt;-immune_data_plus_tumor_type%&gt;%
 results3&lt;-results1%&gt;%
   left_join(results2)
   </code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<p>capture plot as ggplot. capture multiple plots into grid. save plot
-as pdf.</p>
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZ2g8LWdyaWQuZ3JhYkV4cHIoZHJhdyhoMSkpXG5cblxuZ2dzYXZlKHBhc3RlMChcImsxOW1mL3Bsb3RzL1wiLCBcImltbXVuZS1obS1cIiwgZ3JvdXBfbmFtZSwgXCIucGRmXCIpLFxuICAgICAgIHBsb3Q9Z2gsXG4gICAgICAgXG4gICAgICAgc2NhbGUgPSAxLFxuICAgICAgIGRwaT02MDAsXG4gICAgICAgXG4gICAgICAgaGVpZ2h0PS41Km5yb3coaW50X21hdF96KSs4LFxuICAgICAgIHdpZHRoID0uNypuY29sKGludF9tYXRfeikrMTAsXG4gICAgICAgdW5pdHMgPSBcImNtXCIsXG4gICAgICAgXG4gICAgICAgbGltaXRzaXplID0gRkFMU0VcbiAgICAgICBcbiAgICAgICApXG5gYGAifQ== -->
-<pre class="r"><code>gh&lt;-grid.grabExpr(draw(h1))
+<pre><code>
+&lt;!-- rnb-source-end --&gt;
+
+&lt;!-- rnb-chunk-end --&gt;
 
 
-ggsave(paste0(&quot;k19mf/plots/&quot;, &quot;immune-hm-&quot;, group_name, &quot;.pdf&quot;),
+&lt;!-- rnb-text-begin --&gt;
+
+
+capture plot as ggplot. capture multiple plots into grid. save plot as
+pdf.
+
+
+&lt;!-- rnb-text-end --&gt;
+
+
+&lt;!-- rnb-chunk-begin --&gt;
+
+
+&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuZ2g8LWdyaWQuZ3JhYkV4cHIoZHJhdyhoMSkpXG5cblxuZ2dzYXZlKHBhc3RlMChcXGsxOW1mL3Bsb3RzL1xcLCBcXGltbXVuZS1obS1cXCwgZ3JvdXBfbmFtZSwgXFwucGRmXFwpLFxuICAgICAgIHBsb3Q9Z2gsXG4gICAgICAgXG4gICAgICAgc2NhbGUgPSAxLFxuICAgICAgIGRwaT02MDAsXG4gICAgICAgXG4gICAgICAgaGVpZ2h0PS41Km5yb3coaW50X21hdF96KSs4LFxuICAgICAgIHdpZHRoID0uNypuY29sKGludF9tYXRfeikrMTAsXG4gICAgICAgdW5pdHMgPSBcXGNtXFwsXG4gICAgICAgXG4gICAgICAgbGltaXRzaXplID0gRkFMU0VcbiAgICAgICBcbiAgICAgICApXG5gYGBcbmBgYCJ9 --&gt;
+
+```r
+```r
+gh&lt;-grid.grabExpr(draw(h1))
+
+
+ggsave(paste0(\k19mf/plots/\, \immune-hm-\, group_name, \.pdf\),
        plot=gh,
        
        scale = 1,
@@ -1867,36 +1916,52 @@ ggsave(paste0(&quot;k19mf/plots/&quot;, &quot;immune-hm-&quot;, group_name, &quo
        
        height=.5*nrow(int_mat_z)+8,
        width =.7*ncol(int_mat_z)+10,
-       units = &quot;cm&quot;,
+       units = \cm\,
        
        limitsize = FALSE
        
        )</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<p>collect all recently written pdfs (can specify time, name, location…)
-and combine into 1 pdf.</p>
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxucGxvdHM8LWZzOjpkaXJfaW5mbyhcImsxOW1mL3Bsb3RzXCIsIGZ1bGwubmFtZXMgPSBULCBwYXR0ZXJuPVwiXmhtLipcXFxcLnBkZiRcIiwgcmVjdXJzZSA9IEYpJT4ldGliYmxlKCklPiVcbiAgZmlsdGVyKG1vZGlmaWNhdGlvbl90aW1lPlN5cy50aW1lKCktbHVicmlkYXRlOjptaW51dGVzKDUpKSU+JVxuICBhcnJhbmdlKHBhdGgpJT4lXG4gIGZpbHRlcih0eXBlPT1cImZpbGVcIiklPiVcbiAgcHVsbChwYXRoKVxuXG5cblxucXBkZjo6cGRmX2NvbWJpbmUocGxvdHMsIG91dHB1dCA9IFwiazE5bWYvcGxvdHMvY29tYmluZWQvaW1tdW5lLWhtczIucGRmXCIpXG5cbmBgYCJ9 -->
-<pre class="r"><code>plots&lt;-fs::dir_info(&quot;k19mf/plots&quot;, full.names = T, pattern=&quot;^hm.*\\.pdf$&quot;, recurse = F)%&gt;%tibble()%&gt;%
+<pre><code>
+&lt;!-- rnb-source-end --&gt;
+
+&lt;!-- rnb-chunk-end --&gt;
+
+
+&lt;!-- rnb-text-begin --&gt;
+
+
+collect all recently written pdfs (can specify time, name, location...)
+and combine into 1 pdf.
+
+
+&lt;!-- rnb-text-end --&gt;
+
+
+&lt;!-- rnb-chunk-begin --&gt;
+
+
+&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxucGxvdHM8LWZzOjpkaXJfaW5mbyhcXGsxOW1mL3Bsb3RzXFwsIGZ1bGwubmFtZXMgPSBULCBwYXR0ZXJuPVxcXmhtLipcXFxcLnBkZiRcXCwgcmVjdXJzZSA9IEYpJT4ldGliYmxlKCklPiVcbiAgZmlsdGVyKG1vZGlmaWNhdGlvbl90aW1lPlN5cy50aW1lKCktbHVicmlkYXRlOjptaW51dGVzKDUpKSU+JVxuICBhcnJhbmdlKHBhdGgpJT4lXG4gIGZpbHRlcih0eXBlPT1cXGZpbGVcXCklPiVcbiAgcHVsbChwYXRoKVxuXG5cblxucXBkZjo6cGRmX2NvbWJpbmUocGxvdHMsIG91dHB1dCA9IFxcazE5bWYvcGxvdHMvY29tYmluZWQvaW1tdW5lLWhtczIucGRmXFwpXG5cbmBgYFxuYGBgIn0= --&gt;
+
+```r
+```r
+plots&lt;-fs::dir_info(\k19mf/plots\, full.names = T, pattern=\^hm.*\\.pdf$\, recurse = F)%&gt;%tibble()%&gt;%
   filter(modification_time&gt;Sys.time()-lubridate::minutes(5))%&gt;%
   arrange(path)%&gt;%
-  filter(type==&quot;file&quot;)%&gt;%
+  filter(type==\file\)%&gt;%
   pull(path)
 
 
 
-qpdf::pdf_combine(plots, output = &quot;k19mf/plots/combined/immune-hms2.pdf&quot;)
+qpdf::pdf_combine(plots, output = \k19mf/plots/combined/immune-hms2.pdf\)
 </code></pre>
+<p>```</p>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <p>—end</p>
 <!-- rnb-text-end -->
 
-<div id="rmd-source-code">LS0tDQp0aXRsZTogIlIgTm90ZWJvb2siDQpvdXRwdXQ6IA0KICBodG1sX25vdGVib29rOiANCiAgICB0b2M6IHRydWUNCmVkaXRvcl9vcHRpb25zOiANCiAgbWFya2Rvd246IA0KICAgIHdyYXA6IDcyDQotLS0NCmBgYHtyIGtsaXBweSwgZWNobz1GQUxTRSwgaW5jbHVkZT1UUlVFfQ0Ka2xpcHB5OjprbGlwcHkoKQ0KYGBgDQoNCg0KDQpDb2xsYXBzZQ0KDQpgYGB7cn0NCmludGVyZXN0czwtYygiXklsIiwNCiJeSWZuIiwNCiJeQ3hjbCIsDQoiXkNjbCIsDQoiXkNkMjc0IiwNCiJeUGRjZCIpDQoNCg0KDQpwYXN0ZShpbnRlcmVzdHMsIGNvbGxhcHNlID0gInwiKQ0KDQpgYGANCg0KQWRkIGEgbmV3IGNodW5rIGJ5IGNsaWNraW5nIHRoZSAqSW5zZXJ0IENodW5rKiBidXR0b24gb24gdGhlIHRvb2xiYXIgb3INCmJ5IHByZXNzaW5nICpDdHJsK0FsdCtJKi4NCg0KV2hlbiB5b3Ugc2F2ZSB0aGUgbm90ZWJvb2ssIGFuIEhUTUwgZmlsZSBjb250YWluaW5nIHRoZSBjb2RlIGFuZCBvdXRwdXQNCndpbGwgYmUgc2F2ZWQgYWxvbmdzaWRlIGl0IChjbGljayB0aGUgKlByZXZpZXcqIGJ1dHRvbiBvciBwcmVzcw0KKkN0cmwrU2hpZnQrSyogdG8gcHJldmlldyB0aGUgSFRNTCBmaWxlKS4NCg0KVGhlIHByZXZpZXcgc2hvd3MgeW91IGEgcmVuZGVyZWQgSFRNTCBjb3B5IG9mIHRoZSBjb250ZW50cyBvZiB0aGUNCmVkaXRvci4gQ29uc2VxdWVudGx5LCB1bmxpa2UgKktuaXQqLCAqUHJldmlldyogZG9lcyBub3QgcnVuIGFueSBSIGNvZGUNCmNodW5rcy4gSW5zdGVhZCwgdGhlIG91dHB1dCBvZiB0aGUgY2h1bmsgd2hlbiBpdCB3YXMgbGFzdCBydW4gaW4gdGhlDQplZGl0b3IgaXMgZGlzcGxheWVkLg0KDQpgYGB7cn0NCiAgZ3JvdXBfYnkoZ2VuZV9uYW1lX21zLHR1bW9yX3R5cGUpICU+JQ0KDQogICAgc3VtbWFyaXNlKG49bigpLA0KICAgICAgICAgICAgDQogICAgICAgICAgICBtZWFuPW1lYW4ocnBrbSksDQogICAgICAgICAgICBzZD1zZChycGttKSwNCiAgICAgICAgICAgIA0KICAgICAgICAgICAgc2U9c2Qvc3FydChuKSkNCmBgYA0KDQojcGVyZm9ybSB0LXRlc3RzIHdpdGggZGF0YSBpbiB0aWR5IGZvcm1hdC4gUmVxdWlyZXMgYnJvb20gYW5kIHRpZHl2ZXJzZQ0KQWxzbyBnZXQgc3VtbWFyeSBzdGF0cyBmb3IgZWFjaCBncm91cCB5b3Ugd2FudC4gWW91IGNhbiB0aGVuIGpvaW4gdGhhdA0KdG8gdGhlIHAtdmFsdWVzIGFmdGVyIGlmIHlvdSB3YW50IGZvciBhIHNsaWdodGx5IGRhdGEtZHVwbGljYXRlZCBkZiwgYnV0DQptb3N0IHVzZWZ1bCBmb3JtYXQuDQoNCmBgYHtyfQ0KbGlicmFyeShicm9vbSkNCg0KDQpyZXN1bHRzMSA8LSBpbW11bmVfZGF0YV9wbHVzX3R1bW9yX3R5cGUgJT4lDQogIGdyb3VwX2J5KGdlbmVfbmFtZV9tcyx0dW1vcl90eXBlKSAlPiUNCg0KICBzdW1tYXJpc2Uobj1uKCksDQogICAgICAgICAgICANCiAgICAgICAgICAgIG1lYW49bWVhbihycGttKSwNCiAgICAgICAgICAgIHNkPXNkKHJwa20pLA0KICAgICAgICAgICAgDQogICAgICAgICAgICBzZT1zZC9zcXJ0KG4pKQ0KDQoNCg0KDQpyZXN1bHRzMjwtaW1tdW5lX2RhdGFfcGx1c190dW1vcl90eXBlJT4lDQogIA0KICBncm91cF9ieShnZW5lX25hbWVfbXMpJT4lDQogICAgDQogICAgc3VtbWFyaXNlKA0KICAgIA0KICAgICAgIyMjIyMjIyMjIHZhbHVlIH4gZ3JvdXAgIyMjIw0KICAgICAgdF90ZXN0ID0gbGlzdCh0LnRlc3QocnBrbSB+IHR1bW9yX3R5cGUpKSkgJT4lDQogIA0KICBtdXRhdGUocF91bmFkanVzdGVkID0gbWFwX2RibCh0X3Rlc3QsIH4gLngkcC52YWx1ZSkpICU+JQ0KICBtdXRhdGUocF9hZGpfYm9uZmVycm9uaSA9IHAuYWRqdXN0KHBfdW5hZGp1c3RlZCwgbWV0aG9kID0gImJvbmZlcnJvbmkiKSwgICMgQm9uZmVycm9uaSBjb3JyZWN0aW9uDQogICAgICAgICBwX2Fkal9mZHIgPSBwLmFkanVzdChwX3VuYWRqdXN0ZWQsIG1ldGhvZCA9ICJmZHIiKSklPiUNCiAgDQogIHNlbGVjdCgtdF90ZXN0KQ0KDQoNCg0KDQoNCg0KDQoNCg0KcmVzdWx0czM8LXJlc3VsdHMxJT4lDQogIGxlZnRfam9pbihyZXN1bHRzMikNCiAgDQpgYGANCg0KY2FwdHVyZSBwbG90IGFzIGdncGxvdC4gY2FwdHVyZSBtdWx0aXBsZSBwbG90cyBpbnRvIGdyaWQuIHNhdmUgcGxvdCBhcw0KcGRmLg0KDQpgYGB7cn0NCmdoPC1ncmlkLmdyYWJFeHByKGRyYXcoaDEpKQ0KDQoNCmdnc2F2ZShwYXN0ZTAoImsxOW1mL3Bsb3RzLyIsICJpbW11bmUtaG0tIiwgZ3JvdXBfbmFtZSwgIi5wZGYiKSwNCiAgICAgICBwbG90PWdoLA0KICAgICAgIA0KICAgICAgIHNjYWxlID0gMSwNCiAgICAgICBkcGk9NjAwLA0KICAgICAgIA0KICAgICAgIGhlaWdodD0uNSpucm93KGludF9tYXRfeikrOCwNCiAgICAgICB3aWR0aCA9LjcqbmNvbChpbnRfbWF0X3opKzEwLA0KICAgICAgIHVuaXRzID0gImNtIiwNCiAgICAgICANCiAgICAgICBsaW1pdHNpemUgPSBGQUxTRQ0KICAgICAgIA0KICAgICAgICkNCmBgYA0KDQpjb2xsZWN0IGFsbCByZWNlbnRseSB3cml0dGVuIHBkZnMgKGNhbiBzcGVjaWZ5IHRpbWUsIG5hbWUsIGxvY2F0aW9uLi4uKQ0KYW5kIGNvbWJpbmUgaW50byAxIHBkZi4NCg0KYGBge3J9DQpwbG90czwtZnM6OmRpcl9pbmZvKCJrMTltZi9wbG90cyIsIGZ1bGwubmFtZXMgPSBULCBwYXR0ZXJuPSJeaG0uKlxcLnBkZiQiLCByZWN1cnNlID0gRiklPiV0aWJibGUoKSU+JQ0KICBmaWx0ZXIobW9kaWZpY2F0aW9uX3RpbWU+U3lzLnRpbWUoKS1sdWJyaWRhdGU6Om1pbnV0ZXMoNSkpJT4lDQogIGFycmFuZ2UocGF0aCklPiUNCiAgZmlsdGVyKHR5cGU9PSJmaWxlIiklPiUNCiAgcHVsbChwYXRoKQ0KDQoNCg0KcXBkZjo6cGRmX2NvbWJpbmUocGxvdHMsIG91dHB1dCA9ICJrMTltZi9wbG90cy9jb21iaW5lZC9pbW11bmUtaG1zMi5wZGYiKQ0KDQpgYGANCg0KDQoNCg0KLS0tZW5k</div>
+<div id="rmd-source-code">LS0tCnRpdGxlOiAiUiBOb3RlYm9vayIKb3V0cHV0OiAKICBodG1sX25vdGVib29rOiAKICAgIHRvYzogdHJ1ZQplZGl0b3Jfb3B0aW9uczogCiAgbWFya2Rvd246IAogICAgd3JhcDogNzIKLS0tCgoKCgoKYGBge3J9CnNvdXJjZSgibGlicy5SIikKbGlicmFyeSh0aWR5dmVyc2UpCmxpYnJhcnkoZHRwbHlyKQoKCmBgYAoKQWRkIGEgbmV3IGNodW5rIGJ5IGNsaWNraW5nIHRoZSAqSW5zZXJ0IENodW5rKiBidXR0b24gb24gdGhlIHRvb2xiYXIgb3IKYnkgcHJlc3NpbmcgKkN0cmwrQWx0K0kqLgoKV2hlbiB5b3Ugc2F2ZSB0aGUgbm90ZWJvb2ssIGFuIEhUTUwgZmlsZSBjb250YWluaW5nIHRoZSBjb2RlIGFuZCBvdXRwdXQKd2lsbCBiZSBzYXZlZCBhbG9uZ3NpZGUgaXQgKGNsaWNrIHRoZSAqUHJldmlldyogYnV0dG9uIG9yIHByZXNzCipDdHJsK1NoaWZ0K0sqIHRvIHByZXZpZXcgdGhlIEhUTUwgZmlsZSkuCgpUaGUgcHJldmlldyBzaG93cyB5b3UgYSByZW5kZXJlZCBIVE1MIGNvcHkgb2YgdGhlIGNvbnRlbnRzIG9mIHRoZQplZGl0b3IuIENvbnNlcXVlbnRseSwgdW5saWtlICpLbml0KiwgKlByZXZpZXcqIGRvZXMgbm90IHJ1biBhbnkgUiBjb2RlCmNodW5rcy4gSW5zdGVhZCwgdGhlIG91dHB1dCBvZiB0aGUgY2h1bmsgd2hlbiBpdCB3YXMgbGFzdCBydW4gaW4gdGhlCmVkaXRvciBpcyBkaXNwbGF5ZWQuCgpgYGB7cn0KICBncm91cF9ieShnZW5lX25hbWVfbXMsdHVtb3JfdHlwZSkgJT4lCgogICAgc3VtbWFyaXNlKG49bigpLAogICAgICAgICAgICAKICAgICAgICAgICAgbWVhbj1tZWFuKHJwa20pLAogICAgICAgICAgICBzZD1zZChycGttKSwKICAgICAgICAgICAgCiAgICAgICAgICAgIHNlPXNkL3NxcnQobikpCmBgYAoKI3BlcmZvcm0gdC10ZXN0cyB3aXRoIGRhdGEgaW4gdGlkeSBmb3JtYXQuIFJlcXVpcmVzIGJyb29tIGFuZCB0aWR5dmVyc2UKQWxzbyBnZXQgc3VtbWFyeSBzdGF0cyBmb3IgZWFjaCBncm91cCB5b3Ugd2FudC4gWW91IGNhbiB0aGVuIGpvaW4gdGhhdAp0byB0aGUgcC12YWx1ZXMgYWZ0ZXIgaWYgeW91IHdhbnQgZm9yIGEgc2xpZ2h0bHkgZGF0YS1kdXBsaWNhdGVkIGRmLCBidXQKbW9zdCB1c2VmdWwgZm9ybWF0LgoKYGBge3J9CmxpYnJhcnkoYnJvb20pCgoKcmVzdWx0czEgPC0gaW1tdW5lX2RhdGFfcGx1c190dW1vcl90eXBlICU+JQogIGdyb3VwX2J5KGdlbmVfbmFtZV9tcyx0dW1vcl90eXBlKSAlPiUKCiAgc3VtbWFyaXNlKG49bigpLAogICAgICAgICAgICAKICAgICAgICAgICAgbWVhbj1tZWFuKHJwa20pLAogICAgICAgICAgICBzZD1zZChycGttKSwKICAgICAgICAgICAgCiAgICAgICAgICAgIHNlPXNkL3NxcnQobikpCgoKCgpyZXN1bHRzMjwtaW1tdW5lX2RhdGFfcGx1c190dW1vcl90eXBlJT4lCiAgCiAgZ3JvdXBfYnkoZ2VuZV9uYW1lX21zKSU+JQogICAgCiAgICBzdW1tYXJpc2UoCiAgICAKICAgICAgIyMjIyMjIyMjIHZhbHVlIH4gZ3JvdXAgIyMjIwogICAgICB0X3Rlc3QgPSBsaXN0KHQudGVzdChycGttIH4gdHVtb3JfdHlwZSkpKSAlPiUKICAKICBtdXRhdGUocF91bmFkanVzdGVkID0gbWFwX2RibCh0X3Rlc3QsIH4gLngkcC52YWx1ZSkpICU+JQogIG11dGF0ZShwX2Fkal9ib25mZXJyb25pID0gcC5hZGp1c3QocF91bmFkanVzdGVkLCBtZXRob2QgPSAiYm9uZmVycm9uaSIpLCAgIyBCb25mZXJyb25pIGNvcnJlY3Rpb24KICAgICAgICAgcF9hZGpfZmRyID0gcC5hZGp1c3QocF91bmFkanVzdGVkLCBtZXRob2QgPSAiZmRyIikpJT4lCiAgCiAgc2VsZWN0KC10X3Rlc3QpCgoKCgoKCgoKCnJlc3VsdHMzPC1yZXN1bHRzMSU+JQogIGxlZnRfam9pbihyZXN1bHRzMikKICAKYGBgCgpjYXB0dXJlIHBsb3QgYXMgZ2dwbG90LiBjYXB0dXJlIG11bHRpcGxlIHBsb3RzIGludG8gZ3JpZC4gc2F2ZSBwbG90IGFzCnBkZi4KCmBgYHtyfQpnaDwtZ3JpZC5ncmFiRXhwcihkcmF3KGgxKSkKCgpnZ3NhdmUocGFzdGUwKCJrMTltZi9wbG90cy8iLCAiaW1tdW5lLWhtLSIsIGdyb3VwX25hbWUsICIucGRmIiksCiAgICAgICBwbG90PWdoLAogICAgICAgCiAgICAgICBzY2FsZSA9IDEsCiAgICAgICBkcGk9NjAwLAogICAgICAgCiAgICAgICBoZWlnaHQ9LjUqbnJvdyhpbnRfbWF0X3opKzgsCiAgICAgICB3aWR0aCA9LjcqbmNvbChpbnRfbWF0X3opKzEwLAogICAgICAgdW5pdHMgPSAiY20iLAogICAgICAgCiAgICAgICBsaW1pdHNpemUgPSBGQUxTRQogICAgICAgCiAgICAgICApCmBgYAoKY29sbGVjdCBhbGwgcmVjZW50bHkgd3JpdHRlbiBwZGZzIChjYW4gc3BlY2lmeSB0aW1lLCBuYW1lLCBsb2NhdGlvbi4uLikKYW5kIGNvbWJpbmUgaW50byAxIHBkZi4KCmBgYHtyfQpwbG90czwtZnM6OmRpcl9pbmZvKCJrMTltZi9wbG90cyIsIGZ1bGwubmFtZXMgPSBULCBwYXR0ZXJuPSJeaG0uKlxcLnBkZiQiLCByZWN1cnNlID0gRiklPiV0aWJibGUoKSU+JQogIGZpbHRlcihtb2RpZmljYXRpb25fdGltZT5TeXMudGltZSgpLWx1YnJpZGF0ZTo6bWludXRlcyg1KSklPiUKICBhcnJhbmdlKHBhdGgpJT4lCiAgZmlsdGVyKHR5cGU9PSJmaWxlIiklPiUKICBwdWxsKHBhdGgpCgoKCnFwZGY6OnBkZl9jb21iaW5lKHBsb3RzLCBvdXRwdXQgPSAiazE5bWYvcGxvdHMvY29tYmluZWQvaW1tdW5lLWhtczIucGRmIikKCmBgYAoKCgoKLS0tZW5k</div>
 
 
 

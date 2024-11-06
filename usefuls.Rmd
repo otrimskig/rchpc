@@ -7,25 +7,16 @@ editor_options:
   markdown: 
     wrap: 72
 ---
-```{r klippy, echo=FALSE, include=TRUE}
-klippy::klippy()
-```
 
 
 
-Collapse
+
 
 ```{r}
-interests<-c("^Il",
-"^Ifn",
-"^Cxcl",
-"^Ccl",
-"^Cd274",
-"^Pdcd")
+source("libs.R")
+library(tidyverse)
+library(dtplyr)
 
-
-
-paste(interests, collapse = "|")
 
 ```
 
