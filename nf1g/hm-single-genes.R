@@ -6,9 +6,9 @@ library(gridtext)
 
 
 #set list of gene names of interest (mouse format) in dataset.
-gene_names<-c("Trp53", "Rb1", "Mdm2", "Cdk4", "Cdkn2a", "Cdkn2b", "Pten", "Atrx", "Nf1", "Fat1", "Hdlbp")
+gene_names<-c("Ink4a", "P16", "P19", "Trp53", "Rb1", "Mdm2", "Cdk4", "Cdkn2a", "Cdkn2b", "Pten", "Atrx", "Nf1", "Fat1", "Hdlbp")
 
-
+a<-readRDS("nf1g/ds/vm-02-filtered_rpkms.rds")
 
 
 #read in full rpkm dataset. Filter by specified gene names. 
