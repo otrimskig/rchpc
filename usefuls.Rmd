@@ -19,6 +19,36 @@ library(dtplyr)
 Add a new chunk by clicking the *Insert Chunk* button on the toolbar or
 by pressing *Ctrl+Alt+I*.
 
+
+how to save a ggplot or other grob to pdf. This below is useful because it adds a title to the metadata of the pdf file, which prints the R script path and date-time of generation.
+```{r}
+ggsave("file_path_output",
+       
+       title=paste0("src: ",
+                    
+        rstudioapi::getSourceEditorContext()$path%>%
+         sub("/uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig/rchpc/","",.),
+         
+         " at ", 
+        
+        lubridate::round_date(Sys.time(), "second")
+       ),
+         
+       plot=plot_object,
+       limitsize = FALSE,
+       
+       
+       height=10,
+       width=30,
+       scale = .5,
+       dpi=600,
+       
+)
+
+```
+
+
+
 When you save the notebook, an HTML file containing the code and output
 will be saved alongside it (click the *Preview* button or press
 *Ctrl+Shift+K* to preview the HTML file).
