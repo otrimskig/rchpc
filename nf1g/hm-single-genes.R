@@ -6,7 +6,13 @@ library(gridtext)
 
 
 #set list of gene names of interest (mouse format) in dataset.
-gene_names<-c("Ink4a", "P16", "P19", "Trp53", "Rb1", "Mdm2", "Cdk4", "Cdkn2a", "Cdkn2b", "Pten", "Atrx", "Nf1", "Fat1", "Hdlbp")
+gene_names<-c("Syp", 
+              "Mki67", 
+              "Olig2",
+              "Gfap",
+              "Mapk1",
+              
+              "Trp53", "Rb1", "Mdm2", "Cdk4", "Cdkn2a", "Cdkn2b", "Pten", "Atrx", "Nf1", "Fat1", "Hdlbp")
 
 a<-readRDS("nf1g/ds/vm-02-filtered_rpkms.rds")
 
@@ -69,7 +75,7 @@ anno<-HeatmapAnnotation(df=de_samples%>%select(#mouse_num,
                         annotation_name_side = "left",
                         gp = gpar(col = "black"),
                         
-                        simple_anno_size = unit(.25, "in"))
+                        simple_anno_size = unit(.25, "cm"))
 
 
 #######################################################################
@@ -92,7 +98,7 @@ hmz <- Heatmap(zmat,
                 # 
                 # 
                 
-               height=unit(1*nrow(zmat),"cm"),
+               height=unit(.75*nrow(zmat),"cm"),
              
                 column_title_gp = gpar(font = 2, fontsize = 60),
                 row_title_gp = gpar(font = 2, fontsize = 40),
@@ -152,7 +158,7 @@ hm_list[[sgn]] <- Heatmap(zmat_single,
                #   r = unit(2, "pt")),
                # 
                # 
-               height=unit(1,"cm"),
+               height=unit(.75,"cm"),
                
                
                column_title_gp = gpar(font = 2, fontsize = 60),
@@ -189,24 +195,39 @@ final_plot <- plot_grid(
   plotlist = plot_grid_list, 
   ncol = 1, 
   align = "v",
-  rel_heights = rep(1, length(plot_grid_list))  # Adjust this vector to fine-tune spacing
+  rel_heights = c(10,rep(1, length(plot_grid_list)-1))# Adjust this vector to fine-tune spacing
 )
 
 
 output_loc<-paste0("nf1g/plots/", "hm-single-genes.pdf")
 
+
+
 ggsave(output_loc,
-       plot=final_plot,
-       height=100,
-       width=30,
-       scale = 1,
-       dpi=600,
-       limitsize = FALSE
+      
+      title=paste0("src: ",
+                   
+                   rstudioapi::getSourceEditorContext()$path%>%
+                     
+                     sub("/uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig/","",.),
+                   
+                   " at ", 
+                   
+                   lubridate::round_date(Sys.time(), "second")
+      ),
+      
+      plot=final_plot,
+      limitsize = FALSE,
+      
+      
+      height=50,
+      width=15,
+      scale = 1,
+      dpi=600,
+      
 )
 
-Cairo::CairoPDF(file = output_loc, 
-         title = "Selected genes from NF1 glioma RNA seq",
-         height=100,
-         width=30)
-print(final_plot)
-dev.off()
+
+
+
+
