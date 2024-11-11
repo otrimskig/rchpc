@@ -53,7 +53,19 @@ plot<-ggplot(sa_sub, aes(x=mutation_perc, color=resultant_geno, y=factor(patho_g
 
 
 ggsave("nf1g/plots/dp-nf1-mutation-perc.pdf",
+       
+       title=paste0("src: ",
+                    
+        rstudioapi::getSourceEditorContext()$path%>%
+         sub("/uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig/rchpc/","",.),
+         
+         " at ", 
+        
+        lubridate::round_date(Sys.time(), "second")
+       ),
+         
        plot=plot,
+       
        height=10,
        width=30,
        scale = .5,
@@ -62,6 +74,11 @@ ggsave("nf1g/plots/dp-nf1-mutation-perc.pdf",
 )
 
 
+
+
+scriptName::current_filename()
+scriptName::current_cli_filename()
+scriptName::current_source_filename()
 
 
 
