@@ -13,43 +13,51 @@ x<-readRDS("nec_files/outside_files.rds")
 
 
 
-x1 <- keep(x, ~ nrow(.) == 1)
+x1r <- keep(x, ~ nrow(.) == 1)
 
 
 x2r <- keep(x, ~ nrow(.) == 2)
 
+x3r<-keep(x, ~ nrow(.) ==3 & length(.)<50)
 
-xcrap<-keep(x, ~ nrow(.) > 2)
-
-
-
-bit<-x1.c[1:10]
+x2r<-c(x2r, x3r)
 
 
-x1.c <- map(x1, ~ mutate(.x, across(everything(), as.character)))
 
-for (i in 1:length(x1.c)){
 
-x1.c[[i]]<-x1.c[[i]]%>%
+xcrap<-keep(x, ~ nrow(.) > 3)
+
+
+
+
+
+
+x1r.c <- map(x1r, ~ mutate(.x, across(everything(), as.character)))
+
+for (i in 1:length(x1r.c)){
+
+x1r.c[[i]]<-x1r.c[[i]]%>%
   
-  mutate(initials_added=names(x1.c[[i]])[1])%>%
+  mutate(initials_added=names(x1r.c[[i]])[1])%>%
   select(where(~ !all(is.na(.))))
 
 
 }
 
 
-
-
-x2 <- bind_rows(x1.c)
-
-
-
-stop()
+x1.b <- bind_rows(x1r.c)
 
 
 
-x2r[[1]]%>%
+
+
+
+
+
+
+for (i in 1:length(x2r)){
+
+x2r[[i]]<-x2r[[1]]%>%
   
   mutate(across(everything(), ~ ifelse(. == "`", NA, .)))%>%
   slice(1)%>%
@@ -57,13 +65,49 @@ x2r[[1]]%>%
 
 
 
+}
+
+
+x2r.c <- map(x2r, ~ mutate(.x, across(everything(), as.character)))
+
+x2.b <- bind_rows(x2r.c)
 
 
 
 
-x3<-x2%>%select(where(~ !all(is.na(.))))%>%
+
+
+
+x2<-bind_rows(x1.b,  x2.b)
+
+
+
+
+
+
+
+
+
+
+x3<-x2%>%
   
-  relocate(filename)%>%
+  janitor::clean_names()%>%
+  
+  mutate(across(everything(), ~ case_when(
+    str_to_lower(.) %in% c("na", "n/a") ~ NA_character_,  # Replace with NA if the value matches
+    TRUE ~ .  # Keep other values unchanged
+  )))%>%
+  
+  
+  
+  
+  select(where(~ !all(is.na(.))))%>%
+  
+  
+
+
+  rename(sheet_name=sheet_name2)%>%
+  relocate(filename, sheet_name)%>%
   unite(
     disposition_notes,
     starts_with("dispos"),
@@ -119,119 +163,133 @@ x4<-x3%>%
   mutate(additional_comments=if_else(additional_comments=="", NA, additional_comments))%>%
   
   
-  rename(bx=x)%>%
   
-  mutate(bd=if_else(is.na(bd), bx, bd))%>%
   
-  select(-bx)%>%
+  mutate(initials=if_else(initials=="initials", NA, initials))%>%
   
   
   
   unite(
-    treatment_duration,
-    c("treatment_duration", "treatment_length"),
+    initials,
+    c("initials", "initials_added"),
     sep = "; ",
     na.rm = TRUE,
     remove = TRUE
   )%>%
-  mutate(treatment_duration=if_else(treatment_duration=="", NA, treatment_duration))%>%
-  
-  
-  unite(
-    virus_1,
-    c("virus_1", "virus1"),
-    sep = "; ",
-    na.rm = TRUE,
-    remove = TRUE
-  )%>%
-  mutate(virus_1=if_else(virus_1=="", NA, virus_1))%>%
+  mutate(initials=if_else(initials=="", NA, initials))%>%
   
   
   
   
-  unite(
-    duration_of_dox,
-    c("duration_of_dox", "duration_of_dox_tx"),
-    sep = "; ",
-    na.rm = TRUE,
-    remove = TRUE
-  )%>%
-  mutate(duration_of_dox=if_else(duration_of_dox=="", NA, duration_of_dox))%>%
   
-  unite(
-    blood_collection,
-    c("blood_collection", "blood_draw"),
-    sep = "; ",
-    na.rm = TRUE,
-    remove = TRUE
-  )%>%
-  mutate(blood_collection=if_else(blood_collection=="", NA, blood_collection))%>%
+  # # rename(bx=x)%>%
+  # 
+  # mutate(bd=if_else(is.na(bd), bx, bd))%>%
+  # 
+  # select(-bx)%>%
   
   
   
-  unite(
-    cell_line_injected,
-    c("cell_line_injected", "cells"),
-    sep = "; ",
-    na.rm = TRUE,
-    remove = TRUE
-  )%>%
-  mutate(cell_line_injected=if_else(cell_line_injected=="", NA, cell_line_injected))%>%
+  # unite(
+  #   treatment_duration,
+  #   c("treatment_duration", "treatment_length"),
+  #   sep = "; ",
+  #   na.rm = TRUE,
+  #   remove = TRUE
+  # )%>%
+  # mutate(treatment_duration=if_else(treatment_duration=="", NA, treatment_duration))%>%
   
   
-  unite(
-    date_of_first_treatment,
-    c("date_of_first_treatment", "date_of_first_treatrment"),
-    sep = "; ",
-    na.rm = TRUE,
-    remove = TRUE
-  )%>%
-  mutate(date_of_first_treatment=if_else(date_of_first_treatment=="", NA, date_of_first_treatment))%>%
-  
-  
-  unite(
-    necropsy_date,
-    c("necropsy_date", "todays_date"),
-    sep = "; ",
-    na.rm = TRUE,
-    remove = TRUE
-  )%>%
-  mutate(date_of_first_treatment=if_else(date_of_first_treatment=="", NA, date_of_first_treatment))%>%
-  
-  
-  mutate(across(everything(), ~ case_when(
-    str_to_lower(.) %in% c("na", "n/a") ~ NA_character_,  # Replace with NA if the value matches
-    TRUE ~ .  # Keep other values unchanged
-  )))%>%
-  
-  
-  select(-ihc_stain_2)%>%
+  # unite(
+  #   virus_1,
+  #   c("virus_1", "virus1"),
+  #   sep = "; ",
+  #   na.rm = TRUE,
+  #   remove = TRUE
+  # )%>%
+  # mutate(virus_1=if_else(virus_1=="", NA, virus_1))%>%
   
   
   
-  mutate(treated=if_else(tolower(treated)=="no", NA, treated))%>%
-  mutate(dox_tx=if_else(tolower(dox_tx)=="no", NA, dox_tx))%>%
+  
+  # unite(
+  #   duration_of_dox,
+  #   c("duration_of_dox", "duration_of_dox_tx"),
+  #   sep = "; ",
+  #   na.rm = TRUE,
+  #   remove = TRUE
+  # )%>%
+  # mutate(duration_of_dox=if_else(duration_of_dox=="", NA, duration_of_dox))%>%
+  
+  # unite(
+  #   blood_collection,
+  #   c("blood_collection", "blood_draw"),
+  #   sep = "; ",
+  #   na.rm = TRUE,
+  #   remove = TRUE
+  # )%>%
+  # mutate(blood_collection=if_else(blood_collection=="", NA, blood_collection))%>%
+  # 
   
   
-  unite(
-    treatment,
-    c("treatment", "treated", "drug_treatment"),
-    sep = "; ",
-    na.rm = TRUE,
-    remove = TRUE
-  )%>%
-  mutate(treatment=if_else(treatment=="", NA, treatment))%>%
+  # unite(
+  #   cell_line_injected,
+  #   c("cell_line_injected", "cells"),
+  #   sep = "; ",
+  #   na.rm = TRUE,
+  #   remove = TRUE
+  # )%>%
+  # mutate(cell_line_injected=if_else(cell_line_injected=="", NA, cell_line_injected))%>%
+  # 
   
-  unite(
-    date_treatment_started,
-    c("date_of_first_treatment", "start_of_treatment"),
-    sep = "; ",
-    na.rm = TRUE,
-    remove = TRUE
-  )%>%
-  mutate(date_treatment_started=if_else(date_treatment_started=="", NA, date_treatment_started))%>%
+  # unite(
+  #   date_of_first_treatment,
+  #   c("date_of_first_treatment", "date_of_first_treatrment"),
+  #   sep = "; ",
+  #   na.rm = TRUE,
+  #   remove = TRUE
+  # )%>%
+  # mutate(date_of_first_treatment=if_else(date_of_first_treatment=="", NA, date_of_first_treatment))%>%
+  # 
+  
+  # unite(
+  #   necropsy_date,
+  #   c("necropsy_date", "todays_date"),
+  #   sep = "; ",
+  #   na.rm = TRUE,
+  #   remove = TRUE
+  # )%>%
+  # mutate(date_of_first_treatment=if_else(date_of_first_treatment=="", NA, date_of_first_treatment))%>%
   
   
+  
+
+  
+  
+  
+  # mutate(treated=if_else(tolower(treated)=="no", NA, treated))%>%
+  # mutate(dox_tx=if_else(tolower(dox_tx)=="no", NA, dox_tx))%>%
+  # 
+  # 
+  # unite(
+  #   treatment,
+  #   c("treatment", "treated", "drug_treatment"),
+  #   sep = "; ",
+  #   na.rm = TRUE,
+  #   remove = TRUE
+  # )%>%
+  # mutate(treatment=if_else(treatment=="", NA, treatment))%>%
+  # 
+  # unite(
+  #   date_treatment_started,
+  #   c("date_of_first_treatment", "start_of_treatment"),
+  #   sep = "; ",
+  #   na.rm = TRUE,
+  #   remove = TRUE
+  # )%>%
+  # mutate(date_treatment_started=if_else(date_treatment_started=="", NA, date_treatment_started))%>%
+  # 
+  # 
   
   
   select(where(~ !all(is.na(.))))
@@ -239,7 +297,7 @@ x4<-x3%>%
 
 
 
-saveRDS(x4, "nec_files/2024-11-14-combined_cleaned_necs.rds")
+saveRDS(x4, "nec_files/2024-11-14-combined_cleaned_necs-part2.rds")
 
 
 
