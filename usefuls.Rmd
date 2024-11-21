@@ -8,14 +8,6 @@ editor_options:
     wrap: 72
 ---
 
-```{r}
-source("libs.R")
-library(tidyverse)
-library(dtplyr)
-```
-
-Add a new chunk by clicking the *Insert Chunk* button on the toolbar or
-by pressing *Ctrl+Alt+I*.
 
 how to save a ggplot or other grob to pdf. This below is useful because
 it adds a title to the metadata of the pdf file, which prints the R
@@ -44,10 +36,25 @@ ggsave("file_path_output",
        dpi=600,
        
 )
+```
+
+some super useful dplyr calls
+
+```{r}
+#sorts columns by names
+select(sort(names(.)))
+
+#remove columns with all NA values
+select(where(~ !all(is.na(.))))
+
+
+#helpful to turn specific date formats into actual dates,
+#useful where there are mixed columns
+mutate(injection_date_1 = lubridate::as_date(str_extract(injection_date, "^\\d{4}-\\d{2}-\\d{2}$")))
 
 ```
 
-h
+google sheets usage
 
 ```{r}
 ##################################
@@ -79,14 +86,7 @@ sheets_df<-read_sheet(sheet_id,
 
 ```
 
-When you save the notebook, an HTML file containing the code and output
-will be saved alongside it (click the *Preview* button or press
-*Ctrl+Shift+K* to preview the HTML file).
 
-The preview shows you a rendered HTML copy of the contents of the
-editor. Consequently, unlike *Knit*, *Preview* does not run any R code
-chunks. Instead, the output of the chunk when it was last run in the
-editor is displayed.
 
 ```{r}
   group_by(gene_name_ms,tumor_type) %>%
@@ -98,6 +98,7 @@ editor is displayed.
             
             se=sd/sqrt(n))
 ```
+
 
 #perform t-tests with data in tidy format. Requires broom and tidyverse
 Also get summary stats for each group you want. You can then join that
@@ -198,3 +199,14 @@ mutate(
 ```
 
 ---end
+
+
+
+When you save the notebook, an HTML file containing the code and output
+will be saved alongside it (click the *Preview* button or press
+*Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the
+editor. Consequently, unlike *Knit*, *Preview* does not run any R code
+chunks. Instead, the output of the chunk when it was last run in the
+editor is displayed.
