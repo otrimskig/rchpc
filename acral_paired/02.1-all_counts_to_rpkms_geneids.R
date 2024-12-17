@@ -13,9 +13,6 @@ df<-readRDS(paste0(proj_dir, "ds/v00-all_counts.rds"))%>%
   #rename_at(vars(contains("merged")), ~ sub("_merged.bam", "", .))
 
 
-
-
-
 human <- useMart(biomart = "ensembl", dataset = "hsapiens_gene_ensembl", host="https://www.ensembl.org/")
 mouse <- useMart(biomart = "ensembl", dataset = "mmusculus_gene_ensembl", host="https://www.ensembl.org/")
 
@@ -26,74 +23,61 @@ ms_gene_info <- getBM(attributes = c("entrezgene_id", "external_gene_name"),
   rename(gene_id_ms = entrezgene_id, gene_name_ms = external_gene_name)
 
 
-
-human = useMart("ensembl", dataset = "hsapiens_gene_ensembl", host = "https://jan2024.archive.ensembl.org/")
-mouse = useMart("ensembl", dataset = "mmusculus_gene_ensembl", host = "https://jan2024.archive.ensembl.org/")
-
-
-
-
 a<-ms_gene_info$gene_name_ms%>%as_tibble()%>%
   filter(!is.na(value))%>%
   unique()%>%pull()
-a[4]
 
-results <- list()
 
-for (i in seq_along(a)) {
-  tryCatch({
-    # Attempt to fetch and rename the results
-    results[[i]] <- getLDS(
-      attributes = c("hgnc_symbol"), 
-      filters = "hgnc_symbol", 
-      values = a[i], 
-      mart = human, 
-      attributesL = c("mgi_symbol"), 
-      martL = mouse, 
-      uniqueRows = FALSE
-    ) %>%
-      rename(gene_name_ms = MGI.symbol, gene_name_hu = HGNC.symbol)
-  }, error = function(e) {
-    # Handle the error (e.g., log or skip)
-    message("Error on iteration ", i, ": ", conditionMessage(e))
-    results[[i]] <- NULL
-  })
-}
-a[4]
+
+
+
+human = useMart("ensembl", dataset = "hsapiens_gene_ensembl", host = "https://dec2021.archive.ensembl.org/")
+mouse = useMart("ensembl", dataset = "mmusculus_gene_ensembl", host = "https://dec2021.archive.ensembl.org/")
+
+
+
+
+
+
 
 results<-getLDS(mart = mouse,
-                values = "Oog3",
-                filters = "external_gene_name", 
-                attributes = "external_gene_name",  
+                values = a,
+                filters = "mgi_symbol", 
+                attributes = "mgi_symbol",  
                 
                 martL = human, 
                 attributesL = c("hgnc_symbol"), 
                 
                 uniqueRows=F)
   
-  rename(gene_name_ms=MGI.symbol, gene_name_hu= HGNC.symbol)
+hu_gene_info<-results%>%rename(gene_name_ms=MGI.symbol, gene_name_hu= HGNC.symbol)
 
   
-attributes <- listAttributes(human)
-
-attributesm <- listAttributes(mouse)
 
 
 
-chunked_values <- split(a, ceiling(seq_along(a) / 100))
 
-results <- lapply(chunked_values, function(chunk) {
-  getLDS(
-    attributes = c("hgnc_symbol"), 
-    filters = "hgnc_symbol", 
-    values = chunk, 
-    mart = human, 
-    attributesL = c("mgi_symbol"), 
-    martL = mouse, 
-    uniqueRows = TRUE
-  )
-})
-final_results <- do.call(rbind, results)
+# attributes <- listAttributes(human)
+# 
+# attributesm <- listAttributes(mouse)
+
+
+# chunked_values <- split(a, ceiling(seq_along(a) / 100))
+# 
+# results <- lapply(chunked_values, function(chunk) {
+#   getLDS(
+#     attributes = c("hgnc_symbol"),
+#     filters = "hgnc_symbol",
+#     values = chunk,
+#     mart = human,
+#     attributesL = c("mgi_symbol"),
+#     martL = mouse,
+#     uniqueRows = TRUE
+#   )
+# })
+# final_results <- do.call(rbind, results)
+
+
 
 
 gene_info<-ms_gene_info%>%
@@ -111,15 +95,13 @@ unique_genes<-gene_info%>%
 
 
 
-
-
 df2<-df%>%
   left_join(unique_genes)%>%
   relocate(gene_id_ms, gene_len_ms, gene_name_ms, gene_name_hu)%>%
   
   # pivot_longer(cols=contains("X23908"), names_to="sample_id", values_to="read_count")%>%
  
-   pivot_longer(cols=5:last_col(), names_to="sample_id", values_to="read_count")%>%
+  pivot_longer(cols=5:last_col(), names_to="sample_id", values_to="read_count")%>%
   
   group_by(sample_id)%>%
  
@@ -128,6 +110,4 @@ df2<-df%>%
   
 
 
-
-
-saveRDS(df2, paste0(proj_dir, "ds/vm-01-gene_id_hu_m_rpkms.rds"))
+saveRDS(df2, paste0(proj_dir, "ds/v01-gene_id_hu_m_rpkms.rds"))
