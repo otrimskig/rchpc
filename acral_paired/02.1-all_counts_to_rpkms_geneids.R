@@ -9,8 +9,6 @@ proj_dir<-"acral_paired/"
 df<-readRDS(paste0(proj_dir, "ds/v00-all_counts.rds"))%>%
   rename(gene_id_ms=GeneID)%>%
   rename(gene_len_ms=Length)
-  
-  #rename_at(vars(contains("merged")), ~ sub("_merged.bam", "", .))
 
 
 human <- useMart(biomart = "ensembl", dataset = "hsapiens_gene_ensembl", host="https://www.ensembl.org/")
@@ -28,15 +26,8 @@ a<-ms_gene_info$gene_name_ms%>%as_tibble()%>%
   unique()%>%pull()
 
 
-
-
-
 human = useMart("ensembl", dataset = "hsapiens_gene_ensembl", host = "https://dec2021.archive.ensembl.org/")
 mouse = useMart("ensembl", dataset = "mmusculus_gene_ensembl", host = "https://dec2021.archive.ensembl.org/")
-
-
-
-
 
 
 
@@ -51,32 +42,6 @@ results<-getLDS(mart = mouse,
                 uniqueRows=F)
   
 hu_gene_info<-results%>%rename(gene_name_ms=MGI.symbol, gene_name_hu= HGNC.symbol)
-
-  
-
-
-
-
-# attributes <- listAttributes(human)
-# 
-# attributesm <- listAttributes(mouse)
-
-
-# chunked_values <- split(a, ceiling(seq_along(a) / 100))
-# 
-# results <- lapply(chunked_values, function(chunk) {
-#   getLDS(
-#     attributes = c("hgnc_symbol"),
-#     filters = "hgnc_symbol",
-#     values = chunk,
-#     mart = human,
-#     attributesL = c("mgi_symbol"),
-#     martL = mouse,
-#     uniqueRows = TRUE
-#   )
-# })
-# final_results <- do.call(rbind, results)
-
 
 
 

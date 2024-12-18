@@ -33,5 +33,21 @@ all_counts<-cbind(all_counts, counts[,3])
 }
 
 
-saveRDS(all_counts, paste0(output_path, "v00-all_counts.rds"))
+
+#now clean up sample names. may need to adjust if format of names changes with other exp.
+
+
+bam_sample_names<-colnames(all_counts)%>%as_tibble()%>%
+  rename(name1=value)%>%
+  mutate(name2=substr(name1, 1,9))
+
+name_map<-setNames(bam_sample_names$name2, bam_sample_names$name1)
+
+all_counts2<-all_counts%>%
+  rename_with(~ name_map[.x], .cols = all_of(bam_sample_names$name1))
+
+
+
+saveRDS(all_counts2, paste0(output_path, "v00-all_counts.rds"))
+
 

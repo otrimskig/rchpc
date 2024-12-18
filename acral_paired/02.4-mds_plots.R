@@ -8,6 +8,14 @@ library(ggnewscale)
 all_info<-readRDS("acral_paired/ds/v00-sample_info.rds")
 
 
+all_info<-readRDS("k19mf/ds/vm-00-sample_info.rds")
+
+
+str(all_info)
+
+
+
+
 #get coordinates from plot-mds analysis, and dimension length.
 mds<-readRDS("k19mf/ds/mds_dge.rds")
 mds_coords<-tibble(x=mds$x,
