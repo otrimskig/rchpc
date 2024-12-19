@@ -41,7 +41,7 @@ df2<-df%>%
   dplyr::select(-mean_rpkm, -max_rpkm)%>%
   ungroup()
 
-saveRDS(df2, paste0(exp_dir,"ds/v02-filtered_rpkms.rds"))
+saveRDS(df2, paste0(exp_dir,"ds/xv02-filtered_rpkms.rds"))
 
 
 
@@ -52,4 +52,4 @@ gene_stats<-df%>%
   dplyr::select(gene_id_ms, gene_name_hu, gene_name_ms, mean_rpkm, max_rpkm)%>%
   unique()
 
-saveRDS(gene_stats, paste0(exp_dir,"ds/gene_stats.rds"))
+saveRDS(gene_stats, paste0(exp_dir,"ds/xgene_stats.rds"))

@@ -4,7 +4,7 @@ library(ggrepel)
 library(edgeR)
 
 r_folder_name<-"acral_paired"
-vm02<-readRDS("acral_paired/ds/v02-filtered_rpkms.rds")
+vm02<-readRDS("acral_paired/ds/xv02-filtered_rpkms.rds")
 
 # sample_info<-readRDS("ds/v07-per_sample_info.rds")
 
@@ -29,7 +29,7 @@ dge<-DGEList(counts = mat,
 
 
 p<-plotMDS.DGEList(dge)
-saveRDS(p, paste0(r_folder_name, "/ds/mds_dge.rds"))
+saveRDS(p, paste0(r_folder_name, "/ds/xmds_dge.rds"))
 
 
 
@@ -37,7 +37,7 @@ saveRDS(p, paste0(r_folder_name, "/ds/mds_dge.rds"))
 dir.create(paste0(r_folder_name, "/plots"), showWarnings = FALSE)
 
 
-pdf(paste0(r_folder_name, "/plots/","MDS_plot1.pdf"), width = 7, height = 7)  # Set dimensions as needed
+pdf(paste0(r_folder_name, "/plots/","xMDS_plot1.pdf"), width = 7, height = 7)  # Set dimensions as needed
 plotMDS.DGEList(dge, main = "MDS Plot")
 dev.off()
 
