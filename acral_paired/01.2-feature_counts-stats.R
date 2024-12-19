@@ -62,4 +62,10 @@ write_csv(combined_perc, file=paste0(exp_path, "/featurecounts/", basename(exp_p
 
 dir.create(paste0(r_folder_name, "/ds"), showWarnings = FALSE)
 
+
+
+
+
+
+
 saveRDS(combined_perc, paste0(r_folder_name, "/ds", "/featurecount_stats.rds"))
