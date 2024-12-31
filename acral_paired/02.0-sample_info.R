@@ -42,3 +42,8 @@ feature_stats<-readRDS("acral_paired/ds/featurecount_stats.rds")%>%
 b<-left_join(a, feature_stats)
 
 saveRDS(b, "acral_paired/ds/v00-sample_info.rds")
+
+
+
+#save for easy check outside.
+write_csv(b, "acral_paired/ds/v00-sample_info.csv")
