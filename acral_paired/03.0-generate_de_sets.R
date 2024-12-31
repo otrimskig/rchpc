@@ -5,14 +5,9 @@ library(edgeR)
 library(dtplyr)
 
 sample_info<-readRDS("acral_paired/ds/v00-sample_info.rds")
+read_counts<-readRDS("acral_paired/ds/v02-filtered_rpkms.rds")
 
-
-read_counts<-readRDS("k19mf/ds/vm-02-filtered_rpkms.rds")
-
-all_data<-read_counts%>%left_join(sample_info)%>%ungroup()%>%arrange(sample_id)%>%
-  
-  filter(mouse_num!="3126")%>%
-  filter(mouse_num!="3971")
+all_data<-read_counts%>%left_join(sample_info)%>%ungroup()%>%arrange(sample_id)
 
 
 #view all available categories.
@@ -20,9 +15,12 @@ colnames(all_data)
 
 
 #use to determine category for selection of comparison.
-categories<-c("tumor_type")
+categories<-c("sample_type")
 
-# categories[2]
+r_folder_name<-"acral_paired"
+
+
+#generate de sets from all categories specified above.
 tryCatch({
 for(i in 1:length(categories)){  
 # i<-1
@@ -167,8 +165,11 @@ comp_counts<-all_data%>%
     pivot_wider(values_from = rpkm, names_from = sample_id, names_prefix = "rpkm_")
 
   
+  
+  dir.create(paste0(r_folder_name, "/dexps"), showWarnings = F)
+  
   #save output file.
-  saveRDS(output2, paste0("k19mf/dexps/", "dexp-", fs::path_sanitize(paste0(category, "-", ga,  " v. ", gb, "excluded2s")), ".rds"))
+  saveRDS(output2, paste0(r_folder_name, "/dexps/", "dexp-", fs::path_sanitize(paste0(category, "-", ga,  " v. ", gb)), ".rds"))
   
   
   
@@ -185,6 +186,5 @@ comp_counts<-all_data%>%
 
 }
 }
-  
 }) 
 
