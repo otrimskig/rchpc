@@ -100,7 +100,7 @@ ggsave(paste0("plots/",fs::path_sanitize(paste0("vol-glioma-atrx", file_base, "-
 
 }
 
-stop("stope here")
+stop("stop here")
 
 plots<-list.files("plots", full.names = T, pattern="^vol.*\\.pdf$")
 
