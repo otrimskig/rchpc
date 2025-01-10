@@ -1,24 +1,26 @@
-
-
 library(tidyverse)
 library(EnhancedVolcano)
-
 
 ###########################################
 
 #get vector of all .rds files containing dexp analyses.
-all_dexps<-list.files("nf1g/single_geno/dexps", full.names = T, pattern="^dexp.*\\.rds$")
-
+all_dexps<-list.files("nf1g/dexps/atrx_comps", full.names = T, pattern="^dexp.*\\.rds$")
 
 
 for(i in 1:length(all_dexps)){
 
 
-
 rds_file_path<-all_dexps[i]
+
 
 #determine plot title from basic naming pattern of rds file.
 plot_title<-basename(rds_file_path)%>%
+  sub(".rds$", "", .)%>%
+  sub("^dexp-", "", .)%>%
+  sub("-nf1 KO; pten KO; ink KO; atrx KO v. nf1 KO; pten KO; ink KO; atrx wt", "", .)
+
+#determine plot title from basic naming pattern of rds file.
+plot_subtitle<-basename(rds_file_path)%>%
   sub(".rds$", "", .)%>%
   sub("^dexp-", "", .)%>%
   sub(".*-", "", .)%>%
@@ -63,11 +65,11 @@ p<-EnhancedVolcano(vdf,
                 colConnectors = "grey50",
                 arrowheads = FALSE,
                 min.segment.length=.3,
-                title=plot_title,
+                title=plot_title, 
                 
                 
                 
-                subtitle = paste0("Of genotype: ", genotype_analyzed),
+                subtitle = plot_subtitle,
                 
                 
                 
@@ -92,7 +94,7 @@ p<-EnhancedVolcano(vdf,
 pdf_height<-y_axis_max/15+2
 pdf_height=8
 
-ggsave(paste0("nf1g/single_geno/plots/",fs::path_sanitize(paste0("vol-", file_base, "-rpkms.pdf"))),
+ggsave(paste0("nf1g/atrx_comps/plots/",fs::path_sanitize(paste0("vol-", file_base, "-rpkms.pdf"))),
        plot=p,
        
        
@@ -121,8 +123,8 @@ ggsave(paste0("nf1g/single_geno/plots/",fs::path_sanitize(paste0("vol-", file_ba
 
 stop("stop here")
 
-plots<-list.files("nf1g/single_geno/plots", full.names = T, pattern="^vol.*\\.pdf$")
+plots<-list.files("nf1g/atrx_comps/plots/", full.names = T, pattern="^vol.*\\.pdf$")
 
 
 
-qpdf::pdf_combine(plots, output = "nf1g/single_geno/plots/combined/vol-scale_same.pdf")
+qpdf::pdf_combine(plots, output = "nf1g/atrx_comps/plots/combined/vol-scale_same.pdf")
