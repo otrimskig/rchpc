@@ -21,6 +21,7 @@ df<-readRDS(paste0(exp_dir, "ds/v01-gene_id_hu_m_rpkms.rds"))%>%
   group_by(gene_id_ms)%>%
   mutate(mean_rpkm = mean(rpkm))%>%
   mutate(max_rpkm = max(rpkm))%>%
+  mutate(sd_rpkm = sd(rpkm))%>%
   ungroup()%>%
   
   #remove genes where the max rpkm for any sample was at least 1.
@@ -38,7 +39,7 @@ df2<-df%>%
   slice(1)%>%
   
   
-  dplyr::select(-mean_rpkm, -max_rpkm)%>%
+  dplyr::select(-mean_rpkm, -max_rpkm, -sd_rpkm)%>%
   ungroup()
 
 saveRDS(df2, paste0(exp_dir,"ds/v02-filtered_rpkms.rds"))
@@ -49,7 +50,7 @@ saveRDS(df2, paste0(exp_dir,"ds/v02-filtered_rpkms.rds"))
 #get stats for all gene name - id combos. Some have no mouse name, but have a human name. 
 #some are duplicated. Keep a dataset with all unique combos with rpkm stats for each.
 gene_stats<-df%>%
-  dplyr::select(gene_id_ms, gene_name_hu, gene_name_ms, mean_rpkm, max_rpkm)%>%
+  dplyr::select(gene_id_ms, gene_name_hu, gene_name_ms, mean_rpkm, max_rpkm, sd_rpkm)%>%
   unique()
 
 saveRDS(gene_stats, paste0(exp_dir,"ds/gene_stats.rds"))
