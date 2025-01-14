@@ -1,5 +1,3 @@
-#combination heatmap with "z-score" heat. 
-
 source("libs.R")
 library(tidyverse)
 library(dtplyr)
@@ -12,62 +10,56 @@ library(purrr)
 
 
 
-
-
-pathways<-readRDS("k19mf/ds/gsva_pathway_names.rds")%>%
+pathways<-readRDS("acral_paired/ds/gsva_pathway_names.rds")%>%
+  
+  
   filter(list_name=="immune")%>%
+  
   mutate(pathway_name_clean2=gsub("_", " ", pathway_name))
 
 
 
 
-gsva_u<-readRDS("k19mf/ds/gsva_u-onco.rds")
-gsva_z<-readRDS("k19mf/ds/gsva_z-onco.rds")
+gsva_u<-readRDS("acral_paired/ds/gsva_u.rds")
+gsva_z<-readRDS("acral_paired/ds/gsva_z.rds")
+
+summary_stats<-readRDS("acral_paired/ds/gsva_pathway_stats.rds")
+
+sample_info<-readRDS("acral_paired/ds/v00-sample_info.rds")
 
 
 
 
-summary_stats<-readRDS("k19mf/ds/gsva_pathway_stats-onco.rds")
-
-
-#anno_color<-readRDS("nf1g/ds/colors_list.rds")
-#aod_colors = circlize::colorRamp2(c(50, 150), c("navy", "white"))
-
-
-de_samples<-readRDS("k19mf/ds/vm-00-sample_info.rds")
 
 ###now annotation set-up.
 
 #this will be all the annotation information that we will want for 
-#each plot. note that this contains only the information relevant to 
-#each specific plot.
+#each plot. 
 
-de_anno_df<-de_samples%>%select(tumor_type)
+anno_df<-sample_info%>%select(sample_type)
+
+anno_color_set <- list(
+  sample_type = setNames(c("#a200ff", "#59f7c8"), 
+                         c("acral", "subq"))
+)
 
 
-#this is the df list that contains all assigned color values
-#for all potential annotations.
-#the issue is that it also contains colors for things 
-#that WON'T show up in each plot.
-#thus we need to subset it by only the variables we are interested in.
-
-anno_color_set<-readRDS("k19mf/ds/colors_list.rds")
 
 #get the names of the variables that we are interested in filtering. 
-de_anno_colnames<-colnames(de_anno_df)
+anno_colnames<-colnames(anno_df)
 
 
 anno_subset<-list()
-for (colnum in 1:length(de_anno_colnames)){
+for (colnum in 1:length(anno_colnames)){
   
   #set column num(this wil be dynamic in for loop.)
   colnum<-1
   
   #get column name as character, from dynamically defined number.
-  colname<-de_anno_colnames[colnum]
+  colname<-anno_colnames[colnum]
   
   #from that column name, get all the unique values.
-  unique_to_filter<-de_anno_df%>%select(!!sym(colname))%>%unique()%>%pull()%>%as.character()
+  unique_to_filter<-anno_df%>%select(!!sym(colname))%>%unique()%>%pull()%>%as.character()
 
 
   
@@ -76,11 +68,11 @@ for (colnum in 1:length(de_anno_colnames)){
 }
 
 
-col_proper_names<-c("Tumor type/location")
+col_proper_names<-c("Tumor location")
 
 
 
-anno<-HeatmapAnnotation(df=de_anno_df, 
+anno<-HeatmapAnnotation(df=anno_df, 
                         col=c(anno_subset),
                         annotation_name_side = "left",
                         
@@ -117,14 +109,14 @@ gsva_subset2<-gsva_u%>%as.data.frame()%>%
   as.matrix.data.frame()
 
 
+
+
+
 summary_stats_subset<-summary_stats%>%as.data.frame()%>%
-  rownames_to_column("pathway")%>%
   filter(pathway %in% c(pathways_to_include))%>%
+  
   column_to_rownames("pathway")%>%
   as.matrix.data.frame()
-
-summary_stats_subset2<-summary_stats_subset[,c(1,2,3)]
-
 
 
 
@@ -132,9 +124,25 @@ row_labels<- structure(pathways$pathway_name_clean2, names = pathways$gsva_name)
 
 
 
+
+
+mat_plus<-gsva_subset%>%
+  as.data.frame()%>%
+  rownames_to_column("pathway")%>%
+  
+  left_join(summary_stats_subset[,"mean_value"]%>%as.data.frame()%>%
+              rownames_to_column("pathway")%>%
+              rename("mean_value"=".")
+  )%>%
+  column_to_rownames("pathway")%>%
+  as.matrix.data.frame()
+
+
+
+
 ###################################################################
 
-ha3 = rowAnnotation(a=anno_points(summary_stats_subset[,3],
+ha3 = rowAnnotation(a=anno_points(mat[,"mean_value"],
                                   pch = c("|"), 
                                   #gp = gpar(col = 2:3))
                                   #joyplot_scale = 5,
@@ -144,13 +152,14 @@ ha3 = rowAnnotation(a=anno_points(summary_stats_subset[,3],
                     show_annotation_name = c(a = FALSE))
                                   
 
+mat<-mat_plus[,-which(colnames(mat_plus) == "mean_value")]
 
 
 hm1<- Heatmap(gsva_subset,
                 right_annotation = ha3,
                  top_annotation = anno,
                 column_title = gt_render(
-                  paste0("<span style='font-size:25pt'>","Pathway Group: ", "</span><br><span style='font-size:15pt'>expression levels normalized per row (pathway)</span>"), 
+                  paste0("<span style='font-size:25pt'>","Pathway Group: Immune ", "</span><br><span style='font-size:15pt'>expression levels normalized per row (pathway)</span>"), 
                   r = unit(2, "pt")),
               
                 column_dend_height = unit(1, "in"),
@@ -180,8 +189,22 @@ combo<-draw((hm1), annotation_legend_side = "left")
 
 gh2<-grid.grabExpr(draw(combo))
 
-ggsave(paste0("k19mf/plots/hm-immune-clean", "-clustered-relative-summary-stats-no-aod.pdf"),
+ggsave(paste0("acral_paired/plots/hm-immune-clustered-relative-mean_exp_anno.pdf"),
        plot=gh2,
+       
+       
+       
+       title=paste0("src: ",
+                    
+                    rstudioapi::getSourceEditorContext()$path%>%
+                      sub("/uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig/rchpc/","",.),
+                    
+                    " at ", 
+                    
+                    lubridate::round_date(Sys.time(), "second")
+       ),
+       
+       
        
        scale = .8,
        dpi=600,
