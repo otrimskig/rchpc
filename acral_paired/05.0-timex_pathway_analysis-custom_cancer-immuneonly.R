@@ -107,8 +107,8 @@ notincluded<-setdiff(signaturevector, gseavector)%>%
 
 stop("check file save locations")
 # 
-saveRDS(gng_ssgsea_u, "acral_paired/ds/gsva_u-onco.rds")
-saveRDS(gng_ssgsea_z, "acral_paired/ds/gsva_z-onco.rds")
+saveRDS(gng_ssgsea_u, "acral_paired/ds/gsva_u.rds")
+saveRDS(gng_ssgsea_z, "acral_paired/ds/gsva_z.rds")
 
 
 
