@@ -4,7 +4,7 @@ library(tidyverse)
 
 
 
-all_sample_info<-readRDS("23908R/v07-per_sample_info.rds")
+all_sample_info<-readRDS("nf1g/ds/v10-per_sample_updated.rds")
 
 pivot<-all_sample_info%>%
   mutate(across(1:last_col(), ~as.character(.)))%>%

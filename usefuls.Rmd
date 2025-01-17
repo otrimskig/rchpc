@@ -26,14 +26,15 @@ This below is useful because it adds a title to the metadata of the pdf file, wh
 ggsave("file_path_output",
        
        title=paste0("src: ",
-                    
-        rstudioapi::getSourceEditorContext()$path%>%
-         sub("/uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig/rchpc/","",.),
-         
-         " at ", 
-        
-        lubridate::round_date(Sys.time(), "second")
-       ),
+                      
+                      rstudioapi::getSourceEditorContext()$path%>%
+                        sub("/uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig/","",.)%>%
+                      sub("C:/Users/u1413890/OneDrive - University of Utah/garrett hl-onedrive/R/","",.),
+                      
+                      " at ", 
+                      
+                      lubridate::round_date(Sys.time(), "second")
+         ),
          
        plot=plot_object,
        limitsize = FALSE,
