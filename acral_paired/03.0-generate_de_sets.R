@@ -23,7 +23,7 @@ r_folder_name<-"acral_paired"
 #generate de sets from all categories specified above.
 tryCatch({
 for(i in 1:length(categories)){  
-# i<-1
+#i<-1
 
 category<-categories[i]
 
@@ -31,6 +31,12 @@ category<-categories[i]
 comp_el<-all_data%>%ungroup()%>%select(!!sym(category))%>%
   count(!!sym(category))%>%select(1)%>%
   pull()
+
+
+
+#add this in. 
+# comp_el<-rev(comp_el)
+comp_el<-c("subq", "acral")
 
 comb_mat<-combn(comp_el, 2)
 
@@ -43,7 +49,7 @@ comb_mat<-combn(comp_el, 2)
 
 for (c in 1:ncol(comb_mat)){  
 
-# c<-1 
+#c<-1 
 
 # sample_info<-readRDS("ds/v10-per_sample_updated.rds")
 # read_counts<-readRDS("ds/vm-02-filtered_rpkms.rds")
