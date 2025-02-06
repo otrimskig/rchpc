@@ -1,8 +1,8 @@
 ####################################
 #2023.01.12
 #creating function to easily export survival analysis data. 
+source("libs.R")
 
-#2023.03.08 - updated comments to increase usability
 
 library(tidyverse)
 library(survminer)
