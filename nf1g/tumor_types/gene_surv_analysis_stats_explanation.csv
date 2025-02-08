@@ -1,0 +1,13 @@
+Column_Name,Description
+coef,Estimated regression coefficient (log hazard ratio)
+hazard_ratio,"Exponentiated coefficient (Hazard Ratio, HR)"
+se_coef,Standard error of the coefficient
+z_value,Wald test z-score
+p_value,p-value from the Wald test
+lower_95_CI,Lower bound of 95% confidence interval for HR
+upper_95_CI,Upper bound of 95% confidence interval for HR
+concordance,"Concordance index (C-index), measures model predictive ability"
+concordance_se,Standard error of the C-index
+likelihood_ratio_p,p-value for the likelihood ratio test
+wald_test_p,p-value for the Wald test
+score_logrank_p,p-value for the Score (log-rank) test
