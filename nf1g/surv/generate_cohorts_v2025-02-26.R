@@ -18,7 +18,6 @@ coh1<-readRDS("nf1g/surv/cohorts-2025-01-07.rds")%>%
 df0<-coh1%>%
 
   mutate(event = if_else(is.na(exp_end_date),1,0))%>%
-  select(-exp_end_date)%>%
   
   #making a convenient variable to easily compare nf1 vs. non-nf1s. 
   mutate(nf1=substr(resultant_geno, 1, 6))%>%
@@ -26,21 +25,33 @@ df0<-coh1%>%
 
   mutate(aod=if_else(event==0, 150,aod))%>%
   
+  #add hist category for not included in hist. categorization
+  mutate(hist=if_else(is.na(hist)&event==0, "xh-ne", hist))%>%
+  mutate(hist=if_else(is.na(hist)&event==1, "xh-e", hist))
+  
+df1<-df0%>%
+  
+  
+  #temp selection to vis. df
+  select("mouse_num", "resultant_geno", "hist", "event")%>%
+  mutate(hist=toupper(hist))%>%
+  
+  #get 1-letter/number shorthand for histological category.
   mutate(hist_cat=substr(hist, 1,1))%>%
-  
-  
+
+
+  #get hist_grade from hist information column. note that excluded from histology will
+  #still show a "grade" but it's not actually a grade. 
   mutate(hist_grade=substr(hist, 3,4))%>%
   mutate(hist_grade=gsub("\\.", "", hist_grade))%>%
   mutate(hist_grade=gsub("15", "1.5", hist_grade))%>%
-  mutate(hist_grade=gsub("^d$", "ned", hist_grade))%>%
-  
-  
   mutate(hist_catgrade=paste0(hist_cat, ".", hist_grade))%>%
-  mutate(hist_catgrade=if_else(hist_catgrade=="n.ned", "ned", hist_catgrade))%>%
   
-  mutate(hist_cat=if_else(hist_cat=="n", "ned", hist_cat))%>%
-  mutate(hist_grade=if_else(hist_grade=="N", "no grade assigned", hist_grade))
-    
+  
+  mutate(across(c(hist_cat, hist_grade, hist_catgrade), 
+               ~ if_else(hist == "NED" | grepl("^X", hist), hist, .x)))%>%
+  mutate(across(c(hist_cat, hist_grade, hist_catgrade), 
+                ~ if_else(hist == "NED" | grepl("^X", hist), hist, .x)))
 
     
 
@@ -54,12 +65,12 @@ nf1_renaming_dataset3 <- readxl::read_excel("nf1g/surv/nf1-renaming dataset.xlsx
 nf1_renaming_dataset5 <- readxl::read_excel("nf1g/surv/nf1-renaming dataset.xlsx", sheet = "patho_cat_det")%>%
   rename(hist=patho_cat_det)
 
-df1<-df0%>%
+df2<-df1%>%
   left_join(nf1_renaming_dataset1)%>%
   left_join(nf1_renaming_dataset2)%>%
   left_join(nf1_renaming_dataset3)%>%
   #left_join(nf1_renaming_dataset4)
-  left_join(nf1_renaming_dataset5)%>%
+  left_join(nf1_renaming_dataset5)
   mutate(full_cohort="1")%>%
   mutate(patho_cat_name=if_else(hist=="3.1", "Pretumorigenic", patho_cat_name))
 
