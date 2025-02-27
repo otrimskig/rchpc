@@ -34,3 +34,6 @@ saveRDS(geno_colors_map, "nf1g/ds/colors_map_geno.rds")
 
 
 
+
+
+
