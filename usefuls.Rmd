@@ -18,9 +18,39 @@ klippy::klippy()
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(eval = FALSE)
 ```
+
+
+
+### add plot src metadata to plot output. 
+
+Add src metadata below plot to easily check (without having to look at title of pdf doc)
+
+
+
+```{r, eval=FALSE, class.source='klippy'}
+metadata_text <- paste0("src: ", 
+                        rstudioapi::getSourceEditorContext()$path %>%
+                          sub("/uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig/","",.) %>%
+                          sub("C:/Users/u1413890/OneDrive - University of Utah/garrett hl-onedrive/R/","",.), 
+                        "\n", "time: ", 
+                        lubridate::round_date(Sys.time(), "second"))
+
+text_grob <- textGrob(metadata_text, x=.05, just="left", gp = gpar(fontsize = 9, col = "gray30"))
+
+p3src<-grid.arrange(p3, text_grob, ncol = 1, heights = c(3, 0.3))
+
+
+```
+
+
+
+
+
+
 ### how to save a ggplot or other grob to pdf. 
 
 This below is useful because it adds a title to the metadata of the pdf file, which prints the R script path and date-time of generation.
+
 
 ```{r, eval=FALSE, class.source='klippy'}
 ggsave("file_path_output",
