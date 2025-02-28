@@ -101,6 +101,24 @@ guides(fill = guide_legend(byrow = TRUE))
   
 p2
 
+
+
+
+metadata_text <- paste0("src: ", 
+                        rstudioapi::getSourceEditorContext()$path %>%
+                          sub("/uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig/","",.) %>%
+                          sub("C:/Users/u1413890/OneDrive - University of Utah/garrett hl-onedrive/R/","",.), 
+                        "\n", "time: ", 
+                        lubridate::round_date(Sys.time(), "second"))
+
+text_grob <- textGrob(metadata_text, x=.05, just="left", gp = gpar(fontsize = 9, col = "gray30"))
+
+p2src<-grid.arrange(p2, text_grob, ncol = 1, heights = c(3, 0.3))
+
+
+
+
+
 ggsave("nf1g/tumor_types/tumor_types-2.pdf",
        
        title=paste0("src: ",
@@ -114,7 +132,7 @@ ggsave("nf1g/tumor_types/tumor_types-2.pdf",
                     lubridate::round_date(Sys.time(), "second")
        ),
        
-       plot=p2,
+       plot=p2src,
        limitsize = FALSE,
        
        
@@ -126,6 +144,9 @@ ggsave("nf1g/tumor_types/tumor_types-2.pdf",
        
        
 )  
+
+
+
 
 
 
@@ -181,13 +202,23 @@ p3<-ggplot(df_props) +
     y = -2.5,   # Adjust as needed for the vertical position of the line
     yend = -2.5,  # Keep line horizontal at the same position
     color = resultant_geno_name  # Color the line based on resultant_geno_name
-  ), size = 1.5) +  # Line width
+  ), linewidth = 1.5) +  # Line width
   scale_color_manual(values = col_map$resultant_geno_name) +
   
   guides(color = "none") 
 
 
 
+metadata_text <- paste0("src: ", 
+                        rstudioapi::getSourceEditorContext()$path %>%
+                          sub("/uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig/","",.) %>%
+                          sub("C:/Users/u1413890/OneDrive - University of Utah/garrett hl-onedrive/R/","",.), 
+                        "\n", "time: ", 
+                        lubridate::round_date(Sys.time(), "second"))
+
+text_grob <- textGrob(metadata_text, x=.05, just="left", gp = gpar(fontsize = 9, col = "gray30"))
+
+p3src<-grid.arrange(p3, text_grob, ncol = 1, heights = c(3, 0.3))
 
 
 
@@ -208,7 +239,7 @@ ggsave("nf1g/tumor_types/tumor_types-3.pdf",
                     lubridate::round_date(Sys.time(), "second")
        ),
        
-       plot=p3,
+       plot=p3src,
        limitsize = FALSE,
        
        
