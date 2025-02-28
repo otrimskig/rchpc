@@ -96,30 +96,37 @@ s_hist<-read_sheet(sheet_id, sheet = "hist") %>%
   janitor::clean_names() %>%
   select(1:3) %>%
   filter(!is.na(.[[3]])) %>%
-  arrange(.[[3]]) %>%
-  mutate(across(2, as.factor)) %>%
+  mutate(across(3, as.numeric))%>%
+  arrange(.[[3]])%>%
+  mutate(across(2, ~ factor(.x, levels = .x))) %>% # Preserve order as factor levels
   select(-3)
   
+  
+
 s_hist_cat <- read_sheet(sheet_id, sheet = "hist_cat") %>%
   mutate(across(everything(), as.character)) %>%
   mutate(across(everything(), ~ na_if(.x, "NULL"))) %>%
   janitor::clean_names() %>%
   select(1:3) %>%
   filter(!is.na(.[[3]])) %>%
-  arrange(.[[3]]) %>%
-  mutate(across(2, as.factor)) %>%
+  mutate(across(3, as.numeric))%>%
+  arrange(.[[3]])%>%
+  mutate(across(2, ~ factor(.x, levels = .x))) %>% # Preserve order as factor levels
   select(-3)
 
 
-s_hist_grade<-read_sheet(sheet_id, sheet = "hist_grade") %>%
+
+s_hist_grade <- read_sheet(sheet_id, sheet = "hist_grade") %>%
   mutate(across(everything(), as.character)) %>%
   mutate(across(everything(), ~ na_if(.x, "NULL"))) %>%
   janitor::clean_names() %>%
   select(1:3) %>%
   filter(!is.na(.[[3]])) %>%
-  arrange(.[[3]]) %>%
-  mutate(across(2, as.factor)) %>%
+  mutate(across(3, as.numeric))%>%
+  arrange(.[[3]])%>%
+  mutate(across(2, ~ factor(.x, levels = .x))) %>% # Preserve order as factor levels
   select(-3)
+
 
 
 s_hist_catgrade<-read_sheet(sheet_id, sheet = "hist_catgrade") %>%
@@ -128,9 +135,11 @@ s_hist_catgrade<-read_sheet(sheet_id, sheet = "hist_catgrade") %>%
   janitor::clean_names() %>%
   select(1:3) %>%
   filter(!is.na(.[[3]])) %>%
-  arrange(.[[3]]) %>%
-  mutate(across(2, as.factor)) %>%
+  mutate(across(3, as.numeric))%>%
+  arrange(.[[3]])%>%
+  mutate(across(2, ~ factor(.x, levels = .x))) %>% # Preserve order as factor levels
   select(-3)
+
 
 
 
