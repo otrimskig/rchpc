@@ -34,9 +34,44 @@ te<-coh1%>%
   filter(is.na(exclude)|exclude>3)%>%
   relocate(aod, .after="resultant_geno")%>%
   anti_join(df1, by="mouse_num")%>%
-  arrange(resultant_geno, aod)
+  arrange(resultant_geno, aod)%>%
+  
+  mutate(exclude=if_else(mouse_num=="25499"|mouse_num=="25500"|mouse_num=="25502", "2", exclude))%>%
+  mutate(metadata=if_else(mouse_num=="25499"|mouse_num=="25500"|mouse_num=="25502", 
+                         
+                           if_else(is.na(metadata), #handle positive results of above in 2 different ways
+                                   "non tumor-related reason for death", paste0(metadata, "; non tumor-related reason for death")),
+                          
+                          metadata)
+         )%>%
+  
+  
+  
+  mutate(metadata=if_else(grepl("cell line", exclude_from_hist_reason), 
+                        
+                        if_else(is.na(metadata), #handle positive results of above in 2 different ways
+                                "samples used for cell lines", paste0(metadata, "; samples used for cell lines")),
+                        
+                        metadata))%>%
+  
+  mutate(exclude=if_else((is.na(exclude)|as.numeric(exclude)>3)&grepl("used for cell lines", metadata), "7", exclude))
 
 
+
+
+  
+  
+  mutate(metadata=if_else(is.na(metadata), "poor data handling. conflicting data sources or data missing.", metadata))%>%
+  
+  mutate(exclude=if_else(is.na(exclude)|as.numeric(exclude>3), "3", exclude))
+
+
+
+
+write_csv(te, "nf1g/surv/man_exclusion_check0.csv")
+
+
+stop()
 ggplot(te, aes(x=resultant_geno, y=aod, color=hist_cat_name))+
   geom_point()+
   theme_minimal()+

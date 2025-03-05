@@ -12,7 +12,7 @@ library(RColorBrewer)
 
 ########dataset read in and construction######################
 #reading in current dataset. 
-coh1<-readRDS("nf1g/surv/cohorts-2025-01-07.rds")%>%
+coh1<-readRDS("nf1g/surv/cohorts-2025-02-27.rds")%>%
   mutate(aod = as.numeric(aod))
 
 #final form for survival analysis. 
