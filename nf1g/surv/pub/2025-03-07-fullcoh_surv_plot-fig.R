@@ -12,118 +12,24 @@ library(RColorBrewer)
 
 ########dataset read in and construction######################
 #reading in current dataset. 
-coh1<-readRDS("nf1g/surv/cohorts-2025-02-27.rds")%>%
-  mutate(aod = as.numeric(aod))%>%
-  mutate(aod=if_else(event==0, 150,aod))
-
+coh1<-readRDS("nf1g/surv/cohorts-2025-03-07-v2.rds")
 
 
 df1<-coh1%>%
-  filter(is.na(exclude)|exclude>3)%>%
-
- filter(is.na(exclude_from_hist_reason)|
-          grepl("^fd$", exclude_from_hist_reason)|
-          grepl("^fd ", exclude_from_hist_reason)|
-          grepl("delay", exclude_from_hist_reason)|
-          grepl("^fd$", g_macro_obs)|
-          grepl("not collected", exclude_from_hist_reason))%>%
-  
-  mutate(exclude_hist=if_else(!is.na(exclude_from_hist_reason), "1", NA_character_))%>%
-  
-  relocate(exclude_hist, exclude, metadata, exclude_from_hist_reason)
+  filter(is.na(exclude))%>%
+  filter(!is.na(include_in_surv))
 
 
 
+df2<-df1
 
 
 
-
-
-
-
-
-
-
-
-te<-coh1%>%
-  filter(is.na(exclude)|exclude>3)%>%
-  relocate(aod, .after="resultant_geno")%>%
-  anti_join(df1, by="mouse_num")%>%
-  arrange(resultant_geno, aod)%>%
-  
-  mutate(exclude=if_else(mouse_num=="25499"|mouse_num=="25500"|mouse_num=="25502", "2", exclude))%>%
-  mutate(metadata=if_else(mouse_num=="25499"|mouse_num=="25500"|mouse_num=="25502", 
-                         
-                           if_else(is.na(metadata), #handle positive results of above in 2 different ways
-                                   "non tumor-related reason for death", paste0(metadata, "; non tumor-related reason for death")),
-                          
-                          metadata)
-         )%>%
-  
-  
-  
-  mutate(metadata=if_else(grepl("cell line", exclude_from_hist_reason), 
-                        
-                        if_else(is.na(metadata), #handle positive results of above in 2 different ways
-                                "samples used for cell lines", paste0(metadata, "; samples used for cell lines")),
-                        
-                        metadata))%>%
-  
-  mutate(exclude=if_else((is.na(exclude)|as.numeric(exclude)>3)&grepl("used for cell lines", metadata), "7", exclude))
-
-
-
-
-  
-  # 
-  # mutate(metadata=if_else(is.na(metadata), "poor data handling. conflicting data sources or data missing.", metadata))%>%
-  # 
-  # mutate(exclude=if_else(is.na(exclude)|as.numeric(exclude>3), "3", exclude))
-
-
-
-write_csv(te, "nf1g/surv/man_exclusion_check0.csv")
-
-
-
-te2<-read_csv("nf1g/surv/man_exclusion_check1 - man_exclusion_check1.csv")%>%
-  janitor::clean_names()%>%
-  select(mouse_num, exclude, exclude_hist, metadata)%>%
-  mutate_at(vars(1:last_col()), ~as.character(.))
-
-
-
-
-
-coh2<-coh1%>%
-  mutate(exclude_hist=NA_character_)%>%
-  rows_update(df1, by="mouse_num")%>%
-  rows_update(te2, by="mouse_num")%>%
-  relocate(mouse_num, exclude_hist, exclude, metadata, exclude_from_hist_reason)
-  
-
-
-
-
-
-
-
-
-ggplot(te, aes(x=resultant_geno, y=aod, color=hist_cat_name))+
-  geom_point()+
-  theme_minimal()+
-  ggrepel::geom_label_repel(aes(label=exclude_from_hist_reason, color=resultant_geno))
-
-
-
-
+#read in colors mapping
 col_map<-readRDS("nf1g/surv/colors_map_surv.rds")
 
-
+#set aspect ratio of plot.
 aspectratio<-.6
-
-
-
 
 
 
@@ -144,7 +50,6 @@ split_curves_by<-"resultant_geno"
 split_curves_clean<-"Resultant Geno"
 
 
-
 plot_subset_by<-"full_cohort"
 
 plot_subset_clean<-"all"
@@ -153,50 +58,17 @@ plot_subset_clean<-"all"
 
 
 
-
-
-
-
-
-#get all unique values to assign colors to.
-#this will ensure consistent colors throughout these plots.
 curve_category_names<-df1%>%
   select(sym(!!split_curves_by))%>%unique()%>%
   pull()
 
 num_categories <- length(curve_category_names)
-  
-# Choose a color palette based on the number of categories
-# colors <- brewer.pal(min(num_categories, 12), "Set1") 
-
-# # Create the named list to assign colors to variables.
-# colors_map <- setNames(colors, curve_category_names)
-colors_map <- setNames(hue_pal()(num_categories), curve_category_names)
-
-#set up dataset split based on previously decided category.
-
 
 
 plot_subset_values<-df1%>%
   select(!!sym(plot_subset_by))%>%
   unique()%>%
   pull()
-
-
-
-plot_subset_values<-plot_subset_values[1]
-
-
-
-# for (subset in 1:length(plot_subset_values)){
-  
-  
-  df2<-df1%>%
- 
-     filter(!!sym(plot_subset_by)==plot_subset_values[subset])
-
-
-          
 
 
 
@@ -212,8 +84,7 @@ plots<-list()
 
 
 
-#now run plots based on elements of split. 
-for(plot_split_index in 1:length(split_dfs)){
+
 plot_split_index<-1  
 
 
@@ -247,7 +118,10 @@ plots[[plot_split_index]]<-ggplot(spec_df)+
   labs(title=paste0("Overall Survival ", "\n",
                     "by: ",  split_curves_clean, "\n",
                     "facet: ", split_plots_clean, "\n",
-                    "subset: ", plot_subset_clean, ": ", plot_subset_values[subset]),
+                    "subset: ", plot_subset_clean, ": ", 
+                    
+                    plot_subset_values),
+       
        x = "Days Post Injection",
        y = "% Survival",
        color=split_curves_clean
@@ -262,7 +136,7 @@ plots[[plot_split_index]]<-ggplot(spec_df)+
 
 
 
-# plots[[1]]
+#plots[[1]]
 
 
 
@@ -305,7 +179,7 @@ comps<-results[["p.value"]]%>%
    
 
 comp_plot<-comps %>%
-  filter(p_value<1)%>%
+  filter(p_value<=.05)%>%
   mutate(group_a = factor(group_a, levels = unique(group_a)),
          group_b = factor(group_b, levels = unique(group_b)))%>%
   mutate(row_id = row_number())%>%
@@ -332,7 +206,7 @@ comp_plot<-comps %>%
             ),
             size=4) +
   
-  scale_color_manual(values = c("blue" = "blue", "black" = "black"))+
+  #scale_color_manual(values = c("blue" = "blue", "black" = "black"))+
   scale_fill_manual(values = col_map[[split_curves_by]]) +
   scale_x_continuous(breaks = c(1, 1.45, 2), labels = c("Group A", "Group B", "p-value")) +
   theme_minimal() +
@@ -346,7 +220,7 @@ comp_plot<-comps %>%
   # 
   coord_fixed(ratio = .2)
 
-comp_plot
+#comp_plot
 
 
 # combined_plot <- grid.arrange(
@@ -363,7 +237,7 @@ plots[[plot_split_index]]<-plots[[plot_split_index]] +
   )
 
 }
-}
+
 
 
 
