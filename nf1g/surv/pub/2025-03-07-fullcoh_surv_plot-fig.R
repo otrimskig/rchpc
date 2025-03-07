@@ -185,11 +185,11 @@ comp_plot<-comps %>%
   mutate(row_id = row_number())%>%
 
 
-# Create the plot
+# Create the comp "plot"
   ggplot(.) +
   geom_tile(aes(x = 1, y = row_id, fill = group_a), width = 0.4, height = 0.9, color="#5c5c5c") +
   geom_tile(aes(x = 1.45, y = row_id, fill = group_b), width = 0.4, height = 0.9, color="#5c5c5c") +
-  geom_tile(aes(x = 2.5, y = row_id), fill = "white", width = 0.4, height = 0.9) +  # Empty white tile
+  geom_tile(aes(x = 2.5, y = row_id), fill = "white", width = 1, height = 0.9) +  # Empty white tile
   
   # Add p-value text on top of the white tile
   # geom_text(aes(x = 2, y = row_id, label = round(p_value, 5), 
@@ -199,12 +199,12 @@ comp_plot<-comps %>%
   #               color = ifelse(p_value <= 0.05, "blue", "black")),
   #           size=2) +
   
-  geom_text(aes(x = 2, y = row_id, label = format(p_value, scientific = TRUE, digits = 7), 
+  geom_text(aes(x = 2.1, y = row_id, label = format(p_value, scientific = TRUE, digits = 3), #set rounding 
                 
-                fontface = ifelse(p_value <= 10, "bold", "plain"),
+                fontface = ifelse(p_value <= .05, "bold", "plain"),
                 
             ),
-            size=4) +
+            size=2) +
   
   #scale_color_manual(values = c("blue" = "blue", "black" = "black"))+
   scale_fill_manual(values = col_map[[split_curves_by]]) +
@@ -273,17 +273,15 @@ for(i in 1:length(plots)){
 }   
 
   
-  
-  
-  
-stop()
+
+
 for(i in 1:length(plots)){
 
   
    
   
   
-ggsave(paste0("nf1g/surv/plots/surv_", split_plots_by, "-", split_curves_by, "-", plot_subset_clean, "-plot_", subset, "-", i,".pdf"),
+ggsave(paste0("nf1g/surv/pub/surv_full_cohort_37v2.pdf"),
  
         title=paste0("src: ",
                     
@@ -309,108 +307,6 @@ ggsave(paste0("nf1g/surv/plots/surv_", split_plots_by, "-", split_curves_by, "-"
        
 )
 }
-
-
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-plot_paths<-fs::dir_info("nf1g/surv/plots", full.names = T, pattern="*\\.pdf$", recurse = F)%>%tibble()%>%
-  filter(modification_time>Sys.time()-lubridate::minutes(1))%>%
-  arrange(path)%>%
-  filter(type=="file")%>%
-  pull(path)
-
-
-
-
-combined_output_filen<-paste0("nf1g/surv/plots/comb/surv_comb_", split_plots_by, "-", split_curves_by, "-", plot_subset_clean, ".pdf")
-
-
-
-qpdf::pdf_combine(plot_paths, output = combined_output_filen)
-
 
 
 
