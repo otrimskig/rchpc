@@ -11,7 +11,7 @@
 
 <meta name="author" content="go" />
 
-<meta name="date" content="2025-02-28" />
+<meta name="date" content="2025-03-07" />
 
 <title>Useful R Functions</title>
 
@@ -1712,7 +1712,7 @@ border-radius: 0px;
 
 <h1 class="title toc-ignore">Useful R Functions</h1>
 <h4 class="author">go</h4>
-<h4 class="date">2025-02-28</h4>
+<h4 class="date">2025-03-07</h4>
 
 </div>
 
@@ -1895,15 +1895,14 @@ slightly data-duplicated df, but most useful format.</p>
 <span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a>       )</span></code></pre></div>
 <p>collect all recently written pdfs (can specify time, name, location…)
 and combine into 1 pdf.</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>plots<span class="ot">&lt;-</span>fs<span class="sc">::</span><span class="fu">dir_info</span>(<span class="st">&quot;k19mf/plots&quot;</span>, <span class="at">full.names =</span> T, <span class="at">pattern=</span><span class="st">&quot;^hm.*</span><span class="sc">\\</span><span class="st">.pdf$&quot;</span>, <span class="at">recurse =</span> F)<span class="sc">%&gt;%</span><span class="fu">tibble</span>()<span class="sc">%&gt;%</span></span>
-<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>  <span class="fu">filter</span>(modification_time<span class="sc">&gt;</span><span class="fu">Sys.time</span>()<span class="sc">-</span>lubridate<span class="sc">::</span><span class="fu">minutes</span>(<span class="dv">5</span>))<span class="sc">%&gt;%</span></span>
-<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>  <span class="fu">arrange</span>(path)<span class="sc">%&gt;%</span></span>
-<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>  <span class="fu">filter</span>(type<span class="sc">==</span><span class="st">&quot;file&quot;</span>)<span class="sc">%&gt;%</span></span>
-<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>  <span class="fu">pull</span>(path)</span>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>plot_paths <span class="ot">&lt;-</span> fs<span class="sc">::</span><span class="fu">dir_info</span>(<span class="st">&quot;nf1g/surv/plots&quot;</span>, <span class="at">regexp =</span> <span class="st">&quot;</span><span class="sc">\\</span><span class="st">.pdf$&quot;</span>, <span class="at">recurse =</span> <span class="cn">FALSE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>  <span class="co">#filter(modification_time&gt;Sys.time()-lubridate::minutes(1))%&gt;%</span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>  <span class="fu">filter</span>(type <span class="sc">==</span> <span class="st">&quot;file&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>  <span class="fu">arrange</span>(path) <span class="sc">%&gt;%</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>  <span class="fu">tibble</span>()</span>
 <span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a></span>
 <span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a></span>
-<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a></span>
-<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a>qpdf<span class="sc">::</span><span class="fu">pdf_combine</span>(plots, <span class="at">output =</span> <span class="st">&quot;k19mf/plots/combined/immune-hms2.pdf&quot;</span>)</span></code></pre></div>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a>qpdf<span class="sc">::</span><span class="fu">pdf_combine</span>(plots, <span class="at">output =</span> <span class="st">&quot;k19mf/plots/combined/immune-hms2.pdf&quot;</span>)</span></code></pre></div>
 <div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="fu">mutate</span>(</span>
 <span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>  <span class="at">consistent_date =</span> <span class="fu">case_when</span>(</span>
 <span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>    <span class="fu">str_detect</span>(injection_date, <span class="st">&quot;/&quot;</span>) <span class="sc">~</span> <span class="fu">mdy</span>(injection_date),</span>
