@@ -12,115 +12,26 @@ library(RColorBrewer)
 
 ########dataset read in and construction######################
 #reading in current dataset. 
-coh1<-readRDS("nf1g/surv/cohorts-2025-02-27.rds")%>%
-  mutate(aod = as.numeric(aod))%>%
-  mutate(aod=if_else(event==0, 150,aod))
+coh1<-readRDS("nf1g/surv/cohorts-2025-03-06.rds")%>%
+  mutate(aod = as.numeric(aod))
 
-
-
-df1<-coh1%>%
-  filter(is.na(exclude)|exclude>3)%>%
-
- filter(is.na(exclude_from_hist_reason)|
-          grepl("^fd$", exclude_from_hist_reason)|
-          grepl("^fd ", exclude_from_hist_reason)|
-          grepl("delay", exclude_from_hist_reason)|
-          grepl("^fd$", g_macro_obs)|
-          grepl("not collected", exclude_from_hist_reason))%>%
+#final form for survival analysis. 
+df0<-coh1%>%
   
-  mutate(exclude_hist=if_else(!is.na(exclude_from_hist_reason), "1", NA_character_))%>%
-  
-  relocate(exclude_hist, exclude, metadata, exclude_from_hist_reason)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-te<-coh1%>%
-  filter(is.na(exclude)|exclude>3)%>%
-  relocate(aod, .after="resultant_geno")%>%
-  anti_join(df1, by="mouse_num")%>%
-  arrange(resultant_geno, aod)%>%
-  
-  mutate(exclude=if_else(mouse_num=="25499"|mouse_num=="25500"|mouse_num=="25502", "2", exclude))%>%
-  mutate(metadata=if_else(mouse_num=="25499"|mouse_num=="25500"|mouse_num=="25502", 
-                         
-                           if_else(is.na(metadata), #handle positive results of above in 2 different ways
-                                   "non tumor-related reason for death", paste0(metadata, "; non tumor-related reason for death")),
-                          
-                          metadata)
-         )%>%
+  filter(is.na(exclude)|as.numeric(exclude>3))%>%
+  filter(is.na(exclude_hist))
   
   
-  
-  mutate(metadata=if_else(grepl("cell line", exclude_from_hist_reason), 
-                        
-                        if_else(is.na(metadata), #handle positive results of above in 2 different ways
-                                "samples used for cell lines", paste0(metadata, "; samples used for cell lines")),
-                        
-                        metadata))%>%
-  
-  mutate(exclude=if_else((is.na(exclude)|as.numeric(exclude)>3)&grepl("used for cell lines", metadata), "7", exclude))
-
-
-
-
-  
-  # 
-  # mutate(metadata=if_else(is.na(metadata), "poor data handling. conflicting data sources or data missing.", metadata))%>%
-  # 
-  # mutate(exclude=if_else(is.na(exclude)|as.numeric(exclude>3), "3", exclude))
-
-
-
-write_csv(te, "nf1g/surv/man_exclusion_check0.csv")
-
-
-
-te2<-read_csv("nf1g/surv/man_exclusion_check1 - man_exclusion_check1.csv")%>%
-  janitor::clean_names()%>%
-  select(mouse_num, exclude, exclude_hist, metadata)%>%
-  mutate_at(vars(1:last_col()), ~as.character(.))
-
-
-
-
-
-coh2<-coh1%>%
-  mutate(exclude_hist=NA_character_)%>%
-  rows_update(df1, by="mouse_num")%>%
-  rows_update(te2, by="mouse_num")%>%
-  relocate(mouse_num, exclude_hist, exclude, metadata, exclude_from_hist_reason)
-  
-
-
-
-
-
-
-
-
-ggplot(te, aes(x=resultant_geno, y=aod, color=hist_cat_name))+
-  geom_point()+
-  theme_minimal()+
-  ggrepel::geom_label_repel(aes(label=exclude_from_hist_reason, color=resultant_geno))
-
-
-
-
-col_map<-readRDS("nf1g/surv/colors_map_surv.rds")
-
+df1<-df0
 
 aspectratio<-.6
+
+
+
+
+
+
+
 
 
 
@@ -184,11 +95,11 @@ plot_subset_values<-df1%>%
 
 
 
-plot_subset_values<-plot_subset_values[1]
+# plot_subset_values<-plot_subset_values[1]
 
 
 
-# for (subset in 1:length(plot_subset_values)){
+for (subset in 1:length(plot_subset_values)){
   
   
   df2<-df1%>%
@@ -208,13 +119,9 @@ split_dfs<-df2 %>%
 
 plots<-list()
 
-
-
-
-
 #now run plots based on elements of split. 
 for(plot_split_index in 1:length(split_dfs)){
-plot_split_index<-1  
+  
 
 
 spec_df <- as_tibble(split_dfs[[plot_split_index]]) %>%
@@ -239,7 +146,7 @@ plots[[plot_split_index]]<-ggplot(spec_df)+
   xlim(0,150)+
   ylim(0,1)+
   
-  scale_color_manual(values = col_map[[split_curves_by]])+
+  scale_color_manual(values = colors_map)+
   
   theme_classic()+
   #theme(legend.position = c(0.2, 0.2))
@@ -262,7 +169,7 @@ plots[[plot_split_index]]<-ggplot(spec_df)+
 
 
 
-# plots[[1]]
+
 
 
 
@@ -270,7 +177,6 @@ spec_df_filtered <- spec_df %>%
   group_by(across(all_of(split_curves_by))) %>%
   filter(n() >= 2) %>%
   ungroup()
-
 
 results <- pairwise_survdiff(
   reformulate(split_curves_by, response = "Surv(time = aod, event = event)"), 
@@ -305,7 +211,7 @@ comps<-results[["p.value"]]%>%
    
 
 comp_plot<-comps %>%
-  filter(p_value<1)%>%
+  filter(p_value<.05)%>%
   mutate(group_a = factor(group_a, levels = unique(group_a)),
          group_b = factor(group_b, levels = unique(group_b)))%>%
   mutate(row_id = row_number())%>%
@@ -325,15 +231,15 @@ comp_plot<-comps %>%
   #               color = ifelse(p_value <= 0.05, "blue", "black")),
   #           size=2) +
   
-  geom_text(aes(x = 2, y = row_id, label = format(p_value, scientific = TRUE, digits = 7), 
+  geom_text(aes(x = 2, y = row_id, label = format(p_value, scientific = TRUE, digits = 3), 
                 
-                fontface = ifelse(p_value <= 10, "bold", "plain"),
+                fontface = ifelse(p_value <= 0.05, "bold", "plain"),
                 
             ),
-            size=4) +
+            size=2) +
   
   scale_color_manual(values = c("blue" = "blue", "black" = "black"))+
-  scale_fill_manual(values = col_map[[split_curves_by]]) +
+  scale_fill_manual(values = colors_map) +
   scale_x_continuous(breaks = c(1, 1.45, 2), labels = c("Group A", "Group B", "p-value")) +
   theme_minimal() +
   theme(
@@ -346,7 +252,7 @@ comp_plot<-comps %>%
   # 
   coord_fixed(ratio = .2)
 
-comp_plot
+
 
 
 # combined_plot <- grid.arrange(
@@ -402,14 +308,15 @@ for(i in 1:length(plots)){
   
   
   
-stop()
+  
+  
 for(i in 1:length(plots)){
 
   
    
   
   
-ggsave(paste0("nf1g/surv/plots/surv_", split_plots_by, "-", split_curves_by, "-", plot_subset_clean, "-plot_", subset, "-", i,".pdf"),
+ggsave(paste0("nf1g/surv/plots/surv_v37_", split_plots_by, "-", split_curves_by, "-", plot_subset_clean, "-plot_", subset, "-", i,".pdf"),
  
         title=paste0("src: ",
                     
@@ -441,87 +348,6 @@ ggsave(paste0("nf1g/surv/plots/surv_", split_plots_by, "-", split_curves_by, "-"
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 plot_paths<-fs::dir_info("nf1g/surv/plots", full.names = T, pattern="*\\.pdf$", recurse = F)%>%tibble()%>%
   filter(modification_time>Sys.time()-lubridate::minutes(1))%>%
   arrange(path)%>%
@@ -531,7 +357,7 @@ plot_paths<-fs::dir_info("nf1g/surv/plots", full.names = T, pattern="*\\.pdf$", 
 
 
 
-combined_output_filen<-paste0("nf1g/surv/plots/comb/surv_comb_", split_plots_by, "-", split_curves_by, "-", plot_subset_clean, ".pdf")
+combined_output_filen<-paste0("nf1g/surv/plots/comb/surv_comb_v37_", split_plots_by, "-", split_curves_by, "-", plot_subset_clean, ".pdf")
 
 
 
