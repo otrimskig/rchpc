@@ -11,46 +11,96 @@ library(RColorBrewer)
 
 
 ########dataset read in and construction######################
-library(googlesheets4)
-gs4_auth(email = "gotrimski@gmail.com")
-
-readRDS("nf1g/surv/cohorts-2025-02-27.rds")%>%
-range_write("https://docs.google.com/spreadsheets/d/1uZOQGLUsoWWLQ0_zj-sHzGbVjIo7NVnROKd4z951Dw8/edit?gid=1780804155#gid=1780804155",
-                          sheet = "Sheet1",
-                          .,
-                           reformat=FALSE,
-                          range = "A1")
-
-
-readRDS("nf1g/surv/cohorts-2025-03-06.rds")%>%
-  range_write("https://docs.google.com/spreadsheets/d/1uZOQGLUsoWWLQ0_zj-sHzGbVjIo7NVnROKd4z951Dw8/edit?gid=1780804155#gid=1780804155",
-              sheet = "Sheet2",
-              .,
-              reformat=FALSE,
-              range = "A1")
+#reading in current dataset. 
+coh1<-readRDS("nf1g/surv/cohorts-2025-02-27.rds")%>%
+  mutate(aod = as.numeric(aod))%>%
+  mutate(aod=if_else(event==0, 150,aod))
 
 
 
+df1<-coh1%>%
+  filter(is.na(exclude)|exclude>3)%>%
 
-
-
-
-
-
-
-
-
-df0<-read_sheet("https://docs.google.com/spreadsheets/d/1uZOQGLUsoWWLQ0_zj-sHzGbVjIo7NVnROKd4z951Dw8/edit?gid=1780804155#gid=1780804155", 
-                      sheet = "Sheet3")%>%
-  mutate(across(1:last_col(), as.character))%>%
+ filter(is.na(exclude_from_hist_reason)|
+          grepl("^fd$", exclude_from_hist_reason)|
+          grepl("^fd ", exclude_from_hist_reason)|
+          grepl("delay", exclude_from_hist_reason)|
+          grepl("^fd$", g_macro_obs)|
+          grepl("not collected", exclude_from_hist_reason))%>%
   
-  #then replace all "NULL" with NA. 
-  mutate(across(1:last_col(), function(x){na_if(x, "NULL")}))%>%
+  mutate(exclude_hist=if_else(!is.na(exclude_from_hist_reason), "1", NA_character_))%>%
   
+  relocate(exclude_hist, exclude, metadata, exclude_from_hist_reason)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+te<-coh1%>%
+  filter(is.na(exclude)|exclude>3)%>%
+  relocate(aod, .after="resultant_geno")%>%
+  anti_join(df1, by="mouse_num")%>%
+  arrange(resultant_geno, aod)%>%
+  
+  mutate(exclude=if_else(mouse_num=="25499"|mouse_num=="25500"|mouse_num=="25502", "2", exclude))%>%
+  mutate(metadata=if_else(mouse_num=="25499"|mouse_num=="25500"|mouse_num=="25502", 
+                         
+                           if_else(is.na(metadata), #handle positive results of above in 2 different ways
+                                   "non tumor-related reason for death", paste0(metadata, "; non tumor-related reason for death")),
+                          
+                          metadata)
+         )%>%
+  
+  
+  
+  mutate(metadata=if_else(grepl("cell line", exclude_from_hist_reason), 
+                        
+                        if_else(is.na(metadata), #handle positive results of above in 2 different ways
+                                "samples used for cell lines", paste0(metadata, "; samples used for cell lines")),
+                        
+                        metadata))%>%
+  
+  mutate(exclude=if_else((is.na(exclude)|as.numeric(exclude)>3)&grepl("used for cell lines", metadata), "7", exclude))
+
+
+
+
+  
+  # 
+  # mutate(metadata=if_else(is.na(metadata), "poor data handling. conflicting data sources or data missing.", metadata))%>%
+  # 
+  # mutate(exclude=if_else(is.na(exclude)|as.numeric(exclude>3), "3", exclude))
+
+
+
+write_csv(te, "nf1g/surv/man_exclusion_check0.csv")
+
+
+
+te2<-read_csv("nf1g/surv/man_exclusion_check1 - man_exclusion_check1.csv")%>%
   janitor::clean_names()%>%
+  select(mouse_num, exclude, exclude_hist, metadata)%>%
+  mutate_at(vars(1:last_col()), ~as.character(.))
+
+
+
+
+
+coh2<-coh1%>%
+  mutate(exclude_hist=NA_character_)%>%
+  rows_update(df1, by="mouse_num")%>%
+  rows_update(te2, by="mouse_num")%>%
+  relocate(mouse_num, exclude_hist, exclude, metadata, exclude_from_hist_reason)
   
-  mutate(aod=as.numeric(aod))%>%
-  mutate(event=as.numeric(event))
 
 
 
@@ -58,13 +108,11 @@ df0<-read_sheet("https://docs.google.com/spreadsheets/d/1uZOQGLUsoWWLQ0_zj-sHzGb
 
 
 
-df1<-df0%>%
-  filter(is.na(exclude))%>%
-  filter(!is.na(include_in_surv))
 
-
-
-df2<-df1
+ggplot(te, aes(x=resultant_geno, y=aod, color=hist_cat_name))+
+  geom_point()+
+  theme_minimal()+
+  ggrepel::geom_label_repel(aes(label=exclude_from_hist_reason, color=resultant_geno))
 
 
 
@@ -140,13 +188,13 @@ plot_subset_values<-plot_subset_values[1]
 
 
 
-#for (subset in 1:length(plot_subset_values)){
+# for (subset in 1:length(plot_subset_values)){
   
   
-  # df2<-df1%>%
-  # 
-  #    filter(!!sym(plot_subset_by)==plot_subset_values[subset])
-  # 
+  df2<-df1%>%
+ 
+     filter(!!sym(plot_subset_by)==plot_subset_values[subset])
+
 
           
 
