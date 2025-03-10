@@ -164,7 +164,7 @@ plots[[plot_split_index]]<-ggplot(spec_df1)+
   )+
   theme(plot.title = element_text(hjust = 0),
         aspect.ratio=aspectratio,
-        plot.margin = margin(5, 5, 40, 5))
+        plot.margin = margin(5, 5, 5, 5))
 
 
 } #end of initial plot create.
@@ -223,29 +223,32 @@ if(dim(comps)[1]==0){ #check for dimensions in comps tibble (no significant comp
   #make a no comps are significant square annotation. 
  comp_plot<-ggplot(comps) +
     
-    geom_tile(aes(x = 5, y = 5), fill = "red", width = 10, height = 10) +   # Empty white tile
-    geom_tile(aes(x = 1, y= 1), fill= "gray", width = 0.4, height = 0.9, color="#5c5c5c")+
-    geom_tile(aes(x = 1.45, y = 1), fill = "gray", width = 0.4, height = 0.9, color="#5c5c5c") +
-    
-    geom_text(aes(x = 1.7, y = 1, label = "all comparisons ns", 
-                  
-                  fontface = "bold",
-                  
-    ),
-    size=2,
-    hjust=0)+
-   scale_x_continuous(breaks = c(1, 1.45, 2), labels = c("Group A", "Group B", "p-value")) +
-   theme_minimal() +
-   theme(
-     axis.text.y = element_blank(),
-     axis.text.x = element_blank(),
-     axis.ticks = element_blank(),
-     axis.title = element_blank(),
-     panel.grid = element_blank(),
-     legend.position = "none")+
-   # 
-   coord_fixed(ratio = 1)
+     geom_tile(aes(x = 7.5, y = 7.5), fill = "#ccffff", alpha=0, width = 15, height = 15)+  # Empty tile
+     geom_tile(aes(x = .75, y = 1, fill = "gray"), width = 1.5, height = .85, color="#5c5c5c")+
+     geom_tile(aes(x = 2.35, y = 1, fill = "gray"), width = 1.5, height = .85, color="#5c5c5c")+
+     
+     
+   geom_text(aes(x = 3.3, y = 1, label = "all comparisons ns",
+                 
+                 fontface ="bold"
+   ),
+   size=2,
+   hjust = 0) +  
 
+     scale_fill_manual(values = col_map[[split_curves_by]]) +
+     theme_minimal() +
+     
+     theme(
+       axis.text.y = element_blank(),
+       axis.text.x = element_blank(),
+       axis.ticks = element_blank(),
+       axis.title = element_blank(),
+       panel.grid = element_blank(),
+       legend.position = "none",
+       plot.margin = margin(0, 0, 0, 0))+
+     coord_fixed(ratio = 1)
+
+   
 }else{
 
 
@@ -254,43 +257,34 @@ comp_plot<-comps %>%
   mutate(group_a = factor(group_a, levels = unique(group_a)),
          group_b = factor(group_b, levels = unique(group_b)))%>%
   mutate(row_id = row_number())%>%
-
-
-# Create the comp "plot"
+  
+  
+  # Create the comp "plot"
   ggplot(.) +
-  geom_tile(aes(x = 10, y = 10), fill = "#ccffff", width = 20, height = 20) +   # Empty white tile
-  geom_tile(aes(x = 2, y = row_id, fill = group_a), width = 2, height = 1, color="#5c5c5c") +
-  geom_tile(aes(x = , y = row_id, fill = group_b), width = 2, height = 1, color="#5c5c5c") +
- 
+  geom_tile(aes(x = 7.5, y = 7.5), fill = "#ccffff", alpha=0, width = 15, height = 15)+  # Empty tile
+  geom_tile(aes(x = .75, y = row_id, fill = group_a), width = 1.5, height = .85, color="#5c5c5c")+
+  geom_tile(aes(x = 2.35, y = row_id, fill = group_b), width = 1.5, height = .85, color="#5c5c5c")+
   
-  # Add p-value text on top of the white tile
-  # geom_text(aes(x = 2, y = row_id, label = round(p_value, 5), 
-  #               
-  #               fontface = ifelse(p_value <= 0.05, "bold", "plain"),
-  #               
-  #               color = ifelse(p_value <= 0.05, "blue", "black")),
-  #           size=2) +
   
-  geom_text(aes(x = 1.7, y = row_id, label = format(p_value, scientific = TRUE, digits = 3), #set rounding 
-                
+  geom_text(aes(x = 3.3, y = row_id, label = format(p_value, scientific = TRUE, digits = 3), #set rounding
+
                 fontface = ifelse(p_value <= .05, "bold", "plain"),
-                
-            ),
-            size=2,
-            hjust = 0) +
+
+  ),
+  size=2,
+  hjust = 0) +
   
-  #scale_color_manual(values = c("blue" = "blue", "black" = "black"))+
   scale_fill_manual(values = col_map[[split_curves_by]]) +
-  scale_x_continuous(breaks = c(1, 1.45, 2), labels = c("Group A", "Group B", "p-value")) +
   theme_minimal() +
+  
   theme(
     axis.text.y = element_blank(),
     axis.text.x = element_blank(),
     axis.ticks = element_blank(),
     axis.title = element_blank(),
     panel.grid = element_blank(),
-    legend.position = "none")+
-  # 
+    legend.position = "none",
+    plot.margin = margin(0, 0, 0, 0))+
   coord_fixed(ratio = 1)
 
 
@@ -299,7 +293,7 @@ comp_plot<-comps %>%
 plots[[plot_split_index]]<-plots[[plot_split_index]] +
   annotation_custom(
     grob = ggplotGrob(comp_plot),  # The grob of the second plot
-    xmin = 0, xmax = 40,  # Set the x-range for placing the plot inside
+    xmin = -10, xmax = 40,  # Set the x-range for placing the plot inside
     ymin = 0, ymax = .5   # Set the y-range for placing the plot inside
   )
 
@@ -313,7 +307,6 @@ plots[[plot_split_index]]<-plots[[plot_split_index]] +
 
 
 
-plots[[5]]
 
 
 
@@ -329,8 +322,14 @@ for(i in 1:length(plots)){
   
   text_grob <- textGrob(metadata_text, x=.05, just="left", gp = gpar(fontsize = 7, col = "gray30"))
   
- plots[[i]]<-grid.arrange(plots[[i]], text_grob, ncol = 1, heights = c(3, 0.3))
-  
+ 
+ plots[[i]] <- grid.arrange(
+   plots[[i]], 
+   text_grob, 
+   ncol = 1, 
+   heights = c(3, 0.3),  # Maintain spacing
+   layout_matrix = rbind(c(1), c(2))  # Keeps layout structure stable
+ )
   
   
    
@@ -366,7 +365,7 @@ ggsave(paste0(plot_output_loc,
        
        
        height=5,
-       width=8,
+       width=10,
        scale = 1.2,
        dpi=600,
        
