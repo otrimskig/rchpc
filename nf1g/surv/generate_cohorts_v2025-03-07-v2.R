@@ -27,4 +27,24 @@ df0<-read_sheet("https://docs.google.com/spreadsheets/d/1uZOQGLUsoWWLQ0_zj-sHzGb
 
 
 
-saveRDS(df0, "nf1g/surv/cohorts-2025-03-07-v2.rds")
+
+
+#use to create factors and determine factor levels. 
+source("nf1g/colors_map_create.R")
+#check and edit levels (order here: https://docs.google.com/spreadsheets/d/1SALlvQdI5zyhZLgUg3XS1kmb2M8Skr_8Pjt9y_spWGE/edit?gid=763297397#gid=763297397)
+
+col_map<-readRDS("nf1g/surv/colors_map_surv.rds")
+
+
+df1 <- df0 %>%
+  mutate(across(names(col_map), ~ factor(.x, levels = names(col_map[[cur_column()]]))))
+
+
+
+
+
+
+
+
+
+saveRDS(df1, "nf1g/surv/cohorts-2025-03-07-v2.rds")
