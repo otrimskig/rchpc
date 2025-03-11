@@ -10,7 +10,7 @@ library(survminer)
 library(RColorBrewer)
 
 plot_output_loc<-"nf1g/surv/pub/" #include "/"
-plot_output_base<-"surv_by_tt_wi_geno_" #do not include .pdf
+plot_output_base<-"surv_full_cohort_" #do not include .pdf
 
 ########dataset read in and construction######################
 #reading in current dataset. 
@@ -19,10 +19,7 @@ coh1<-readRDS("nf1g/surv/cohorts-2025-03-07-v2.rds")
 
 df1<-coh1%>%
   filter(is.na(exclude))%>%
-  filter(!is.na(include_in_surv))%>%
-  
-  filter(is.na(exclude_hist))
-
+  filter(!is.na(include_in_surv))
 
 
 df2<-df1
@@ -42,29 +39,22 @@ aspectratio<-.6
 #set up splits. grouping variables and splitting variables. 
 
 #set name of actual variable to split on.
-split_plots_by<-"resultant_geno"
+split_plots_by<-"full_cohort"
 
 #set how the variable will be printed in the plot. 
-split_plots_clean<-"Cohort (Resultant Genotype)"
+split_plots_clean<-"full cohort"
 
 
 #set how curves will be split.
-split_curves_by<-"hist_cat_name"
+split_curves_by<-"resultant_geno"
 
 #set how the variable will be printed in the plot. 
-split_curves_clean<-"Tumor Type (Histology)"
+split_curves_clean<-"Resultant Geno"
 
 
+plot_subset_by<-"full_cohort"
 
-
-# plot_subset_by<-"full_cohort"
-# 
-# plot_subset_clean<-"all"
-
-
-plot_subset_by<-split_plots_by
-# 
-plot_subset_clean<-split_plots_clean
+plot_subset_clean<-"all"
 
 
 
@@ -82,18 +72,18 @@ plot_subset_values<-df1%>%
   pull()
 
 
- 
+
  split_dfs<-df2 %>%
   group_split(!!sym(split_plots_by))%>%
   
   setNames(sort(unique(df2[[split_plots_by]])))
-# split_dfs<-split_dfs[5]
+
+ 
 
 plots<-list()
 
 
 
-# brewer.pal(7, "Spectral")
 
 
 for (plot_split_index in 1:length(split_dfs)){
@@ -105,6 +95,14 @@ for (plot_split_index in 1:length(split_dfs)){
 
 spec_df1 <- as_tibble(split_dfs[[plot_split_index]]) %>%
   setNames(gsub("^d\\$", "", names(as_tibble(split_dfs[[plot_split_index]]))))
+
+
+cat_name<-spec_df1%>%
+  select(all_of(split_plots_by))%>%
+  mutate_at(vars(all_of(split_plots_by)), ~as.character(.x))%>%
+  unique()%>%
+  pull()
+
 
 
 spec_counts0<-reframe(spec_df1, .by=all_of(split_curves_by),
@@ -155,7 +153,7 @@ plots[[plot_split_index]]<-ggplot(spec_df1)+
                     "facet: ", split_plots_clean, "\n",
                     "subset: ", plot_subset_clean, ": ", 
                     
-                    plot_subset_values),
+                    cat_name),
        
        x = "Days Post Injection",
        y = "% Survival",
@@ -382,13 +380,3 @@ ggsave(paste0(plot_output_loc,
 
 
 
-
-
-plot_output_pdf_paths <- fs::dir_info(plot_output_loc, regexp = "\\.pdf$", recurse = FALSE) %>%
-  
-  filter(modification_time>Sys.time()-lubridate::minutes(1))%>%
-  filter(type == "file") %>%
-  arrange(path) %>%
-  tibble()
-
-qpdf::pdf_combine(plot_output_pdf_paths$path, output = paste0(plot_output_loc, plot_output_base, "_combined.pdf"))

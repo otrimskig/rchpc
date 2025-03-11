@@ -190,14 +190,20 @@ p3<-ggplot(df_props) +
     labels = str_wrap(unique(df_props$resultant_geno), width = 18)  # Wrap long labels
   )+
   
-  
+  geom_segment(aes(
+    x = as.numeric(resultant_geno_name_numeric) - 0.11,
+    xend = as.numeric(resultant_geno_name_numeric) + 0.11,
+    y = -3,
+    yend = -3,
+    color = "grey"  # Add grey color for the outline
+  ), linewidth = 3) +
   geom_segment(aes(
     x = as.numeric(resultant_geno_name_numeric) - 0.1,   # Slightly offset from bars
     xend = as.numeric(resultant_geno_name_numeric) + 0.1, # Slightly offset from bars
-    y = -2.5,   # Adjust as needed for the vertical position of the line
-    yend = -2.5,  # Keep line horizontal at the same position
+    y = -3,   # Adjust as needed for the vertical position of the line
+    yend = -3,  # Keep line horizontal at the same position
     color = resultant_geno  # Color the line based on resultant_geno_name
-  ), linewidth = 1.5) +  # Line width
+  ), linewidth = 2) +  # Line width
   scale_color_manual(values = col_map$resultant_geno) +
   
   guides(color = "none") 

@@ -107,6 +107,15 @@ spec_df1 <- as_tibble(split_dfs[[plot_split_index]]) %>%
   setNames(gsub("^d\\$", "", names(as_tibble(split_dfs[[plot_split_index]]))))
 
 
+
+cat_name<-spec_df1%>%
+  select(all_of(split_plots_by))%>%
+  mutate_at(vars(all_of(split_plots_by)), ~as.character(.x))%>%
+  unique()%>%
+  pull()
+
+
+
 spec_counts0<-reframe(spec_df1, .by=all_of(split_curves_by),
         countn=n())
 
@@ -145,7 +154,7 @@ plots[[plot_split_index]]<-ggplot(spec_df1)+
   xlim(0,150)+
   ylim(0,1)+
   
-  scale_color_manual(values = alpha(col_map[[split_curves_by]], 0.8),  #geom_km doesn't respect alpha argument for some reason. set it manually in color call.
+  scale_color_manual(values = alpha(col_map[[split_curves_by]], 0.9),  #geom_km doesn't respect alpha argument for some reason. set it manually in color call.
                      labels = spec_counts1$var_plus_countn)+ 
   theme_classic()+
   #theme(legend.position = c(0.2, 0.2))
@@ -155,7 +164,7 @@ plots[[plot_split_index]]<-ggplot(spec_df1)+
                     "facet: ", split_plots_clean, "\n",
                     "subset: ", plot_subset_clean, ": ", 
                     
-                    plot_subset_values),
+                    cat_name),
        
        x = "Days Post Injection",
        y = "% Survival",

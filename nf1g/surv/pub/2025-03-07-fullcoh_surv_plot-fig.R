@@ -23,7 +23,8 @@ df1<-coh1%>%
 
 df2<-df1
 
-
+#read in colors mapping
+source("nf1g/colors_map_create.R") #source to get most updated.
 
 #read in colors mapping
 col_map<-readRDS("nf1g/surv/colors_map_surv.rds")
