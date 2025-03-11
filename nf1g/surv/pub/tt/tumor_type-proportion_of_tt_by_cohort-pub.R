@@ -12,7 +12,10 @@ library(RColorBrewer)
 library(forcats)
 
 source("ggplot_draw_square.R")
-
+stderrorcalc <- function(count, total) {
+  p <- count / total
+  sqrt((p * (1 - p)) / total)
+}
 
 ########dataset read in and construction######################
 #reading in current dataset. 
@@ -57,6 +60,16 @@ df_props0<-df1%>%
 
 
 
+
+group_ns<-df_props0%>%
+  group_by(hist_cat_name)%>%
+  reframe(n, resultant_geno, 
+          hist_total_n=sum(n))
+
+hist_cat_ns<-group_ns%>%select(hist_cat_name, hist_total_n)%>%unique()
+
+
+
 df_props1<-df_props0%>%
   select(resultant_geno, hist_cat_name, n, perc)%>%
   filter(!is.na(n))%>%
@@ -76,7 +89,63 @@ df_props1<-df_props0%>%
 df_props2<-df_props0%>%
   left_join(df_props1)%>%
   #add in a dummy number for each hist_cat-geno combo to ensure consistency in plot display groups.
-  complete(resultant_geno, hist_cat_name, fill = list(norm_100_n = -.5))
+  complete(resultant_geno, hist_cat_name, fill = list(norm_100_n = -.5))%>%
+  left_join(group_ns)%>%
+  mutate(x_label_ns=if_else(!is.na(n), paste0(hist_cat_name, "\n (n = ", hist_total_n, ")"), 
+                            NA_character_))
+
+
+
+
+df_props3<-df_props2%>%
+  select(resultant_geno, hist_cat_name,
+         n, total_n, 
+         perc, 
+         norm_100_n, 
+         hist_total_n)%>%
+  
+  rename(total_n_geno=total_n)%>%
+  rename(total_n_hist=hist_total_n)%>%
+  
+  select(resultant_geno,
+         hist_cat_name,
+         n, total_n_hist, total_n_geno)%>%
+  mutate(n=if_else(is.na(n), 0, n))%>%
+  
+  rename(n_actual=n)%>%
+  group_by(resultant_geno)%>%
+  
+  reframe(resultant_geno,
+          hist_cat_name, n_actual,
+          total_n_geno=sum(n_actual))%>%
+  
+  group_by(hist_cat_name)%>%
+  reframe(resultant_geno,
+          hist_cat_name, n_actual,
+          total_n_geno,
+          total_n_hist=sum(n_actual))%>%
+  
+  
+  filter(total_n_geno!=0)%>%
+  filter(total_n_hist!=0)%>%
+
+  
+  mutate(n_norm_coh_size=n_actual/total_n_geno*100)%>%
+  
+  group_by(hist_cat_name)%>%
+  
+  reframe(across(everything()), total_n_hist_norm=sum(n_norm_coh_size))%>%
+  
+  mutate(norm_prop=n_norm_coh_size/total_n_hist_norm)%>%
+  
+  mutate(norm_count=norm_prop*total_n_hist)%>%
+  
+  mutate(se = stderrorcalc(norm_count, total_n_hist))%>%
+  
+  mutate(perc=norm_prop*100)%>%
+  mutate(perc=norm_count)%>%
+  
+  mutate(se_scaled=se*100/total_n_hist)
 
 
 
@@ -88,115 +157,45 @@ df_props2<-df_props0%>%
 
 
 
-# df_props_w <- df_props1 %>%
-#   select(hist_cat_name, resultant_geno, norm_100_n, norm_100_n_total)%>%
-#   pivot_wider(
-#     names_from = resultant_geno,    # Pivot by `resultant_geno`
-#     values_from = c(norm_100_n, norm_100_n_total),    # Get `n` and `total_n` columns
-#     names_glue = "{resultant_geno}_{.value}"  # Create custom column names like 'genotype_n' and 'genotype_total_n'
-#   )
 
-
-# results <- df_props_w %>%
-#   rowwise() %>%  # Apply row-wise operations
-#   mutate(
-#     prop_test = list({
-#       # Check if any count is less than a threshold (e.g., 5)
-#       if(any(c(`nf1 KO; pten KO; ink KO; atrx KO_n`, `nf1 KO; pten KO; ink KO; atrx wt_n`) < 5)) {
-#         # Use Fisher's Exact Test for small counts
-#         fisher.test(matrix(c(`nf1 KO; pten KO; ink KO; atrx KO_n`, `nf1 KO; pten KO; ink KO; atrx wt_n`, 
-#                              `nf1 KO; pten KO; ink KO; atrx KO_total_n`, `nf1 KO; pten KO; ink KO; atrx wt_total_n`), 
-#                            nrow = 2))
-#       } else {
-#         # Use prop.test() otherwise
-#         prop.test(
-#           x = c(`nf1 KO; pten KO; ink KO; atrx KO_n`, `nf1 KO; pten KO; ink KO; atrx wt_n`),  # Success counts (x)
-#           n = c(`nf1 KO; pten KO; ink KO; atrx KO_total_n`, `nf1 KO; pten KO; ink KO; atrx wt_total_n`)  # Total counts (n)
-#         )
-#       }
-#     }),
-#     p_value = prop_test$p.value,
-#     estimate_WT = prop_test$estimate[1],  # Estimate for WT genotype
-#     estimate_KO = prop_test$estimate[2]   # Estimate for KO genotype
-#   ) %>%
-#   select(hist_cat_name, p_value, estimate_WT, estimate_KO)  # Adjust columns as needed
-
-
-# 
-# tumor_counts <- table(df1$resultant_geno, df1$hist_cat_name)  # Contingency table
-# total_counts <- rowSums(tumor_counts)  # Total tumors per genotype
-# 
-# # Compute proportions for each tumor type within each genotype
-# proportions <- sweep(tumor_counts, 1, total_counts, "/")  # Equivalent to tumor_counts / total_counts
-# 
-# # Compute standard error (SE) for proportions
-# SE <- sqrt(proportions * (1 - proportions) / total_counts)
-# 
-# # Convert to tidy format
-# prop_df <- as.data.frame(as.table(proportions)) %>%
-#   rename(resultant_geno = Var1, hist_cat_name = Var2, Proportion = Freq)
-# 
-# SE_df <- as.data.frame(as.table(SE)) %>%
-#   rename(resultant_geno = Var1, hist_cat_name = Var2, SE = Freq)
-# 
-# # Merge proportions and standard errors into one tidy tibble
-# result_df <- left_join(prop_df, SE_df, by = c("resultant_geno", "hist_cat_name"))
+df_props3$hist_cat_name_numeric <- as.numeric(as.factor(df_props3$hist_cat_name))
+cat_levels <- unique(df_props3$hist_cat_name)
+df_props3$hist_cat_name_numeric <- match(df_props3$hist_cat_name, cat_levels) * 0.6  # Adjust 0.8 to fine-tune spacing
 
 
 
-
-
-
-
-# df_props1<-df_props%>%
-#   left_join(result_df)%>%
-#   janitor::clean_names()
-
-
-
-
-
-
-
-
-df_props2$hist_cat_name_numeric <- as.numeric(as.factor(df_props2$hist_cat_name))
-cat_levels <- unique(df_props2$hist_cat_name)
-df_props2$hist_cat_name_numeric <- match(df_props2$hist_cat_name, cat_levels) * 0.6  # Adjust 0.8 to fine-tune spacing
-
-
-
-p2<-ggplot(df_props2) +
+p2<-ggplot(df_props3) +
   geom_col(aes(x = hist_cat_name_numeric, 
                fill = resultant_geno,
-               y = norm_100_n),
+               y = perc),
            width = 0.4,  
            position = position_dodge(0.5),
            key_glyph = draw_square)  +
   
   
-  # geom_errorbar(aes(
-  #   x = hist_cat_name_numeric, 
-  #   ymin = ifelse(perc > 0, perc - se * 100, NA), 
-  #   ymax = ifelse(perc > 0, perc + se * 100, NA),
-  #   group = resultant_geno_name
-  # ),
-  # position = position_dodge(0.5),
-  # width = .2,
-  # linewidth = .01,
-  # alpha=.5)+
+  geom_errorbar(aes(
+    x = hist_cat_name_numeric,
+    ymin = ifelse(perc > 0, perc - se_scaled, NA),
+    ymax = ifelse(perc > 0, perc + se_scaled, NA),
+    group = resultant_geno
+  ),
+  position = position_dodge(0.5),
+  width = .2,
+  linewidth = 1,
+  alpha=.5)+
   
   
   
 
-  theme_classic()+
+  theme_classic()
 
-
+p2
 
 
   scale_fill_manual(values=col_map$resultant_geno,
                     
                     
-                   labels = scales::label_wrap(30))+ #wrap long strings into multiple lines.
+                   labels = scales::label_wrap(20))+ #wrap long strings into multiple lines.
   
   theme(
     axis.text.x = element_text(size=12,angle = 45, hjust = 1),
@@ -211,7 +210,7 @@ p2<-ggplot(df_props2) +
   
   
   scale_x_continuous(breaks = unique(df_props2$hist_cat_name_numeric),
-                     labels = unique(df_props2$hist_cat_name))+
+                     labels = na.omit(unique(df_props2$x_label_ns)))+
   theme(
     legend.text = element_text(size = 8, hjust = 0, vjust=0.5), 
     #legend.key.height = unit(5, "mm"),
@@ -223,9 +222,9 @@ guides(fill = guide_legend(byrow = TRUE))
 p2
 
 
-stop()
 
-metadata_text <- paste0("src: ", 
+
+ metadata_text <- paste0("src: ", 
                         rstudioapi::getSourceEditorContext()$path %>%
                           sub("/uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig/","",.) %>%
                           sub("C:/Users/u1413890/OneDrive - University of Utah/garrett hl-onedrive/R/","",.), 
@@ -242,7 +241,7 @@ p2src<-grid.arrange(p2, text_grob, ncol = 1, heights = c(3, 0.3))
 
 
 
-ggsave("nf1g/surv/pub/tumor_types-prop-tt_cohort.pdf",
+ggsave("nf1g/surv/pub/pub_plots/tumor_types-prop-tt_cohort.pdf",
        
        title=paste0("src: ",
                     
