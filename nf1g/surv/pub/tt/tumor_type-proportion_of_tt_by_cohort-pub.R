@@ -200,9 +200,15 @@ p2
   theme(
     axis.text.x = element_text(size=12,angle = 45, hjust = 1),
     plot.margin = margin(10, 10, 10, 20),
-    plot.caption = element_text(hjust = 0, size = 10),)+
-  ggtitle("Cohort prevalence by tumor type")+
-  labs(fill=NULL,
+    plot.caption = element_text(hjust = 0, size = 10))+
+  
+    
+    
+    ggtitle("Cohort prevalence by tumor type")+
+  
+    
+    
+    labs(fill=NULL,
        x=NULL,
        y="% of Each Cohort",
        caption = "**Error bars represent standard error.")+
