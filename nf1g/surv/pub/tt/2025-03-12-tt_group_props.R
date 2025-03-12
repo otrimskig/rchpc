@@ -22,8 +22,12 @@ aspectratio<-.6
 df1<-coh1%>%
   #most conservative exclusion criteria
   filter(is.na(exclude))%>%
-  filter(!is.na(include_in_surv))
-  #filter(is.na(exclude_hist))%>%
+  filter(!is.na(include_in_surv))%>%
+  #
+
+
+
+  filter(is.na(exclude_hist))
   #filter(as.numeric(hist_grade)>1)%>%
   
 
@@ -112,38 +116,45 @@ sum_df2<-comp_3%>%
           se_prop_scaled=se_prop/prop_total_hist)%>%
 
   relocate(resultant_geno)%>%
-  relocate(n_total_hist, .after=n_total_geno)%>%
+  relocate(n_total_hist, .after=n_total_geno)
   
   
-  mutate(hist_cat_name_numeric=as.numeric(hist_cat_name))
+  
 
 
 
 
 
 
-
-cat_levels <- unique(sum_df2$hist_grade_name)
-sum_df2$hist_grade_name_numeric <- match(sum_df2$hist_grade_name, cat_levels) * 0.2  # Adjust 0.8 to fine-tune spacing
+# cat_levels <- unique(sum_df2$hist_grade_name)
+# sum_df2$hist_grade_name_numeric <- match(sum_df2$hist_grade_name_numeric, cat_levels) * 0.2  # Adjust 0.8 to fine-tune spacing
 
 gg_data<-sum_df2%>%
-  filter(grepl("\\d$", hist_grade_name)|
-           hist_grade_name=="No grade assigned")%>%
+  # filter(grepl("\\d$", hist_grade_name)|
+  #          hist_grade_name=="No grade assigned"|
+  #          hist_grade_name=="No evidence of disease")%>%
   filter(hist_cat_name!="No histological classification")%>%
   mutate(across(where(is.factor), droplevels))%>%
   
   complete(hist_grade_name, hist_cat_name, resultant_geno, fill=list(n_geno=0))%>%
-  mutate(prop_geno_dummy=if_else(n_geno==0, -.5, prop_geno*100))
+  mutate(prop_geno_dummy=if_else(n_geno==0, -1, prop_geno*100))%>%
   
+  
+  mutate(hist_grade_name_numeric=as.numeric(factor(hist_grade_name))*.3)
+
+  
+
+
+
 
 ggplot(gg_data) +
   geom_col(aes(x = hist_grade_name_numeric,
                fill = hist_cat_name,
                y = prop_geno_dummy),
-           width = 0.4,
-           position = position_dodge(width = .5, preserve="total"),
+           width = 0.2,
+           position = position_dodge(width = .25, preserve="total"),
            key_glyph = draw_square)+
-  facet_grid(vars(resultant_geno))
+
   # 
   # 
   # scale_x_continuous(breaks = unique(gg_data$hist_cat_name_numeric),
@@ -154,15 +165,35 @@ ggplot(gg_data) +
 
 
 
-  
+  # 
   geom_errorbar(aes(
-    x = hist_cat_name_numeric, 
-    ymin = ifelse(perc > 0, perc - se * 100, NA), 
-    ymax = ifelse(perc > 0, perc + se * 100, NA),
-    group = resultant_geno_name
+    x = hist_grade_name_numeric,
+    ymin = ifelse(prop_geno_dummy > 0, prop_geno_dummy-se_prop * 100, NA),
+    ymax = ifelse(prop_geno_dummy > 0, prop_geno_dummy+se_prop * 100, NA),
+    group = hist_cat_name
   ),
-  position = position_dodge(0.5),
-  width = .2,
-  linewidth = .01,
-  alpha=.5)
+  position = position_dodge(width = .25, preserve = "total"),
+  width = 0.1, linewidth = 0.2,
+  alpha=1)+
   
+  
+  facet_grid(vars(resultant_geno))+
+  
+  theme_bw()+
+  
+  scale_x_continuous(breaks = unique(gg_data$hist_grade_name_numeric),
+                     labels = na.omit(unique(gg_data$hist_grade_name)))+
+  
+  
+  ggtitle("Tumor types by cohort")+
+  
+  labs(fill=NULL,
+       x=NULL,
+       y="% of Each Cohort",
+       caption = "**Error bars represent standard error.")+
+  # 
+
+  theme(
+  axis.text.x = element_text(size=12,angle = 45, hjust = 1),
+  plot.margin = margin(10, 10, 10, 20),
+  plot.caption = element_text(hjust = 0, size = 10))
