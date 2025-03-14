@@ -1,6 +1,9 @@
 source("libs.R")
 
 library(tidyverse)
+library(ggplot2)
+library(ggrepel)
+library(dplyr)
 library(gprofiler2)
 
 
@@ -9,13 +12,13 @@ library(gprofiler2)
 genes<-readRDS("nf1g/ds/gene_stats.rds")
 
 #all data. 
-gostres<- gost(query = genes$gene_id_ms,
-               organism = "mmusculus",
-               numeric_ns = "ENTREZGENE_ACC")
-
-
-gostplot(gostres, capped = F, interactive = F)
-
+# gostres<- gost(query = genes$gene_id_ms,
+#                organism = "mmusculus",
+#                numeric_ns = "ENTREZGENE_ACC")
+# 
+# 
+# gostplot(gostres, capped = F, interactive = F)
+# 
 
 #genericise for m-dexps. 
 
@@ -44,38 +47,9 @@ d<-readRDS(dexp_files[i])%>%
 
 d_name<-basename(dexp_files[i])
 
-
-
-g<- gost(query = d$gene_id_ms,
-               organism = "mmusculus",
-               numeric_ns = "ENTREZGENE_ACC",
-         ordered_query = TRUE)
-
-p<-gostplot(g, capped = TRUE, interactive = F)
-
-
-
-
-#save as self-contained html file. 
-# htmlwidgets::saveWidget(p, html_out_path)
-
-
-
 }
 
 
-
-p
-
-# publish_gosttable(g)
-
-
-
-
-library(ggplot2)
-library(ggrepel)
-library(dplyr)
-library(gprofiler2)
 
 for (i in 1:length(dexp_files)) {
   
@@ -136,52 +110,29 @@ for (i in 1:length(dexp_files)) {
 }
 
 results <- g$result %>%
-  mutate(g_label = if_else(-log10(p_value) > 5, term_name, NA))
+  mutate(g_label = if_else(-log10(p_value) > 5, 
+                           stringr::str_wrap(term_name, width=25),
+                           NA))
 
 # Filter only significant terms for labeling
 significant_labels <- results %>% filter(!is.na(g_label))
 
-p <- ggplot(results, aes(x = source, y = -log10(p_value))) +
+
+my_pal <- function(range = c(2, 12)) {
+  force(range)
+  function(x) scales::rescale(x, to = range, from = c(0, 1))
+}
+
+
+
+
+p <- ggplot(results, aes(x = source, y = -log10(p_value), label = g_label)) +
  
+
   
-  
-  
-  
-  
-  
-  
-  
-  # Scale point sizes with a larger range
-  scale_size_continuous(range = c(2, 12)) +  # Adjust range as needed
-  
-  
-  
-  
-  
-  
-  # Ensure labels match jittered points by setting the same width
-  geom_label_repel(aes(label = g_label), 
-                   size = 3, 
-                   max.overlaps = 10, 
-                   force = 50,
-                   hjust= 0,
-       
-                   position = position_jitter(width = 0.2, seed=3)) + 
-  
-  
-  
-  
+
   # Add jittered points
-  geom_jitter(aes(size = intersection_size), 
-              fill = "white",
-              color = "black",
-              position = position_jitter(width = 0.2, seed = 3),
-              alpha = 1, 
-              shape = 21,      # Ensures both fill & stroke work
-              stroke = 0) +  # Controls outline thickness
-  
-  # Add jittered points
-  geom_jitter(aes(size = intersection_size, fill = source),
+  geom_jitter(aes(size = intersection_size, fill = source, group=source),
               color = "black",
               position = position_jitter(width = 0.2, seed = 3),
               alpha = 0.6, 
@@ -189,15 +140,55 @@ p <- ggplot(results, aes(x = source, y = -log10(p_value))) +
               stroke = 0.5) +  # Controls outline thickness
   
   
-  
-  
-  
+  coord_cartesian(clip = "off")
+
   
 
 
 
+plot_data <- ggplot_build(p)$data[[1]]
+
+ggplot(plot_data, aes(x=x, y=y, color=group, size=size, label=label))+
+  geom_point()+
+  geom_label_repel(aes(label=label))
+
+
+
+# Ensure labels match jittered points by setting the same width
+  geom_label_repel(aes(label = g_label,
+                       point.size = intersection_size), 
+                   #xlim = c(-Inf, Inf), ylim = c(-Inf, Inf),
+                   point.padding = 0,
+                   min.segment.length = 0,
+                   size = 3, 
+                   max.overlaps = 10, 
+                   force = 20,
+                   hjust= 0,
+                   box.padding = 0,
+                   position = position_jitter(width = 0.2, seed=3)) +   
+  
+  
+  
+  # geom_text_repel(
+  #   data          = subset(dat, wt < 3),
+  #   nudge_x       = 2.7 - subset(dat, wt < 3)$wt,
+  #   segment.size  = 0.2,
+  #   segment.color = "grey50",
+  #   direction     = "y",
+  #   hjust         = 1
+  # ) +  
 
   
+
+
+  
+  # Scale point sizes with a larger range
+  continuous_scale(
+    aesthetics = c("size", "point.size"),  # Scale both point size and label size
+    palette = my_pal(c(2.5, 12.5))  # Custom palette for scaling
+    #guide = guide_legend(override.aes = list(label = ""))  # Hide "a" in legend
+  ) +
+
   # Custom colors for pathway sources
   scale_fill_manual(values = c("GO:MF" = "#E41A1C", "GO:CC" = "#377EB8", "GO:BP" = "#4DAF4A", 
                                 "KEGG" = "#FF7F00", "REAC" = "#984EA3", "TF" = "#FFFF33", 
