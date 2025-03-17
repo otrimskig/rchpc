@@ -30,7 +30,8 @@ aspectratio<-.6
 df1<-coh1%>%
   #most conservative exclusion criteria
   filter(is.na(exclude))%>%
-  filter(!is.na(include_in_surv))
+  filter(!is.na(include_in_surv))%>%
+  filter(hist_cat_name!="No histological classification")
   #
 df1%>%
   select(starts_with("hist"))%>%
@@ -215,7 +216,7 @@ gg_data<-bind_rows(gg_data1, gg_data5)%>%
 
 
 #plot part 1
-
+tt_facet<-
 ggplot(gg_data) +
   geom_col(aes(x = hist_cat_name,
                fill = resultant_geno,
@@ -223,8 +224,8 @@ ggplot(gg_data) +
                alpha = ifelse(prop_geno_dummy < 0, .4, NA)
               ),
            #color = if_else(prop_geno_dummy < 0, "black", "transparent"),
-           width = .45,
-           position = position_dodge(width = .5,  preserve = "single"),
+           width = .8,
+           position = position_dodge(width = .85,  preserve = "single"),
            key_glyph = draw_square)+
   
   scale_fill_manual(values=col_map$resultant_geno)+
@@ -239,40 +240,12 @@ ggplot(gg_data) +
     ymax = ifelse(prop_geno_dummy > 0, prop_geno_dummy+se_prop * 100, NA),
     group=resultant_geno
   ),
-  position = position_dodge(width = .5,  preserve = "single"),
-  width = 0.2, linewidth = 0.2,
-  alpha=.5)
+  position = position_dodge(width = .85,  preserve = "single"),
+  width = 0.3, linewidth = 0.2,
+  alpha=.5)+
   
-  scale_fill_manual(values=col_map$hist_cat_name)+
-
-
-
-  facet_wrap2(
-    vars(resultant_geno), 
-    ncol = 2, 
-    scales = "free_y",
-    strip = strip_themed(
-      background_x = elem_list_rect(
-        fill = col_map$resultant_geno[names(col_map$resultant_geno) %in% unique(gg_data$resultant_geno)]
-      )  # Ensure colors map correctly
-    )
-  ) +
  
-  #  scale_y_continuous(
-  #   expand = expansion(mult = c(0, 0.05)),  # Ensures a little padding at the top
-  #   breaks = function(limits) seq(0, max(limits, na.rm = TRUE), by = 10)  # Ensures consistent step sizes
-  # ) +
-  
-  theme_bw()+
-  
-  scale_x_continuous(breaks = unique(gg_data$hist_grade_name_numeric),
-                    
-                     labels = add_ws(n_final_string=30, label=as.character(na.omit(unique(gg_data$hist_grade_name)))))+
-  
-
-  scale_y_continuous(limits = c(-1,90))+
-  
-  ggtitle("Tumor types by cohort")+
+  ggtitle("Penetrance by grade and tumor type")+
   
   labs(fill=NULL,
        x=NULL,
@@ -282,14 +255,25 @@ ggplot(gg_data) +
 
   theme(
   axis.text.x = element_text(size=12,angle = 45, hjust = 1),
-  plot.margin = margin(10, 10, 10, 20),
+  strip.text = element_text(size = 10),  # Increase the size of facet labels
+  plot.margin = margin(10, 50, 10, 50),
   plot.caption = element_text(hjust = 0, size = 10),
   axis.line.x.bottom = element_line(color = "black", size = 0.5),
   axis.line.y.left = element_line(color = "black", size = 0.5),
   panel.grid.major = element_blank(),  # Removes major grid lines
-  panel.grid.minor = element_blank())
+  panel.grid.minor = element_blank(),
+  legend.position = "none" )
 
 
+
+
+
+# tt_facet$labels$title
+
+
+#save plot
+plot_object_name_for_session<-"tt_facet"
+plot_filename_output<-"nf1g/surv/pub/pub_plots/tt_facet_3.pdf"
 
 
 metadata_text <- paste0("src: ", 
@@ -299,134 +283,26 @@ metadata_text <- paste0("src: ",
                         "\n", "time: ", 
                         lubridate::round_date(Sys.time(), "second"))
 
-text_grob <- textGrob(metadata_text, x=.05, just="left", gp = gpar(fontsize = 9, col = "gray30"))
+text_grob <- grid::textGrob(metadata_text, x=.05, just="left", gp = grid::gpar(fontsize = 9, col = "gray30"))
 
-p3src<-grid.arrange(p1, text_grob, ncol = 1, heights = c(3, 0.3))
+p3src<-gridExtra::grid.arrange(get(plot_object_name_for_session), text_grob, ncol = 1, heights = c(3, 0.3))
 
-stop()
-ggsave("nf1g/surv/pub/pub_plots/tt_facet_w-exh_r01.pdf",
-       
-       title=paste0("src: ",
-                    
-                    rstudioapi::getSourceEditorContext()$path%>%
-                      sub("/uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig/","",.)%>%
-                      sub("C:/Users/u1413890/OneDrive - University of Utah/garrett hl-onedrive/R/","",.),
-                    
-                    " at ", 
-                    
-                    lubridate::round_date(Sys.time(), "second")
-       ),
+ggsave(filename=plot_filename_output,
        
        plot=p3src,
        limitsize = FALSE,
        
-       
-       height=12,
-       width=14,
+       height=9,
+       width=6,
        scale = 1,
        dpi=600,
        
+       title=paste0(get(plot_object_name_for_session)$labels$title,
+                    
+                    " at ", 
+                    
+                    lubridate::round_date(Sys.time(), "second")
+       ))
        
        
-)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# 
-# #plot data part 2
-# 
-# gg_data<-sum_df2%>%
-#   filter(!grepl("\\d$", hist_grade_name))%>%
-#           
-#   #          hist_grade_name=="No evidence of disease")%>%
-#   filter(hist_cat_name!="No histological classification"&hist_grade_name!="No grade assigned")%>%
-#   
-#   mutate(across(where(is.factor), droplevels))%>%
-#   
-#   complete(hist_grade_name, hist_cat_name, resultant_geno, fill=list(n_geno=0))%>%
-#   mutate(prop_geno_dummy=if_else(n_geno==0, -1, prop_geno*100))%>%
-#   
-#   
-#   mutate(hist_grade_name_numeric=as.numeric(factor(hist_grade_name))*.3)
-# 
-# 
-# 
-# 
-# # 
-# # 
-# #plot part 2
-# 
-# p2<-ggplot(gg_data) +
-#   geom_col(aes(x = hist_grade_name_numeric,
-#                fill = hist_cat_name,
-#                y = prop_geno_dummy),
-#            width = 0.2,
-#            position = position_dodge(width = .25, preserve="total"),
-#            key_glyph = draw_square)+
-#   
-#   # 
-#   # 
-#   # scale_x_continuous(breaks = unique(gg_data$hist_cat_name_numeric),
-#   #                    labels = unique(gg_data$hist_cat_name))
-#   # 
-#   # 
-#   scale_y_continuous(limits = c(0,80))+
-#   
-#   
-#   
-# # 
-# geom_errorbar(aes(
-#   x = hist_grade_name_numeric,
-#   ymin = ifelse(prop_geno_dummy > 0, prop_geno_dummy-se_prop * 100, NA),
-#   ymax = ifelse(prop_geno_dummy > 0, prop_geno_dummy+se_prop * 100, NA),
-#   group = hist_cat_name
-# ),
-# position = position_dodge(width = .25, preserve = "total"),
-# width = 0.1, linewidth = 0.2,
-# alpha=1)+
-#   
-#   
-#   facet_grid(vars(resultant_geno))+
-#   
-#   theme_bw()+
-#   
-#   scale_x_continuous(breaks = unique(gg_data$hist_grade_name_numeric),
-#                      labels = add_ws(n_final_string=100, label=as.character(na.omit(unique(gg_data$hist_grade_name)))))+
-#   
-#   
-#   ggtitle("Tumor types by cohort")+
-#   
-#   labs(fill=NULL,
-#        x=NULL,
-#        y="% of Each Cohort",
-#        caption = "**Error bars represent standard error.")+
-#   # 
-#   
-#   theme(
-#     axis.text.x = element_text(size=12,angle = 45, hjust = 1),
-#     plot.margin = margin(10, 10, 50, 20),
-#     plot.caption = element_text(hjust = 0, size = 10))
-# 
-# 
-# library(ggplot2)
-# library(gridExtra)
-# library(gtable)
-# library(grid)
-# 
-# library(cowplot)
-# 
-# 
-# 
