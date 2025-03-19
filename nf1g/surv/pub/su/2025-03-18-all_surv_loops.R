@@ -43,9 +43,9 @@ split_plots_1deg_clean<-"Tumor Type (Histology)"
 
 
 #set further subsets if desired.
-split_plots_2deg<-"hist_grade_name"
+split_plots_2deg<-"hist_cat_name"
 # 
-split_plots_2deg_clean<-"Histology Grade"
+split_plots_2deg_clean<-"Tumor Type (Histology)"
 
 
 
@@ -65,7 +65,7 @@ gray_plot<-ggplot(sample_n(mtcars, 1)) +
   geom_tile(aes(x = 2.35, y = 1), fill = "gray", width = 1.5, height = .85, color="#5c5c5c")+
   
   geom_text(aes(x = 3.3, y = 1), 
-            label = "all comparisons ns",
+            label = "comparison is NA",
             fontface ="bold",
             size=2,
             hjust = 0) +  
@@ -192,7 +192,7 @@ for (sp1 in 1:length(split_1deg_values)){
         
         spec_df_filtered <- spec_df1 %>%
           group_by(across(all_of(split_curves_by))) %>%
-          filter(n() >= 2, any(event == 1)) %>%  # Ensure at least one event in each group
+          #filter(n() >= 2, any(event == 1)) %>%  # Ensure at least one event in each group
           ungroup()
         
         spec_counts0<-reframe(spec_df1, .by=all_of(split_curves_by),
@@ -250,12 +250,11 @@ for (sp1 in 1:length(split_1deg_values)){
 
         
         #now run tests to and either make non-sig or significant annotation.
-      
         if (n_distinct(spec_df_filtered[[split_curves_by]]) <2) {
       
           #bad distinction between values.
           cat(bold(red("not enough distinct values in: ")), split_1_char, ":", split_2_char, "\n")
-          
+
           #set comp_plot to gray plot.
           comp_plot<-gray_plot
           
@@ -306,14 +305,12 @@ for (sp1 in 1:length(split_1deg_values)){
               mutate(grouping_category=results[["grouping"]])%>%
               
               as_tibble()%>%
-              filter(!is.na(p_value))%>%
-              filter(p_value<=.05)
+              filter(!is.na(p_value))#%>%
+              #filter(p_value<=.05)
             
             if(dim(comps)[1]==0){
-              #no sig p values
-              cat(bold(red("no significant p values: ")), split_1_char, ":", split_2_char, "\n")
-              
-              
+              #no p values generated
+              cat(bold(red("no p values generated: ")), split_1_char, ":", split_2_char, "\n")
               
               #set comp_plot to gray plot.
               comp_plot<-gray_plot
@@ -322,25 +319,57 @@ for (sp1 in 1:length(split_1deg_values)){
             }else{
               
               #enough distinction in p value table.
-              cat(bold(green("significant results in p value table: ")), split_1_char, ": ", split_2_char, "\n")
+              cat(bold(green("results in p value table: ")), split_1_char, ": ", split_2_char, "\n")
               
               
               #make a no comps are significant square annotation. 
-              comp_plot<-ggplot(comps) +
+              # comp_plot<-comps %>%
+              #   arrange(p_value)%>%
+              #   mutate(group_a = factor(group_a, levels = unique(group_a)),
+              #          group_b = factor(group_b, levels = unique(group_b)))%>%
+              #   mutate(row_id = row_number())%>%
+              #   
+              #   
+              #   # Create the comp "plot"
+              #   ggplot(.) +
+              #   geom_tile(aes(x = 7.5, y = 7.5), fill = "#ccffff", alpha=0, width = 15, height = 15)+  # Empty tile
+              #   geom_tile(aes(x = .75, y = row_id, fill = group_a), width = 1.5, height = .85, color="#5c5c5c")+
+              #   geom_tile(aes(x = 2.35, y = row_id, fill = group_b), width = 1.5, height = .85, color="#5c5c5c")+
+              #   
+              #   
+              #   geom_text(aes(x = 3.3, y = row_id, 
+              #                 label = format(p_value, scientific = TRUE, digits = 3)
+              #                 ), #set rounding
+              #                 
+              #             fontface = ifelse(p_value <= .05, "bold", "plain"),
+              #             size=2,
+              #             hjust = 0) +
+              #  
+              
+              
+              comp_plot <- comps %>%
+              arrange(p_value) %>%
+                mutate(
+                  group_a = factor(group_a, levels = unique(group_a[order(p_value)])),
+                  group_b = factor(group_b, levels = unique(group_b[order(p_value)])),
+                  row_id = row_number()
+                )%>%
+
+                ggplot() +
+                geom_tile(aes(x = 7.5, y = 7.5), fill = "#ccffff", alpha = 0, width = 15, height = 15) +  # Empty tile
+                geom_tile(aes(x = 0.75, y = row_id, fill = group_a), width = 1.5, height = 0.85, color = "#5c5c5c") +
+                geom_tile(aes(x = 2.35, y = row_id, fill = group_b), width = 1.5, height = 0.85, color = "#5c5c5c") +
                 
-                geom_tile(aes(x = 7.5, y = 7.5), fill = "#ccffff", alpha=0, width = 15, height = 15)+  # Empty tile
-                geom_tile(aes(x = .75, y = 1, fill = "gray"), width = 1.5, height = .85, color="#5c5c5c")+
-                geom_tile(aes(x = 2.35, y = 1, fill = "gray"), width = 1.5, height = .85, color="#5c5c5c")+
+                geom_text(aes(
+                  x = 3.3, y = row_id, 
+                  label = format(p_value, scientific = TRUE, digits = 3),
+                  fontface = ifelse(p_value <= 0.05, "bold", "plain"),
+                  color = ifelse(p_value <= 0.05, "black", "gray50")
+                ), size = 2, hjust = 0) +
                 
+                scale_color_identity()+
                 
-                geom_text(aes(x = 3.3, y = 1, label = "all comparisons ns",
-                              
-                              fontface ="bold"
-                ),
-                size=2,
-                hjust = 0) +  
-                
-                #scale_fill_manual(values = col_map[[split_curves_by]]) +
+                scale_fill_manual(values = col_map[[split_curves_by]]) +
                 theme_minimal() +
                 
                 theme(
@@ -353,9 +382,7 @@ for (sp1 in 1:length(split_1deg_values)){
                   plot.margin = margin(0, 0, 0, 0))+
                 coord_fixed(ratio = 1)
               
-              
-              
-              
+
               
               
             }
@@ -413,57 +440,48 @@ for (ab in seq_along(names(plot_list_v1))) {
   # Loop through the inner list of plots
   for (cd in seq_along(names(plot_list_v1[[x1]]))) {
     
-    cat(x1, "\n")
     x2<-names(plot_list_v1[[x1]])[cd]
     
-    cat(x2, "\n","\n","\n","\n")
-    # # Generate the filename dynamically
-    # file_name <- fs::path_sanitize(paste0(
-    #   plot_output_base,
-    #   x1, "-", names(plot_list_v1)[ab][cd], ".pdf"
-    # ))
-    # 
-    # 
-    # # Generate the title dynamically
-    #  title_text <- paste0(
-    #   gsub("\n", "][", plot_list_v1[[ab]][[cd]]$labels$title), "][",
-    #   "src: ",
-    #   rstudioapi::getSourceEditorContext()$path %>%
-    #     sub("/uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig/", "", .) %>%
-    #     sub("C:/Users/u1413890/OneDrive - University of Utah/garrett hl-onedrive/R/", "", .),
-    #   " at ", round_date(Sys.time(), "second")
-    # )
-    # 
-    # # # Save the plot
-    # # ggsave(
-    # #   path = plot_output_loc,
-    # #   filename = file_name,
-    # #   plot = plot_list_v2[[sp1]][[i]],
-    # #   title = title_text,
-    # #   limitsize = FALSE,
-    # #   height = 5,
-    # #   width = 10,
-    # #   scale = 1.2,
-    # #   dpi = 600
-    # # )
-    # 
-    # # Print status message
-    # cat(bold(green("Saved plot: ")), cyan(file_name, "\n"), blue("in "), plot_output_loc, "\n")
+    # Generate the filename dynamically
+    file_name <- fs::path_sanitize(paste0(
+      plot_output_base,
+      x1, "-", x2, "-by_", split_curves_by, ".pdf"
+    ))
+    
+    
+    # Generate the title dynamically
+     title_text <- paste0(
+      gsub("\n", "][", plot_list_v1[[ab]][[cd]]$labels$title), "][",
+      "src: ",
+      rstudioapi::getSourceEditorContext()$path %>%
+        sub("/uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig/", "", .) %>%
+        sub("C:/Users/u1413890/OneDrive - University of Utah/garrett hl-onedrive/R/", "", .),
+      " at ", round_date(Sys.time(), "second")
+    )
+
+    # Save the plot
+     ggsave(
+        path = plot_output_loc,
+        filename = file_name,
+        plot = plot_list_v2[[x1]][[cd]],
+        title = title_text,
+        limitsize = FALSE,
+        height = 5,
+        width = 10,
+        scale = 1.2,
+        dpi = 600
+        )
+
+
+    # Print status message
+    cat(bold(green("Saved plot: ")), cyan(file_name, "\n"), blue("in "), plot_output_loc, "\n")
   }
 }
 
 
 
-
-
-
-
-
-
-
-
 plot_pdf_paths <-fs::dir_info("nf1g/surv/pub/pub_plots/surv_all", regexp = "\\.pdf$", recurse = FALSE) %>%
-  #filter(modification_time>Sys.time()-lubridate::minutes(1))%>%
+  filter(modification_time>Sys.time()-lubridate::minutes(40))%>%
   filter(type == "file") %>%
   filter(!grepl("^comb", basename(path)))%>%
   arrange(desc(modification_time))%>%
