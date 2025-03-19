@@ -43,9 +43,22 @@ split_plots_1deg_clean<-"Tumor Type (Histology)"
 
 
 #set further subsets if desired.
-split_plots_2deg<-"hist_cat_name"
+split_plots_2deg<-"hist_grade_name"
 # 
-split_plots_2deg_clean<-"Tumor Type (Histology)"
+split_plots_2deg_clean<-"Histology Grade"
+
+
+
+# 
+# 
+# #set further subsets if desired.
+# split_plots_2deg<-"hist_cat_name"
+# # 
+# split_plots_2deg_clean<-"Tumor Type (Histology)"
+
+
+
+
 
 
 
@@ -140,26 +153,10 @@ for (sp1 in 1:length(split_1deg_values)){
       
       
       #Set up dfs and initialize plot list#################################
-     
-      
-      
-      # curve_category_names<-df2%>%
-      #   select(sym(!!split_curves_by))%>%unique()%>%
-      #   pull()
-      # 
-      # num_categories <- length(curve_category_names)
-      
-      # split_1deg_values_2<-df2%>%
-      #   select(!!sym(split_plots_2deg))%>%
-      #   unique()%>%
-      #   pull()
-      
       split_dfs<-df2 %>%
         group_split(!!sym(split_plots_2deg))%>%
         setNames(sort(unique(df2[[split_plots_2deg]])))
 
-
-      
       #loop through split_dfs.
       for (sp2 in 1:length(split_dfs)) {
 
@@ -175,29 +172,21 @@ for (sp1 in 1:length(split_1deg_values)){
           
         }else{
           
+          #sufficient data in specific dataframe to proceed.
           cat(bold(cyan("Sufficient values in spec_df1")), split_2_char, "\n")
           
-          
-
-        # cat_name<-spec_df1%>%
-        #   select(all_of(split_plots_1deg))%>%
-        #   mutate_at(vars(all_of(split_plots_1deg)), ~as.character(.x))%>%
-        #   unique()%>%
-        #   pull()
-        
-        
+        #initialize nested lists.
         plot_list_v1[[split_1_char]][[split_2_char]] <- list()
         plot_list_v2[[split_1_char]][[split_2_char]] <- list()
 
-        
-        spec_df_filtered <- spec_df1 %>%
-          group_by(across(all_of(split_curves_by))) %>%
-          #filter(n() >= 2, any(event == 1)) %>%  # Ensure at least one event in each group
-          ungroup()
-        
+        #get counts of each group within specific df.
         spec_counts0<-reframe(spec_df1, .by=all_of(split_curves_by),
                               countn=n())
         
+        #join count number to main spec df. 
+        #This ensures that the factor order is retained.
+        #create the string which includes the group name plus group count for each, that
+        #will be used on the plot.
         spec_counts1 <- spec_df1 %>%
           select(all_of(split_curves_by)) %>%      # Select column by name dynamically
           distinct()%>%# Get unique rows
@@ -207,10 +196,23 @@ for (sp1 in 1:length(split_1deg_values)){
             .[[split_curves_by]], " (n = ", countn, ")"          # Reference the column dynamically using `[[` for concatenation
           )) %>%
           mutate(var_plus_countn = factor(var_plus_countn, 
-                                          levels = var_plus_countn[order(!!sym(split_curves_by))]))
+                                          levels = var_plus_countn[order(!!sym(split_curves_by))]))#ensure order of new string matches order of factored groups.
         
+        # Construct the title outside of labs()
+        title_text <- if (split_1_char == split_2_char) {
+          paste0("Overall Survival ", "\n",
+                 "by: ", split_curves_clean, "\n",
+                 "split 1deg: ", split_plots_1deg_clean, ": ", split_1_char, "\n",
+                 "split 2deg: None")
+        } else {
+          paste0("Overall Survival ", "\n",
+                 "by: ", split_curves_clean, "\n",
+                 "split 1deg: ", split_plots_1deg_clean, ": ", split_1_char, "\n",
+                 "split 2deg: ", split_plots_2deg_clean, ": ", split_2_char)
+        }
+
         
-        
+        #create plot and assign to list location.
         plot_list_v1[[split_1_char]][[split_2_char]]<-ggplot(spec_df1)+
           geom_km(aes(time = aod, 
                       color=!!sym(split_curves_by),
@@ -219,38 +221,52 @@ for (sp1 in 1:length(split_1deg_values)){
                   # alpha= don't set here. geom_km doesn't respect. set in scale_color_manual.
           )+
           
+          
           facet_wrap(
             vars(!!sym(split_plots_1deg)),
             labeller = labeller(
-              .default = function(x) paste0(split_plots_1deg_clean, ": ", x)
+              .default = function(x) {
+                if (split_1_char == split_2_char) {
+                  split_1_char
+                } else {
+                  paste0(split_1_char, ": ", split_2_char)
+                }
+              }
             )
-          ) +
+          ) +  
+          
           
           xlim(0,150)+
           ylim(0,1)+
           
           scale_color_manual(values = alpha(col_map[[split_curves_by]], 0.9),  #geom_km doesn't respect alpha argument for some reason. set it manually in color call.
                              labels = spec_counts1$var_plus_countn)+ 
-          theme_classic()+
+          theme_classic() +
           
-          labs(title=paste0("Overall Survival ", "\n",
-                            "by: ",  split_curves_clean, "\n",
-                            "split 1deg: ", split_plots_1deg_clean, ": ", split_1_char, "\n",
-                            "split 2deg: ", split_plots_2deg_clean, ": ", split_2_char),
-               
-               x = "Days Post Injection",
-               y = "% Survival",
-               color=split_curves_clean
-               
-          )+
+          # Pass the constructed title to labs()
+          labs(
+            title = title_text,
+            x = "Days Post Injection",
+            y = "% Survival",
+            color = split_curves_clean
+          ) +
+          
+          
+          
           theme(plot.title = element_text(hjust = 0),
                 aspect.ratio=aspectratio,
                 plot.margin = margin(5, 5, 5, 5))
         
+        
+        #end of initial plot creation
+
 
         
+        
+        
+        
         #now run tests to and either make non-sig or significant annotation.
-        if (n_distinct(spec_df_filtered[[split_curves_by]]) <2) {
+        if (n_distinct(spec_df1[[split_curves_by]]) <2) {
       
           #bad distinction between values.
           cat(bold(red("not enough distinct values in: ")), split_1_char, ":", split_2_char, "\n")
@@ -267,7 +283,7 @@ for (sp1 in 1:length(split_1deg_values)){
           
           results <- pairwise_survdiff(
             reformulate(split_curves_by, response = "Surv(time = aod, event = event)"), 
-            data = spec_df_filtered, 
+            data = spec_df1, 
             p.adjust.method = "none"
           )
           
@@ -282,13 +298,10 @@ for (sp1 in 1:length(split_1deg_values)){
                 
                 "\n")
             
-            
             #set comp_plot to gray plot.
             comp_plot<-gray_plot
             
-          
           }else{
-            
             
             #enough distinction in p value table.
             cat(bold(cyan("sufficient values in p value table: ")), split_2_char, "\n")
@@ -320,32 +333,6 @@ for (sp1 in 1:length(split_1deg_values)){
               
               #enough distinction in p value table.
               cat(bold(green("results in p value table: ")), split_1_char, ": ", split_2_char, "\n")
-              
-              
-              #make a no comps are significant square annotation. 
-              # comp_plot<-comps %>%
-              #   arrange(p_value)%>%
-              #   mutate(group_a = factor(group_a, levels = unique(group_a)),
-              #          group_b = factor(group_b, levels = unique(group_b)))%>%
-              #   mutate(row_id = row_number())%>%
-              #   
-              #   
-              #   # Create the comp "plot"
-              #   ggplot(.) +
-              #   geom_tile(aes(x = 7.5, y = 7.5), fill = "#ccffff", alpha=0, width = 15, height = 15)+  # Empty tile
-              #   geom_tile(aes(x = .75, y = row_id, fill = group_a), width = 1.5, height = .85, color="#5c5c5c")+
-              #   geom_tile(aes(x = 2.35, y = row_id, fill = group_b), width = 1.5, height = .85, color="#5c5c5c")+
-              #   
-              #   
-              #   geom_text(aes(x = 3.3, y = row_id, 
-              #                 label = format(p_value, scientific = TRUE, digits = 3)
-              #                 ), #set rounding
-              #                 
-              #             fontface = ifelse(p_value <= .05, "bold", "plain"),
-              #             size=2,
-              #             hjust = 0) +
-              #  
-              
               
               comp_plot <- comps %>%
               arrange(p_value) %>%
@@ -484,8 +471,9 @@ plot_pdf_paths <-fs::dir_info("nf1g/surv/pub/pub_plots/surv_all", regexp = "\\.p
   filter(modification_time>Sys.time()-lubridate::minutes(40))%>%
   filter(type == "file") %>%
   filter(!grepl("^comb", basename(path)))%>%
-  arrange(desc(modification_time))%>%
+  arrange(modification_time)%>%
   tibble()%>%
   pull(path)
 
 qpdf::pdf_combine(plot_pdf_paths, output = "nf1g/surv/pub/pub_plots/surv_all/comb-surv-all.pdf")
+
