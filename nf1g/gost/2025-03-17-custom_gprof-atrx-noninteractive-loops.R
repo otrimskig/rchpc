@@ -10,47 +10,49 @@ library(crayon)
 library(grid)
 library(gridExtra)
 
-#get all dexp files.
-dexp_files <- list.files(
-  path = "nf1g/dexps/atrx_comps",
-  pattern = "^dexp-.*\\.rds$",
-  full.names = TRUE
-)
+
+gost_v1<-readRDS("nf1g/atrx_comps/ds/gost_v1.rds")
 
 
-#dexp_files<-dexp_files[1]
-
-gost_v1<-list()
-for (de1 in 1:length(dexp_files)){
+pathway_list_sum<-tibble(pathway_list=NA, index=NA, index_index=NA, p_value=NA)
+for (ps in 1:length(gost_v1)){
   
-  #de1 <- 1  # Ensure i starts at 1 for debugging
-  
-  # Load and filter data
-  dexp <- readRDS(dexp_files[de1]) %>%
-    filter(FDR < 0.1) %>%
-    #filter(abs(logFC) > 2) %>%
-    arrange(logFC)
-  
-  dexp_name <- basename(dexp_files[de1])
-  
-  cat(blue("working on "), red(dexp_name), " (", cyan(de1), " of ", length(dexp_files), ")", "\n")
-  
-  
-  
-  # Run gProfiler analysis
-  gost_v1[[dexp_name]]<- gost(query = dexp$gene_id_ms,
-            organism = "mmusculus",
-            numeric_ns = "ENTREZGENE_ACC",
-            ordered_query = TRUE)
-  
-  # # Extract results
-  # results <- gdexp$result  # Extract enrichment results
-
+  pathway_list_sum<-bind_rows(pathway_list_sum,
+                              as.tibble(gost_v1[[ps]]$result)%>%
+                                mutate(index=1:n())%>%
+                                mutate(index_index=ps)%>%
+                                rename(pathway_list=source)%>%
+                                dplyr::select(pathway_list, index, index_index, p_value))%>%
+    drop_na()
 
 }
 
 
-saveRDS(gost_v1, "nf1g/atrx_comps/ds/gost_v1.rds")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -78,8 +80,11 @@ pathway_list_factor<-pathway_list_tib%>%
 
 
 
+
 for (de2 in 1:length(gost_v1)){
 
+
+  
 cat(blue("working on "), red(names(gost_v1$de2)), " (", cyan(de2), " of ", length(gost_v1), ")", "\n")
   
 
@@ -93,7 +98,8 @@ centered_jitter <- function(x, width = 0.65, seed = NULL) {
   if (!is.null(seed)) set.seed(seed) # Ensure reproducibility
   n <- length(x)
   if (n == 1) {
-    return(x)  # Keep single points unchanged
+    jitter_offsets<-0
+    return(x + jitter_offsets)  # Keep single points unchanged
   } else {
     jitter_offsets <- runif(n, min = -width / 2, max = width / 2)
     jitter_offsets <- jitter_offsets - mean(jitter_offsets)  # Center around 0
@@ -113,22 +119,22 @@ data3 <- left_join(pathway_list_factor,data2)%>%
   
   mutate(g_label = if_else(-log10(p_value) > 5|grepl("MHC", term_name), 
                            stringr::str_wrap(term_name, width=25),
-                           ""))
+                           NA))
 
 
-my_pal <- function(range = c(2, 12)) {
+my_pal <- function(range = c(1, 10)) {
   force(range)
   function(x) scales::rescale(x, to = range, from = c(0, 1))
 }
 
-
-breaks_dynamic<-seq(.5, by=.5, length.out=length(pathway_list_factor$pathway_list))
+x_scale_factor_man<-.5
+breaks_dynamic<-seq(x_scale_factor_man, by=x_scale_factor_man, length.out=length(pathway_list_factor$pathway_list))
 limits_dynamic<-c(min(breaks_dynamic)-.25,
                   max(breaks_dynamic)+.25)
 
 
 
-gost_v1[[de2]]$plot1 <- ggplot(data3, aes(x = jittered_x, 
+gost_v1[[de2]]$plot1 <- ggplot(data3, aes(x = group_x_coord*x_scale_factor_man+dist_from_group_x, 
                         y = -log10(p_value), 
                         label = g_label)) +
   
@@ -151,12 +157,12 @@ gost_v1[[de2]]$plot1 <- ggplot(data3, aes(x = jittered_x,
                    aes(label = g_label,
                        point.size = intersection_size),
                    point.padding = .1,
-                   family="Open Sans",
+                   #family="Open Sans",
                    alpha=.8,
                    size=3,
                    min.segment.length = 0,
                    segment.alpha=.25,
-                   max.overlaps = 12,
+                   max.overlaps = 30,
                    force = 5,
                    hjust= 0.5,
                    vjust=0.5,
@@ -203,76 +209,100 @@ metadata_text <- paste0("src: ",
 text_grob <- textGrob(metadata_text, x=.05, just="left", gp = gpar(fontsize = 7, col = "gray30"))
 
 #add in p value annotation.
-gost_v1[[de2]]$plot2<-grid.arrange(
+gost_v1[[de2]]$plot2 <- arrangeGrob(
   gost_v1[[de2]]$plot1, 
   text_grob, 
   ncol = 1, 
   heights = c(3, 0.3),  # Maintain spacing
   layout_matrix = rbind(c(1), c(2))
-)# Keeps layout structure stable
-
+)
 
 
 }
 
-
-grid.draw(gost_v1[[3]]$plot1)
-grid.draw(gost_v1[[3]]$plot2)
-
+# grid.newpage()
+# grid.draw(gost_v1[[7]]$plot1)
+# 
+# grid.newpage()
+# grid.draw(gost_v1[[7]]$plot2)
+# gost_v1[[7]]$result%>%as_tibble()%>%
+#   view()
 
 
 plot_output_base<-"gost-"
 plot_output_loc<-"nf1g/atrx_comps/plots/"  #include trailing slash
 
 
+# gost_v1<-gost_v1[7]
+
+
 # Loop through the outer list
 for (ab in seq_along(names(gost_v1))) {
   
-  x1<-names(gost_v1)[ab] %>%
-    gsub(".rds", "", .)
-    
-    # Generate the filename dynamically
-    file_name <- fs::path_sanitize(paste0(
+  x1<-names(gost_v1)[ab]
+  
+  xtitle<-x1%>%gsub(".rds", "", .)
+  
+  # cat("1: ", red(x1), "\n")
+  # 
+  # cat("2: ", blue(xtitle), "\n")
+  # 
+
+  # Generate the filename dynamically
+  file_name <- fs::path_sanitize(paste0(
       plot_output_base,
-      x1,
+      xtitle,
       ".pdf"
     ))
-    
-    
-    # Generate the title dynamically
-    title_text <- paste0(
-      
-      gost_v1[[ab]]$plot1$labels$title %>%
-        gsub("\n", "][", .) %>%
-        gsub(".rds", "", .)%>%
-        gsub(";", "", .) %>%
-        gsub("\\,", "", .),
-      
-      "src: ",
-      rstudioapi::getSourceEditorContext()$path %>%
-        sub("/uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig/", "", .) %>%
-        sub("C:/Users/u1413890/OneDrive - University of Utah/garrett hl-onedrive/R/", "", .),
-      " at ", round_date(Sys.time(), "second")
-    )
-    # 
-    # Save the plot
-    ggsave(
-      path = plot_output_loc,
-      filename = file_name,
-      plot = grid.draw(gost_v1[[ab]]$plot2),
-      title = title_text,
-      limitsize = FALSE,
-      height = 5,
-      width = 10,
-      scale = 1.2,
-      dpi = 600
-    )
+# 
+#   cat("3: ", green(file_name), "\n")
+  
+  plot_object<-gost_v1[[ab]]$plot2
+  
+  grid.newpage()
+  #grid.draw(plot_object)
+  
+  
+  title_text <- paste0(
 
-    cat(title_text, "\n")
+    gost_v1[[ab]]$plot1$labels$title %>%
+      gsub("\n", "][", .) %>%
+      gsub(".rds", "", .)%>%
+      gsub(";", "", .) %>%
+      gsub("\\,", "", .),
+
+    "src: ",
+    rstudioapi::getSourceEditorContext()$path %>%
+      sub("/uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig/", "", .) %>%
+      sub("C:/Users/u1413890/OneDrive - University of Utah/garrett hl-onedrive/R/", "", .),
+    " at ", round_date(Sys.time(), "second")
+  )
+
+  
+
+  # showtext::showtext_opts(dpi = 600)
+  ggsave(
+    path = plot_output_loc,
+    filename = file_name,
+    plot = plot_object,
+    title = title_text,
+    limitsize = FALSE,
+    height = 7,
+    width = 6,
+    scale = 1.2,
+    dpi = 600
+  )
+  
+ 
+
     # Print status message
     cat(bold(green("Saved plot: ")), cyan(file_name, "\n"), blue("in "), plot_output_loc, "\n")
-  
+
 }
+
+
+
+
 
 
 
@@ -304,3 +334,4 @@ ggsave(
   scale = 1.2,
   dpi = 600
 )
+
