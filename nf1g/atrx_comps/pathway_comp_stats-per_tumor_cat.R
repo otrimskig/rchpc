@@ -20,8 +20,7 @@ tumor_types<-all_sample_info%>%
 
 
 
-
-tm<-1
+tm<-3
 
 tum<-tumor_types[tm]
 
@@ -34,9 +33,9 @@ sample_info<-all_sample_info%>%
 
 
 
-sample_info<-all_sample_info
+#sample_info<-all_sample_info
 
-tum<-"all_tumor_types"
+#tum<-"all_tumor_types"
 
 
 
