@@ -18,42 +18,21 @@ tumor_types<-all_sample_info%>%
   pull()%>%
   as.character()
 
-
-
 tm<-3
 
 tum<-tumor_types[tm]
 
-
-
-
 sample_info<-all_sample_info%>%
   filter(patho_cat_name==tum)
-
-
-
-
-#sample_info<-all_sample_info
-
-#tum<-"all_tumor_types"
-
-
-
 
 #get simplest naming cohort map to use.
 name_map<-sample_info%>%
   select(sample_id, mouse_num, coh, patho_cat_name)
 
-
-
-
 #get mouse nums for each set.
 mouse_nums_coh1<-sample_info%>%filter(coh==1)%>%pull(mouse_num)
 mouse_nums_coh2<-sample_info%>%filter(coh==2)%>%pull(mouse_num)
 mouse_nums<-sample_info%>%pull(mouse_num)
-
-
-
 
 
 #read in dataset of pathway enrichment scores.
@@ -73,18 +52,12 @@ gsva_timex<-readRDS("nf1g/ds/gsva_u-onco.rds")
 rownames(gsva_timex) <- timex_names$name2[match(rownames(gsva_timex), timex_names$name1)]
 
 
-
 gsva<-rbind(gsva_broad, gsva_timex)[,mouse_nums]
-
-
-
-
 
 
 #convert to a df for other uses.
 gsva_df<-gsva%>%as.data.frame()%>%select(all_of(mouse_nums))%>%
   rownames_to_column("pathway")
-
 
 
 #pivot gsva values to enable analysis.
