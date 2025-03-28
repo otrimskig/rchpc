@@ -25,10 +25,222 @@ patho_cat_names<-sample_info%>%
 
 
 
-
-
-
 p<-3
 
 patho_cat_names[p]
+
+
+samples_subset_info<-sample_info%>%
+  filter(patho_cat_name==patho_cat_names[p])
+
+group_factors<-samples_subset_info%>%
+  select(resultant_geno)%>%unique()%>%
+  pull(resultant_geno)
+
+
+group_a_samples<-samples_subset_info%>%
+  filter(resultant_geno==group_factors[1])%>%
+  pull(sample_id)
+
+group_b_samples<-samples_subset_info%>%
+  filter(resultant_geno==group_factors[2])%>%
+  pull(sample_id)
+
+
+
+sub_matrix<-gsva_u0[,c(group_a_samples, group_b_samples)]
+
+# Ensure sample names match matrix column names
+valid_a_samples <- intersect(group_a_samples, colnames(sub_matrix))
+valid_b_samples <- intersect(group_b_samples, colnames(sub_matrix))
+
+# Extract groups as matrices
+group_a_matrix <- sub_matrix[, valid_a_samples, drop = FALSE]
+group_b_matrix <- sub_matrix[, valid_b_samples, drop = FALSE]
+
+# Compute mean per group
+mean_a <- rowMeans(group_a_matrix, na.rm = TRUE)
+mean_b <- rowMeans(group_b_matrix, na.rm = TRUE)
+
+# Compute fold change
+fold_changes <- mean_a - mean_b
+
+# Compute standard deviation per group
+std_a <- apply(group_a_matrix, 1, sd, na.rm = TRUE)
+std_b <- apply(group_b_matrix, 1, sd, na.rm = TRUE)
+
+# Apply t-test across all pathways (rows)
+p_values <- apply(sub_matrix, 1, function(row) {
+  a_values <- row[valid_a_samples]
+  b_values <- row[valid_b_samples]
+  
+  # Ensure at least 2 non-NA values in both groups
+  if (sum(!is.na(a_values)) > 1 & sum(!is.na(b_values)) > 1) {
+    t.test(a_values, b_values)$p.value
+  } else {
+    NA  # Return NA if not enough data
+  }
+})
+
+# Create results tibble
+results <- tibble(
+  Pathway = rownames(sub_matrix),
+  p_value = p_values,
+  mean_group_a = mean_a,
+  mean_group_b = mean_b,
+  std_group_a = std_a,
+  std_group_b = std_b
+) %>%
+  arrange(p_value)  # Sort by significance
+
+# Create the output list with metadata
+analysis_output <- list(
+  results = results,
+  metadata = list(
+    date = Sys.time(),
+    group_comparison = paste(group_factors[1], "vs", group_factors[2]),
+    group_a = paste(group_factors[1]),
+    group_b = paste(group_factors[2]),
+    group_a_samples = valid_a_samples,
+    group_b_samples = valid_b_samples
+  )
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Ensure sample names match matrix column names
+valid_a_samples <- intersect(group_a_samples, colnames(sub_matrix))
+valid_b_samples <- intersect(group_b_samples, colnames(sub_matrix))
+
+# Extract the relevant subsets of the matrix for each group
+group_a_matrix <- sub_matrix[, valid_a_samples, drop = FALSE]
+group_b_matrix <- sub_matrix[, valid_b_samples, drop = FALSE]
+
+# Initialize vectors to store results
+fold_changes <- numeric(nrow(sub_matrix))
+p_values_ttest <- numeric(nrow(sub_matrix))
+p_values_lm <- numeric(nrow(sub_matrix))
+mean_a <- numeric(nrow(sub_matrix))
+mean_b <- numeric(nrow(sub_matrix))
+std_a <- numeric(nrow(sub_matrix))
+std_b <- numeric(nrow(sub_matrix))
+analysis_method <- character(nrow(sub_matrix))  # Store method used for p-value
+
+# Apply t-test and linear model for each pathway (row)
+for (i in 1:nrow(sub_matrix)) {
+  # Get z-scores for this pathway across samples
+  a_values <- group_a_matrix[i, , drop = FALSE]
+  b_values <- group_b_matrix[i, , drop = FALSE]
+  
+  # Combine values into a single vector for fitting the linear model
+  combined_values <- c(a_values, b_values)
+  group_labels <- rep(c(group_factors[1], group_factors[2]), times = c(length(valid_a_samples), length(valid_b_samples)))
+  
+  # Prepare data for linear model
+  lm_data <- data.frame(z_score = combined_values, Group = factor(group_labels))
+  
+  # Perform t-test for this pathway
+  ttest_result <- t.test(a_values, b_values)
+  p_values_ttest[i] <- ttest_result$p.value
+  
+  # Store analysis method for t-test
+  analysis_method[i] <- "t-test"
+  
+  # Fit the linear model: z_score ~ Group (group comparison)
+  lm_model <- lm(z_score ~ Group, data = lm_data)
+  
+  # Store results for linear model
+  p_values_lm[i] <- summary(lm_model)$coefficients[2, 4]  # p-value for group comparison
+  fold_changes[i] <- coef(lm_model)[2]  # Mean difference (group B vs group A)
+  
+  # Store analysis method for linear model if p-value is more significant
+  if (p_values_lm[i] < p_values_ttest[i]) {
+    analysis_method[i] <- "lm"
+  }
+  
+  # Compute mean for each group
+  mean_a[i] <- mean(a_values, na.rm = TRUE)
+  mean_b[i] <- mean(b_values, na.rm = TRUE)
+  
+  # Compute standard deviation for each group
+  std_a[i] <- sd(a_values, na.rm = TRUE)
+  std_b[i] <- sd(b_values, na.rm = TRUE)
+}
+
+# Create results tibble
+results <- tibble(
+  Pathway = rownames(sub_matrix),
+  p_value_ttest = p_values_ttest,
+  p_value_lm = p_values_lm,
+  fold_change = fold_changes,
+  mean_group_a = mean_a,
+  mean_group_b = mean_b,
+  std_group_a = std_a,
+  std_group_b = std_b,
+  analysis_method = analysis_method,
+  diff = mean_b-mean_a,
+  abs_diff=abs(diff)
+
+  
+  
+) %>%
+  arrange(p_value_lm)  # Sort by linear model p-value for significance
+
+# Create the output list with metadata
+analysis_output <- list(
+  results = results,
+  metadata = list(
+    date = Sys.time(),
+    group_comparison = paste(group_factors[1], "vs", group_factors[2]),
+    group_a = paste(group_factors[1]),
+    group_b = paste(group_factors[2]),
+    group_a_samples = valid_a_samples,
+    group_b_samples = valid_b_samples,
+    src=paste0("src: ",
+               
+               rstudioapi::getSourceEditorContext()$path%>%
+                 sub("/uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig/","",.)%>%
+                 sub("C:/Users/u1413890/OneDrive - University of Utah/garrett hl-onedrive/R/","",.),
+               
+               " at ", 
+               
+               lubridate::round_date(Sys.time(), "second")
+    )
+  )
+)
+
+
+
+analysis_output$results2 <- analysis_output$results %>%
+  dplyr::filter(!grepl("--2", Pathway)) %>%
+  dplyr::filter(!grepl("--3", Pathway))%>%
+  mutate(min_pval = if_else(p_value_lm<=p_value_ttest, p_value_lm, p_value_ttest))
+
+
+analysis_output$results2<-analysis_output$results2%>%
+  filter(min_pval<.05)%>%
+  arrange(desc(abs_diff))%>%
+  slice(1:500)
+  #mutate(Pathway=sub("--1","", Pathway))
+
+
+
+saveRDS(analysis_output, "nf1g/gsvas/gsva_top500_output.rds")
+
+
 
