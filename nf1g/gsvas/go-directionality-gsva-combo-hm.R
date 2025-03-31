@@ -19,6 +19,10 @@ gsva_pathway_stats<-readRDS("nf1g/gsvas/gsva_top500_output.rds")$results2%>%
   arrange(desc(abs_diff))%>%
   slice(1:100)
 
+pathway_meta<-readRDS("nf1g/ds/gsva/gsva_pathways_meta.rds")
+
+
+
 gsva_u0<-readRDS("nf1g/ds/gsva/gsva_pathways_matrix.rds")[gsva_pathway_stats$Pathway,]
 
 samples<-sample_info%>%
@@ -111,7 +115,7 @@ combo<-hm1
 gh<-grid.grabExpr(draw(combo))
 
 
-ggsave("nf1g/plots/hm-gsva-500.pdf",
+ggsave("nf1g/gsvas/plots/hm-gsva-500.pdf",
        plot=gh,
        scale = 1,
        dpi=600,

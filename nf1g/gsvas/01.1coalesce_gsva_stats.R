@@ -38,7 +38,23 @@ a2<-bind_rows(a1,a2)
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 a3 <- a2 %>%
+  group_by(pathway)%>%
+  arrange(pathway_list)%>%
+  slice(1)%>%
+  ungroup()%>%
   arrange(pathway_list, pathway) %>%
   mutate(pathway_index = row_number()) %>%
   relocate(pathway_index) %>%
@@ -108,7 +124,7 @@ b1<-a3%>%
   mutate(pathway_code_3=if_else(pathway_code_x=="GOBP", "GO:BP", 
                                 if_else(pathway_code_x=="GOCC", "GO:CC",
                                         if_else(pathway_code_x=="GOMF", "GO:MF",
-                                                if_else(pathway_code_x=="BIOCARTA", "CP:BIOCARTA",
+                                                if_else(pathway_code_x=="BIOCARTA", "CP:B",
                                                         if_else(pathway_code_x=="REACTOME", "CP:REACTOME",
                                                                 if_else(pathway_code_x=="WP", "CP:WIKIPATHWAYS", NA))))))
          )%>%
@@ -136,10 +152,38 @@ b1<-a3%>%
                                     pathway_code_3, "-",
                                     pathway_name))%>%
   
-  mutate(pathway_full_name= gsub("NA-", "", pathway_full_name))
+  mutate(pathway_full_name= gsub("NA-", "", pathway_full_name))%>%
+  
+  mutate(pathway_full_name=sub("GO-GO", "GO", pathway_full_name))%>%
+  mutate(pathway_full_name=sub("CP-CP", "CP", pathway_full_name))
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+tm1<-readRDS("nf1g/ds/gsva_u-onco.rds")
+
+
+
+tm2<-rownames(tm1)%>%
+  tibble()
 
 
 
@@ -178,7 +222,7 @@ c3<-c1%>%
 c4<-c3%>%
   select(-starts_with("x"))
 
-saveRDS(c4, "nf1g/ds/gsva/gsva_pathways_meta.rds")
+saveRDS(c4, "nf1g/gsvas/ds/gsva_pathways_meta.rds")
 
 
 
@@ -188,4 +232,4 @@ d1<-c3%>%
   as.matrix.data.frame()
 
 
-saveRDS(d1, "nf1g/ds/gsva/gsva_pathways_matrix.rds")
+saveRDS(d1, "nf1g/gsvas/ds/gsva_pathways_matrix.rds")
