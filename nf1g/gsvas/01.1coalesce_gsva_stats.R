@@ -56,7 +56,7 @@ a3 <- a2 %>%
   slice(1)%>%
   ungroup()%>%
   arrange(pathway_list, pathway) %>%
-  mutate(pathway_index = row_number()) %>%
+  mutate(pathway_index =  paste0("m", sprintf("%05d", 1:n()))) %>%
   relocate(pathway_index) %>%
   rename(pathway_list_file = pathway_list)
 
@@ -175,7 +175,12 @@ b1<-a3%>%
 
 
 
+#load rda for pathways.
+load("timex/ds/allSignatures.rda")  
 
+timex_names<-names(TIMEx)
+hallmark_names<-names(Hallmark)%>%gsub("HALLMARK_", "", .)
+immune_names<-names(Immune_sig)
 
 
 tm1<-readRDS("nf1g/ds/gsva_u-onco.rds")
@@ -183,53 +188,72 @@ tm1<-readRDS("nf1g/ds/gsva_u-onco.rds")
 
 
 tm2<-rownames(tm1)%>%
-  tibble()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-c1<-a3%>%
-  left_join(b1)
-  #$select(pathway_full_name, starts_with("x"))
-
-
-c2<-c1%>%count(pathway_full_name)
-
+  tibble("original_pathway_name"=.)%>%
+  mutate(parent_pathway=if_else(grepl("^KEGG", original_pathway_name), "KEGG", NA))%>%
+  mutate(parent_pathway=if_else(grepl("^onco_", original_pathway_name), "onco", parent_pathway))%>%
+  mutate(parent_pathway = if_else(is.na(parent_pathway) & original_pathway_name %in% timex_names, "TIMEx", parent_pathway))%>%
+  mutate(parent_pathway = if_else(is.na(parent_pathway) & original_pathway_name %in% immune_names, "Immune_Sig", parent_pathway))%>%
+  mutate(parent_pathway = if_else(is.na(parent_pathway) & original_pathway_name %in% hallmark_names, "Hallmark", parent_pathway))%>%
   
-c3<-c1%>%
-  left_join(c2)%>%
-  group_by(pathway_full_name)%>%
-  relocate(pathway_full_name)%>%
-  relocate(n)%>%
-  mutate(group_n=1:n())%>%
-  mutate(pathway_full_name=if_else(n!=1, paste0(pathway_full_name, "--", group_n), pathway_full_name))
+  mutate(naked_names=gsub("^KEGG_", "", gsub("^onco_", "", original_pathway_name)))%>%
+  
+  mutate(pathway_full_name=paste0("hu-", parent_pathway, "-", naked_names))%>%
+  unique()%>%
+  mutate(pathway_index = paste0("h", sprintf("%03d", 1:n())))%>%
+
+  rename(pathway_name=original_pathway_name)%>%
+  select(-naked_names)%>%
+  rename(pathway_code_1_desc=parent_pathway)%>%
+  mutate(pathway_list_file="allSignatures.rda")
 
 
 
-c4<-c3%>%
-  select(-starts_with("x"))
-
-saveRDS(c4, "nf1g/gsvas/ds/gsva_pathways_meta.rds")
 
 
 
-d1<-c3%>%
-  select(pathway_full_name, starts_with("x"))%>%
+
+tm3<-bind_rows(b1, tm2)
+
+samples<-readRDS("nf1g/ds/v10-per_sample_updated.rds")%>%
+  select(sample_id,mouse_num)%>%
+  mutate(mouse_num=paste0("x", mouse_num))
+
+
+tm4<-tm1%>%as_tibble(rownames = "pathway_name")%>%
+  janitor::clean_names()%>%
+  select(pathway_name, samples$mouse_num)%>%
+  rename_with(~ samples$sample_id[match(.x, samples$mouse_num)], .cols = samples$mouse_num)%>%
+  left_join(tm2)%>%
+  select(starts_with("x"), pathway_full_name)%>%
+  relocate(pathway_full_name)
+
+
+
+
+
+
+
+
+
+all_pathway_meta<-tm3%>%
+  relocate(pathway_full_name)
+
+
+
+saveRDS(all_pathway_meta, "nf1g/gsvas/ds/gsva_pathways_meta.rds")
+
+
+
+
+b2<-a3%>%
+  left_join(b1)%>%
+  select(starts_with("x"), pathway_full_name)
+
+
+all_pathway_gsva<-bind_rows(tm4, b2)%>%
   column_to_rownames("pathway_full_name")%>%
   as.matrix.data.frame()
 
 
-saveRDS(d1, "nf1g/gsvas/ds/gsva_pathways_matrix.rds")
+
+saveRDS(all_pathway_gsva, "nf1g/gsvas/ds/gsva_pathways_matrix.rds")
