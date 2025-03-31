@@ -250,8 +250,19 @@ b2<-a3%>%
   select(starts_with("x"), pathway_full_name)
 
 
+
+
+
+rename_dataset<-readRDS("nf1g/ds/v07-per_sample_info.rds")%>%
+  select(sample_id, mouse_num)
+
+
+
+
+
 all_pathway_gsva<-bind_rows(tm4, b2)%>%
   column_to_rownames("pathway_full_name")%>%
+  rename_with(~ rename_dataset$mouse_num[match(.x, samples$sample_id)], .cols = samples$sample_id)%>%
   as.matrix.data.frame()
 
 

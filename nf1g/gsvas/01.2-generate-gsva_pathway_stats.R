@@ -15,14 +15,11 @@ gsva_meta<-readRDS("nf1g/gsvas/ds/gsva_pathways_meta.rds")
 sample_info<-readRDS("nf1g/ds/v10-per_sample_updated.rds")
 
 
-
-
 patho_cat_names<-sample_info%>%
   select(patho_cat_name)%>%
   unique()%>%
   pull()%>%
   as.character()
-
 
 
 p<-3
@@ -40,27 +37,15 @@ group_factors<-samples_subset_info%>%
 
 group_a_samples<-samples_subset_info%>%
   filter(resultant_geno==group_factors[1])%>%
-  pull(sample_id)
+  pull(mouse_num)
 
 group_b_samples<-samples_subset_info%>%
   filter(resultant_geno==group_factors[2])%>%
-  pull(sample_id)
+  pull(mouse_num)
 
 
 
 sub_matrix<-gsva_u0[,c(group_a_samples, group_b_samples)]
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 # Ensure sample names match matrix column names
@@ -122,6 +107,9 @@ for (i in 1:nrow(sub_matrix)) {
   std_b[i] <- sd(b_values, na.rm = TRUE)
 }
 
+
+
+
 # Create results tibble
 results <- tibble(
   Pathway = rownames(sub_matrix),
@@ -135,9 +123,6 @@ results <- tibble(
   analysis_method = analysis_method,
   diff = mean_b-mean_a,
   abs_diff=abs(diff)
-
-  
-  
 ) %>%
   arrange(p_value_lm)  # Sort by linear model p-value for significance
 
@@ -167,20 +152,10 @@ analysis_output <- list(
 
 
 analysis_output$results2 <- analysis_output$results %>%
-  dplyr::filter(!grepl("--2", Pathway)) %>%
-  dplyr::filter(!grepl("--3", Pathway))%>%
   mutate(min_pval = if_else(p_value_lm<=p_value_ttest, p_value_lm, p_value_ttest))
 
 
-analysis_output$results2<-analysis_output$results2%>%
-  filter(min_pval<.05)%>%
-  arrange(desc(abs_diff))%>%
-  slice(1:500)
-  #mutate(Pathway=sub("--1","", Pathway))
-
-
-
-saveRDS(analysis_output, "nf1g/gsvas/gsva_top500_output.rds")
+saveRDS(analysis_output, "nf1g/gsvas/ds/gsva_pathway_stats_gliomas.rds")
 
 
 
