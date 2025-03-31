@@ -257,3 +257,6 @@ all_pathway_gsva<-bind_rows(tm4, b2)%>%
 
 
 saveRDS(all_pathway_gsva, "nf1g/gsvas/ds/gsva_pathways_matrix.rds")
+
+
+
