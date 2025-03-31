@@ -12,6 +12,8 @@ standard_error <- function(x) {
 library(tidyverse)
 
 
+
+
 #load relevant created from gsva analysis. 
 sample_info<-readRDS("nf1g/ds/v10-per_sample_updated.rds")
 
@@ -20,8 +22,6 @@ gsva_pathway_stats<-readRDS("nf1g/gsvas/gsva_top500_output.rds")$results2%>%
   slice(1:100)
 
 pathway_meta<-readRDS("nf1g/ds/gsva/gsva_pathways_meta.rds")
-
-
 
 gsva_u0<-readRDS("nf1g/ds/gsva/gsva_pathways_matrix.rds")[gsva_pathway_stats$Pathway,]
 
@@ -105,6 +105,22 @@ hm1<- Heatmap(gsva_z1,
               
               width = unit(3, "in"),
               heatmap_height = unit(nrow(gsva_z1)*.3, "in"))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 hm1
 
