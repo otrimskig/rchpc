@@ -18,11 +18,13 @@ sample_info<-readRDS("nf1g/ds/v10-per_sample_updated.rds")
 
 
 
-n_row_total<-100
+n_row_total<-500
 
 sig_pathways<-gsva_stats$results2%>%
-  filter(!grepl("^m1", Pathway))%>%
-  
+  #filter(!grepl("^m1", Pathway))%>%
+  #filter(!grepl("^m3", Pathway))%>%
+  #filter(grepl("m5", Pathway))%>%
+  filter(grepl("NEURO", Pathway))%>%
   filter(min_pval<.05)%>%
   arrange(desc(abs_diff))%>%
   slice(1:n_row_total)
@@ -95,7 +97,7 @@ anno<-HeatmapAnnotation(df=samples_df%>%
 
 
 size <- dev.size("in")
-scaled_height <- unit(size[2] * 2, "in")  # 90% of available height
+scaled_height <- unit(size[2] * 1, "in")  # 90% of available height
 scaled_width <- unit(size[1] * 0.9, "in")   # 90% of available width
 
 
@@ -108,7 +110,7 @@ hm_print <- Heatmap(gmatz1,
                     column_title_gp = gpar(font = 2, fontsize = 60),
                     row_title_gp = gpar(font = 2, fontsize = 1),
                     
-                    row_names_gp = gpar(fontsize = 8),
+                    row_names_gp = gpar(fontsize = 12),
                     
                     show_heatmap_legend = FALSE,
                     width = scaled_width,
