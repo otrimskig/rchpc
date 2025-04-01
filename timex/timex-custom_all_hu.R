@@ -16,84 +16,109 @@ mat<-readRDS("nf1g/ds/vm-h-01-rpkms_wide_human.rds")%>%
   data.matrix()
 
 
+
+gmt_files<-tibble(fn=list.files(path="timex/ds_hu", full.names = T))%>%
+  filter(grepl("symbols", fn))%>%
+  pull()
+
+
+qusage::read.gmt(gmt_files[1])
+
+
+# msig_list<-list()
 # 
-# load("timex/ds/allSignatures.rda")  
-
-onco<-qusage::read.gmt("timex/ds/c6.all.v2024.1.Hs.symbols.gmt")
-names(onco) <- paste0("onco_", names(onco))
-
-
-
-
-
-
-Signature_list <- c(Hallmark, kegg, TIMEx, Immune_sig, onco)
-
+# all_hu<-for(g in 1:length(gmt_files)){
+#   
+# name_element<-basename(gmt_files[g])
+#   
+# msig_list[[name_element]][["gene_signatures"]]<-qusage::read.gmt(gmt_files[g])
+# 
+# }
+# 
+# 
+# 
 
 
+msig_list<-list()
+
+all_hu<-for(g in 1:length(gmt_files)){
+  
+  name_element<-basename(gmt_files[g])
+  
+  msig_list[[name_element]][["gene_signature"]]<-qusage::read.gmt(gmt_files[g])
+  
+}
+
+
+
+
+# msig_list<-msig_list[1]
+
+for (na in 1:length(names(msig_list))){
+
+element_name<-names(msig_list)[na]
+
+
+Signature_list <- msig_list[[element_name]][["gene_signature"]]
 
 ssgeaP<-ssgseaParam(mat, Signature_list)
-
-
-
-
 suppressWarnings(gng_ssgsea<- gsva(ssgeaP))
-rownames(gng_ssgsea) <- stringr::str_remove_all(rownames(gng_ssgsea), "HALLMARK_")
-gng_ssgsea_u <- t(t(gng_ssgsea))
 
 
-#sometimes strips a few signatures from the analysis not sure why. this reveals what is unique 
-namesGSEA<-as.list(rownames(gng_ssgsea_u))
-gseavector<-unlist(namesGSEA)
-signaturevector<-unlist(names(Signature_list))
-signaturevector<- stringr::str_remove_all(signaturevector, "HALLMARK_")
-notincluded<-setdiff(signaturevector, gseavector)
+msig_list[[element_name]][["gsva_values"]]<-gng_ssgsea%>%as.data.frame()%>%as.matrix.data.frame()
 
 
-sig_tracker_df_u <- data.frame("Signature" = gseavector,
-                               "Set" = c( 
-                                 rep("Hallmark", times = 50), 
-                                 rep("KEGG", times = 186),
-                                 rep("TIMEx", times = 37),
-                                 rep("Immune", times = 46),
-                                 rep("onco", times = 189),
-                                 rep("gsea_all", times=34837))) #48 originally updated with setdiff 
-
-
-gng_ssgsea_z <- t(scale(t(gng_ssgsea)))
-
-#sometimes strips a few signatures from the analysis not sure why. this reveals what is unique 
-namesGSEA<-as.list(rownames(gng_ssgsea_z))
-gseavector<-unlist(namesGSEA)
-signaturevector<-unlist(names(Signature_list))
-signaturevector<- stringr::str_remove_all(signaturevector, "HALLMARK_")
-notincluded<-setdiff(signaturevector, gseavector)
+}
 
 
 
-sig_tracker_df_z <- data.frame("Signature" = gseavector,
-                               "Set" = c( 
-                                 rep("Hallmark", times = 50), 
-                                 rep("KEGG", times = 186),
-                                 rep("TIMEx", times = 37),
-                                 rep("Immune", times = 46),
-                                 rep("onco", times = 189),
-                                 rep("gsea_all", times=34837))) #48 originally updated with setdiff 
+saveRDS(msig_list, "timex/ds/hu-msig_list-all-gsva-values.rds")
 
 
 # 
-saveRDS(gng_ssgsea_u, "nf1g/ds/gsva_u-onco.rds")
-saveRDS(gng_ssgsea_z, "nf1g/ds/gsva_z-onco.rds")
-# 
-saveRDS(sig_tracker_df_u, "nf1g/ds/gsva_sig_u-onco.rds")
-saveRDS(sig_tracker_df_z, "nf1g/ds/gsva_sig_z-onco.rds")
+# msig_list<-readRDS("timex/ds/hu-msig_list-all-gsva-values.rds")
 
 
 
 
+# bs<-1
+
+inset<-tibble()
+
+for(bs in 1:length(names(msig_list))){
+
+element_name<-names(msig_list)[bs]
+
+
+addition<-msig_list[[element_name]][["gsva_values"]]%>%
+  as.data.frame()%>%
+  rownames_to_column("original_pathway_name")%>%
+  tibble()%>%
+  mutate(gmt_file=element_name)%>%
+  relocate(gmt_file)
+
+
+inset<-bind_rows(inset,addition)
+
+}
 
 
 
+inset0<-inset%>%
+  group_by(original_pathway_name)%>%
+  arrange(gmt_file)%>%
+  slice(1)%>%
+  ungroup()
+  
+
+inset1 <- inset0 %>%
+  mutate(updated_pathway_name = paste0(substr(gmt_file, 1, 2), ".", original_pathway_name))%>%
+  relocate(updated_pathway_name)%>%
+  select(-gmt_file, -original_pathway_name)%>%
+  column_to_rownames("updated_pathway_name")%>%
+  as.matrix.data.frame()
 
 
+
+saveRDS(inset1, "timex/ds/hu-msig_all-gsva-values.rds")
 
