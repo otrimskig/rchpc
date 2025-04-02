@@ -46,6 +46,11 @@ samples_df<-sample_info
 
 
 
+
+
+
+
+
 matu1<-matu0[sig_pathways$Pathway ,samples_df$mouse_num]
 
 #rescale matrix based on sample selection, rowwise.
@@ -90,7 +95,7 @@ anno<-HeatmapAnnotation(df=samples_df%>%
                           select(mouse_num, 
                                  patho_grade,
                                  resultant_geno,
-                                 patho_cat), 
+                                 patho_cat_name), 
                         col=c(anno_subset),
                         annotation_name_side = "left",
                         
