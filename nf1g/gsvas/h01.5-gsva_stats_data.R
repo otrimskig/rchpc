@@ -31,7 +31,7 @@ for (p in 1:length(patho_cat_names)){
 file_name_ext<-patho_cat_names[p]
   
   
-patho_cat_names[p]
+
 
 
 
@@ -167,7 +167,7 @@ analysis_output <- list(
   results = results,
   metadata = list(
     date = Sys.time(),
-    group_comparison = paste(group_factors[1], "vs", group_factors[2]),
+    group_comparison = paste(patho_cat_names[p], ": ", group_factors[1], "vs", group_factors[2]),
     group_a = paste(group_factors[1]),
     group_b = paste(group_factors[2]),
     group_a_samples = valid_a_samples,
@@ -194,10 +194,9 @@ analysis_output$results2 <- analysis_output$results %>%
 
 
 
-
-saveRDS(analysis_output, paste0("nf1g/gsvas/ds/hu-gsva_pathway_stats_",
+saveRDS(analysis_output, paste0("nf1g/gsvas/ds/hu-gsva_pathway_stats_a86_",
         
-        file_name_ext, 
+        file_name_ext, "][",  group_factors[1], "vs", group_factors[2],
         
         ".rds")
 
@@ -328,7 +327,7 @@ saveRDS(analysis_output, paste0("nf1g/gsvas/ds/hu-gsva_pathway_stats_",
     results = results,
     metadata = list(
       date = Sys.time(),
-      group_comparison = paste(group_factors[1], "vs", group_factors[2]),
+      group_comparison = paste(patho_cat_names[p], ": ", group_factors[1], "vs", group_factors[2]),
       group_a = paste(group_factors[1]),
       group_b = paste(group_factors[2]),
       group_a_samples = valid_a_samples,
@@ -358,7 +357,7 @@ saveRDS(analysis_output, paste0("nf1g/gsvas/ds/hu-gsva_pathway_stats_",
   
   saveRDS(analysis_output, paste0("nf1g/gsvas/ds/hu-gsva_pathway_stats_a86_",
                                   
-                                  file_name_ext, 
+                                  file_name_ext, "][",  group_factors[1], "vs", group_factors[2],
                                   
                                   ".rds")
           
