@@ -11,10 +11,7 @@ hgs0<-readRDS("timex/ds/hu-msig_all-gsva-values.rds")
 sample_info<-readRDS("nf1g/ds/v10-per_sample_updated.rds")
 
 
-
-
-
-genotypes<-sample_info%>%
+genos<-sample_info%>%
   select(resultant_geno)%>%
   unique()%>%
   pull()%>%
@@ -22,44 +19,145 @@ genotypes<-sample_info%>%
 
 
 
-genotype_combinations <- tibble(
-  expand_grid(genotype1 = genotypes, genotype2 = genotypes)
-) %>%
-  filter(genotype1 < genotype2)
+#g<-1
+
+
+# genos[g]
 
 
 
-#for (g in 1:length(patho_cat_names)){
+for(g in 1:length(genos)){
+
+
+sample_info_sub_geno<-sample_info%>%
+  filter(resultant_geno==genos[g])
+
+
+patho_cats<-sample_info_sub_geno%>%
+  select(patho_cat_name)%>%
+  unique()%>%
+  pull()%>%
+  as.character()
+
+
+patho_combos <- tibble(
+  expand_grid(pa1 = patho_cats, pa2 = patho_cats)
+  ) %>%
+   filter(pa1 < pa2)
 
 
 
-g<-1
+if(nrow(patho_combos)==0){
+
+  print("this is where it goes if there are no comps.")
+  
+  sub_matrix<-hgs0[,sample_info_sub_geno%>%pull(mouse_num)]
+  
+  # Apply t-test and linear model for each pathway (row)
+  for (i in 1:nrow(sub_matrix)) {
+    # Get z-scores for this pathway across samples
+    a_values <- sub_matrix[i, , drop = FALSE]
+
+    #compute mean
+    mean_total[i] <- mean(a_values, na.rm = TRUE)
+    
+    # Compute standard deviation for each group
+    std_total[i] <- sd(a_values, na.rm = TRUE)
+ 
+    
+    if (i %% 10 == 0) {
+      cat(blue(i), "out of", green(nrow(sub_matrix)), " ", red(round(i/nrow(sub_matrix)*100, 2)), "%", "\n")
+    }
+    
+    
+  }
+  
+  
+  
+  
+  # Create results tibble
+  results <- tibble(
+    Pathway = rownames(sub_matrix),
+    mean_total=mean_total,
+    std_total = std_total,
+  )
+
+  
+  # Create the output list with metadata
+  analysis_output <- list(
+    results = results,
+    metadata = list(
+      date = Sys.time(),
+      group_comparison = paste0("none"),
+      group_a = paste0(genos[g], 
+                       " ", patho_cats),
+      group_a_samples = sample_info_sub_geno%>%pull(mouse_num),
+      src=paste0("src: ",
+                 
+                 rstudioapi::getSourceEditorContext()$path%>%
+                   sub("/uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig/","",.)%>%
+                   sub("C:/Users/u1413890/OneDrive - University of Utah/garrett hl-onedrive/R/","",.),
+                 
+                 " at ", 
+                 
+                 lubridate::round_date(Sys.time(), "second")
+      )
+    )
+  )
+  
+  file_name_ext2<-paste0(patho_a, " vs. ", patho_b)
+  
+  saveRDS(analysis_output, paste0("nf1g/gsvas/ds/hu-gsva_pathway_stats_",
+                                  
+                                  
+                                  file_name_ext1,      
+                                  
+                                  "][",
+                                  
+                                  file_name_ext2, 
+                                  
+                                  ".rds")
+          
+  )
+  
+  
+  
+  
+  
+  
+  
+  
+  
 
 
-geno_a<-genotype_combinations$genotype1[g]
-geno_b<-genotype_combinations$genotype2[g]
+}else{
+
+for(row in nrow(patho_combos)){
+
+# row<-1
+
+patho_a<-patho_combos[row,]$pa1
+patho_b<-patho_combos[row,]$pa2
 
 
-comparison_name<-paste0(geno_a, " ]vs[ ", geno_b)
+
+file_name_ext2<-paste0(patho_a, " vs. ", patho_b)
 
 
-samples_subset_info<-sample_info
+samples_subset_info<-sample_info_sub_geno%>%
+  filter(patho_cat_name==patho_a|
+           patho_cat_name==patho_b)
 
-
+group_factors<-c(patho_a, patho_b)
 
 group_a_samples<-samples_subset_info%>%
-  filter(resultant_geno==geno_a)%>%
+  filter(patho_cat_name==group_factors[1])%>%
   pull(mouse_num)
 
 group_b_samples<-samples_subset_info%>%
-  filter(resultant_geno==geno_b)%>%
+  filter(patho_cat_name==group_factors[2])%>%
   pull(mouse_num)
 
-
-
-length(group_a_samples)
-
-length(group_b_samples)
 
 
 if(length(group_a_samples)>=2&length(group_b_samples)>=2){
@@ -165,7 +263,7 @@ results <- tibble(
   diff = mean_b-mean_a,
   abs_diff=abs(diff)
 ) %>%
-  arrange(p_value_lm)  # Sort by linear model p-value for significance
+  mutate(min_pval = if_else(p_value_lm<=p_value_ttest, p_value_lm, p_value_ttest))# Sort by linear model p-value for significance
 
 
 
@@ -197,16 +295,14 @@ analysis_output <- list(
 
 
 
-
-analysis_output$results2 <- analysis_output$results %>%
-  mutate(min_pval = if_else(p_value_lm<=p_value_ttest, p_value_lm, p_value_ttest))
-
-
-
-
 saveRDS(analysis_output, paste0("nf1g/gsvas/ds/hu-gsva_pathway_stats_",
         
-        file_name_ext, 
+                                
+         file_name_ext1,      
+         
+         "][",
+                                
+        file_name_ext2, 
         
         ".rds")
 
@@ -214,19 +310,9 @@ saveRDS(analysis_output, paste0("nf1g/gsvas/ds/hu-gsva_pathway_stats_",
 
 
 
-
-
-
-
-
 }else{
-  
-
-  
-  
 
   sub_matrix<-hgs0[,c(group_a_samples, group_b_samples)]
-  
   
   
   # Ensure sample names match matrix column names
@@ -355,27 +441,22 @@ saveRDS(analysis_output, paste0("nf1g/gsvas/ds/hu-gsva_pathway_stats_",
     )
   )
   
-  
-  
-  
-  
-  analysis_output$results2 <- analysis_output$results 
-    #mutate(min_pval = if_else(p_value_lm<=p_value_ttest, p_value_lm, p_value_ttest))
-  
-  
-  
-  
-  saveRDS(analysis_output, paste0("nf1g/gsvas/ds/hu-gsva_pathway_stats_a86_",
-                                  
-                                  file_name_ext, 
-                                  
-                                  ".rds")
-          
-  )
-  
 
-  
-}
+saveRDS(analysis_output, paste0("nf1g/gsvas/ds/hu-gsva_pathway_stats_",
+        
+                                
+         file_name_ext1,      
+         
+         "][",
+                                
+        file_name_ext2, 
+        
+        ".rds")
+
+)
+
+
+
 
 
 
@@ -386,3 +467,8 @@ saveRDS(analysis_output, paste0("nf1g/gsvas/ds/hu-gsva_pathway_stats_",
 
 
 
+}
+}
+
+
+}
