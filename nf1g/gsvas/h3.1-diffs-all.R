@@ -34,8 +34,8 @@ pa<-1
 
 
 
-for(pa in 1:length(rds_diff_files)){
 
+for(pa in 1:length(rds_diff_files)){
 
 analysis_list<-readRDS(rds_diff_files[pa])
 
@@ -50,7 +50,11 @@ dfu1<-matu0[,c(analysis_list$metadata$group_a_samples,
   dplyr::filter(!grepl("^c3.MIR", Pathway))%>%
   dplyr::filter(!grepl("SEX", Pathway))%>%
   dplyr::filter(!grepl("GENDER", Pathway))%>%
-  dplyr::filter(!grepl("MALE", Pathway))
+  dplyr::filter(!grepl("MALE", Pathway))%>%
+  
+  mutate(Pathway_full=Pathway)%>%
+  mutate(Pathway = stringr::str_trunc(Pathway, width = 50))%>%
+  mutate(Pathway = make.unique(Pathway))
 
 
 
@@ -58,14 +62,15 @@ dfu1<-matu0[,c(analysis_list$metadata$group_a_samples,
 
 
 df0<-dfu1%>%
-  pivot_longer(cols= -Pathway, names_to = "mouse_num", values_to = "z_score")%>%
+  pivot_longer(cols= -c(Pathway, Pathway_full), names_to = "mouse_num", values_to = "z_score")%>%
   left_join(sample_info%>%
               select(mouse_num, patho_cat_name, resultant_geno))%>%
   
   left_join(analysis_list$results2)%>%
   
   mutate(Pathway=gsub("_", " ", Pathway))%>%
-  mutate(Pathway=gsub("\\.\\.", "\\.", Pathway))%>%
+  
+  mutate(Pathway=sub("h\\.\\.", "h\\.", Pathway))%>%
   
   mutate(Pathway = as.character(Pathway))
 
@@ -73,7 +78,8 @@ df1 <- df0 %>%
   filter(
     min_pval <= quantile(min_pval, 0.05, na.rm = TRUE),  # lowest 10% p-values
     abs_diff >= quantile(abs_diff, 0.95, na.rm = TRUE)   # top 10% abs_diff
-  )
+  )%>%
+  filter(min_pval<=.05)
 
 
 
@@ -88,7 +94,9 @@ df2<-df1%>%
 # Step 1: Order by pathway_grouping and descending diffs
 ordered_pathways <- df2 %>%
   distinct(Pathway, pathway_grouping, diff, mean_total, diff_direction) %>%
+
   arrange(pathway_grouping, desc(diff_direction), desc(mean_total)) %>%
+  
   pull(Pathway)
 
 
@@ -96,6 +104,7 @@ ordered_pathways <- df2 %>%
 
 # Step 2: Create chunks of 1000 based on the above order
 pathway_chunks <- split(ordered_pathways, ceiling(seq_along(ordered_pathways) / 1000))
+
 
 
 
@@ -112,40 +121,73 @@ for (i in seq_along(pathway_chunks)) {
   
   df_chunk <- df2 %>%
     filter(Pathway %in% pathway_chunks[[i]]) %>%
-    mutate(Pathway = factor(Pathway, levels = rev(pathway_chunks[[i]])))  # reversed order for top-down
+    mutate(Pathway = factor(Pathway, levels = rev(pathway_chunks[[i]])))%>%  # reversed order for top-down
+    mutate(Pathway=pad_labels(Pathway, width = 50))
+  
+
   
   p <- ggplot(data = df_chunk, aes(x = z_score, y = Pathway, color = resultant_geno)) + 
-    geom_point(aes(x = mean_group_a, y = Pathway), color = "black", shape = 124, size = 3) +
-    geom_point(aes(x = mean_group_b, y = Pathway), color = "black", shape = 124, size = 3) +
+    
+    geom_segment(aes(x = mean_group_a, xend = mean_group_b,
+                     y = Pathway, yend = Pathway),
+                 color="gray", alpha=.1, linewidth=2)+
+    
+    geom_point(aes(x = mean_group_a, y = Pathway), color = "#B79F00", shape = 124, size = 3) +
+    geom_point(aes(x = mean_group_b, y = Pathway), color = "#00BFC4", shape = 124, size = 3) +
     geom_point(size = 2, alpha = 0.5) +
+   
+   
     ggh4x::facet_nested(pathway_grouping ~ patho_cat_name, scales = "free_y", space = "free") +
     theme_bw() +
     theme(
       strip.placement = "outside",
       strip.text = element_text(size = 10),
       strip.background = element_blank(),
-      axis.text.y = element_text(size = 7.5),
+
       axis.ticks.y = element_blank(),
       axis.title.y = element_blank(),
       panel.spacing = unit(0.0, "lines"),
       panel.grid.major.y = element_line(color = "grey90"),
       panel.grid.minor.y = element_blank(),
-      plot.margin = margin(10, 10, 10, 10)
+      plot.margin = margin(10, 10, 10, 100),
+      axis.text.y = element_text(family = "Liberation Mono", size = 7.5)
     ) +
+    
+    scale_x_continuous(limits = c(-.5,.5))+
+
     scale_y_discrete(expand = expansion(add = c(1, 1))) +
     scale_color_manual(values = col_map[["resultant_geno"]])
+    
+  
+  
+  
+  #determine plot aspect ratio dynamically to make it consistent
+ 
+  asp<-gg_output_aspect(
+    p,
+    panel_width = 1,
+    row_height = .3,
+    n_rows = length(pathway_chunks[[i]]) # Number of unique y-axis rows (across facets)
+  )
+
+
+  
   
   # Save plot
   ggsave(
-    filename = paste0("nf1g/gsvas/plots/chunks_per_patho/", 
+    filename = paste0("nf1g/gsvas/plots/chunks_per_patho/",
                        name_of_patho_cat,
                        sprintf("plot_chunk_%02d.pdf", i)),
     plot = p,
-    width = 2,
-    height = 4,
-    scale = 8,
+    width = 1,
+    height = 1/asp,
+    scale = 10,
     limitsize = FALSE
   )
+  
+
+  
+  
   
   cat(cli::col_blue(i), "of", cli::col_red(length(pathway_chunks)), "\n")
 }
@@ -155,12 +197,6 @@ for (i in seq_along(pathway_chunks)) {
 
 
 }
-
-
-
-
-
-
 
 
 
