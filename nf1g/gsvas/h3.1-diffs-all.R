@@ -136,8 +136,33 @@ ordered_pathways <- df2 %>%
 
 
 
+
+
+
+
+# Step 1: Order by pathway_grouping and descending diffs
+ordered_pathways2 <- df2 %>%
+  distinct(Pathway, pathway_grouping, diff, mean_total, diff_direction) %>%
+  
+  arrange(pathway_grouping, desc(diff_direction), desc(diff)) %>%
+  
+  pull(Pathway)
+
+
+
+
+
+
+
+
+
 # Step 2: Create chunks of 1000 based on the above order
 pathway_chunks <- split(ordered_pathways, ceiling(seq_along(ordered_pathways) / 1000))
+
+
+
+# Step 2: Create chunks of 1000 based on the above order
+pathway_chunks2 <- split(ordered_pathways2, ceiling(seq_along(ordered_pathways2) / 1000))
 
 
 
@@ -173,6 +198,8 @@ for (i in seq_along(pathway_chunks)) {
                              levels = rev(ordered_padded_labels))  # controls label order
     )
 
+
+
   
   p <- ggplot(data = df_chunk, aes(x = z_score, y = Pathway_label, color = resultant_geno)) + 
     
@@ -198,10 +225,10 @@ for (i in seq_along(pathway_chunks)) {
       panel.grid.major.y = element_line(color = "grey90"),
       panel.grid.minor.y = element_blank(),
       plot.margin = margin(100, 100, 100, 100),
-      axis.text.y = element_text(size = 7) #family = "Arial", 
-      #legend.position = "right",         # (x, y) coordinates in NPC units (0–1)
-      #legend.justification = "top",    # anchor the legend box to its top-right corner
-      #legend.direction = "vertical"     # or "horizontal" depending on layout
+      axis.text.y = element_text(size = 7), #family = "Arial", 
+      legend.position = "right",         # (x, y) coordinates in NPC units (0–1)
+      legend.justification = "top",    # anchor the legend box to its top-right corner
+      legend.direction = "vertical"     # or "horizontal" depending on layout
     ) +
     
     labs(color = "Resultant Genotype")+
@@ -211,37 +238,40 @@ for (i in seq_along(pathway_chunks)) {
     scale_y_discrete(expand = expansion(add = c(1, 1))) +
     scale_color_manual(values = col_map[["resultant_geno"]])
     
-  
-  p2<-p
+
   
  # determine plot aspect ratio dynamically to make it consistent
-
   asp<-gg_output_aspect(
     p,
     panel_width = 1,
     row_height = .3,
     n_rows = length(pathway_chunks[[i]]) # Number of unique y-axis rows (across facets)
   )
-
-  # CairoPDF(
-  #   file = paste0("nf1g/gsvas/plots/chunks_per_patho/", 
-  #                 name_of_patho_cat, 
-  #                 sprintf("plot_chunk_%02d.pdf", i)),
-  #   width = 1.2,
-  #   height = 1 / asp,
-  #   pointsize = 12  # Adjust point size if necessary
-  # )
-  # print(p)  # Plot your ggplot object
-  # dev.off()  # Close the device
- 
+  
   
   # # Save plot
   ggsave(
     filename = paste0("nf1g/gsvas/plots/chunks_per_patho/",
                        name_of_patho_cat,
                        sprintf("plot_chunk_%02d.pdf", i)),
+    
+    
+    
+    title=paste0("src: ",
+                 
+                 rstudioapi::getSourceEditorContext()$path%>%
+                   sub("/uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig/","",.)%>%
+                   sub("C:/Users/u1413890/OneDrive - University of Utah/garrett hl-onedrive/R/","",.),
+                 
+                 " at ", 
+                 
+                 lubridate::round_date(Sys.time(), "second")
+    ),
+    
+    
+    
     device="pdf",
-    plot = p2,
+    plot = p,
     width = 1.2,
     dpi=600,
     #height = 10,
@@ -257,6 +287,127 @@ for (i in seq_along(pathway_chunks)) {
   cat(cli::col_blue(i), "of", cli::col_red(length(pathway_chunks)), "\n")
 }
 
+
+
+
+
+
+
+
+
+
+
+for (i in seq_along(pathway_chunks2)) {
+  
+  
+  # Step 1: Original and padded labels
+  original_labels2 <- pathway_chunks2[[i]]
+  padded_labels2 <- pad_labels(original_labels2, width = 50)
+  
+  # Step 2: Create named map and preserve order
+  label_map2 <- setNames(padded_labels2, original_labels2)
+  ordered_padded_labels2 <- unname(label_map2[original_labels2])  # Preserve the ordering!
+  
+  
+  
+  df_chunk2 <- df2 %>%
+    filter(Pathway %in% original_labels2) %>%
+    
+    mutate(
+      Pathway = factor(Pathway, levels = rev(original_labels2)),  # controls grouping
+      
+      # Display label with fixed width formatting
+      Pathway_label = factor(label_map[as.character(Pathway)],
+                             levels = rev(ordered_padded_labels2))  # controls label order
+    )
+  
+  
+  
+  p2<- ggplot(data = df_chunk2, aes(x = z_score, y = Pathway_label, color = resultant_geno)) + 
+    
+    geom_segment(aes(x = mean_group_a, xend = mean_group_b,
+                     y = Pathway_label, yend = Pathway_label),
+                 color="gray", alpha=.1, linewidth=2)+
+    
+    geom_point(aes(x = mean_group_a, y = Pathway_label), color = "#B79F00", shape = 124, size = 3) +
+    geom_point(aes(x = mean_group_b, y = Pathway_label), color = "#00BFC4", shape = 124, size = 3) +
+    geom_point(size = 2, alpha = 0.35) +
+    
+    
+    ggh4x::facet_nested(pathway_grouping ~ patho_cat_name, scales = "free_y", space = "free") +
+    theme_bw() +
+    theme(
+      strip.placement = "outside",
+      strip.text = element_text(size = 10),
+      strip.background = element_blank(),
+      
+      axis.ticks.y = element_blank(),
+      axis.title.y = element_blank(),
+      panel.spacing = unit(0.0, "lines"),
+      panel.grid.major.y = element_line(color = "grey90"),
+      panel.grid.minor.y = element_blank(),
+      plot.margin = margin(100, 100, 100, 100),
+      axis.text.y = element_text(size = 7), #family = "Arial", 
+      legend.position = "right",         # (x, y) coordinates in NPC units (0–1)
+      legend.justification = "top",    # anchor the legend box to its top-right corner
+      legend.direction = "vertical"     # or "horizontal" depending on layout
+    ) +
+    
+    labs(color = "Resultant Genotype")+
+    
+    scale_x_continuous(limits = c(-.5,.5))+
+    
+    scale_y_discrete(expand = expansion(add = c(1, 1))) +
+    scale_color_manual(values = col_map[["resultant_geno"]])
+  
+  # determine plot aspect ratio dynamically to make it consistent
+  
+  asp2<-gg_output_aspect(
+    p2,
+    panel_width = 1,
+    row_height = .3,
+    n_rows = length(pathway_chunks2[[i]]) # Number of unique y-axis rows (across facets)
+  )
+  
+  
+
+  # # Save plot
+  ggsave(
+    filename = paste0("nf1g/gsvas/plots/chunks_per_patho/",
+                      name_of_patho_cat,
+                      sprintf("plot_-bymostdiff-chunk_%02d.pdf", i)),
+    
+    
+    
+    title=paste0("src: ",
+                 
+                 rstudioapi::getSourceEditorContext()$path%>%
+                   sub("/uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig/","",.)%>%
+                   sub("C:/Users/u1413890/OneDrive - University of Utah/garrett hl-onedrive/R/","",.),
+                 
+                 " at ", 
+                 
+                 lubridate::round_date(Sys.time(), "second")
+    ),
+    
+    
+    
+    device="pdf",
+    plot = p2,
+    width = 1.2,
+    dpi=600,
+    #height = 10,
+    height = 1/asp2,
+    scale = 10,
+    limitsize = FALSE
+  )
+  
+  
+  
+  
+  
+  cat(cli::col_blue(i), "of", cli::col_red(length(pathway_chunks)), "\n")
+}
 
 
 
