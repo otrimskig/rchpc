@@ -4,6 +4,7 @@ library(tidyverse)
 library(edgeR)
 library(dtplyr)
 library(ggplot2)
+library(ComplexHeatmap)
 
 vm0<-readRDS("acral_sub_rppa/ds/rppa_df_list0.rds")
 sample_info0<-readRDS("acral_sub_rppa/ds/sample_info0.rds")
@@ -59,8 +60,6 @@ vm3<-vm2%>%
 
 
 
-
-
 # make sure sample_num is a factor for nice ordering
 vm3$sample_num <- as.factor(vm3$sample_num)
 
@@ -83,27 +82,10 @@ ggplot(vm3, aes(x = rel_diff, y = sample_num, fill = ..x..)) +
 
 
 
-
-
-
-
-
-
 ggplot(vm3, aes(x = rel_diff)) +
   geom_density(linewidth=1,alpha=.2) +
   
   theme_minimal()
-  # #labs(
-  #   title = "Density of Relative Differences by Sample",
-  #   x = "Relative Difference",
-  #   y = "Density",
-  #   color = "Sample Number"
-  # )
-
-
-
-
-
 
 
 
@@ -114,8 +96,6 @@ filtered_diffs<-vm3%>%
 
 
 
-
-
 hm_mat<-filtered_diffs%>%
   mutate(sample_num_type=paste0(sample_num, "_", sample_type))%>%
   select(antibody_name, sample_num_type, mean_filtered)%>%
@@ -123,6 +103,11 @@ hm_mat<-filtered_diffs%>%
   pivot_wider(names_from = sample_num_type, values_from=mean_filtered)%>%
   column_to_rownames("antibody_name")%>%
   as.matrix.data.frame()
+
+
+saveRDS(hm_mat, "acral_sub_rppa/ds/umat-per_sample_375_rel_diff_th.rds")
+
+
 
 
 n_threshold <- 9  # for example, keep rows with at least 5 non-NA entries
@@ -138,8 +123,6 @@ Heatmap(hm_mat_filtered)
 
 
 
-
-
 fdf2<-filtered_diffs%>%
   select(-rppa_value, -rppa_filtered, -order)%>%
   unique()
@@ -149,175 +132,174 @@ library(DESeq2) # For the exact test
 
 
 
+fdf2%>%
+  arrange(mean)%>%
+  str()
 
 
+library(dplyr)
+library(purrr)
 
-
-
-stop()
-
-
-
-
-
-
-
-
-
-
-########################################################################
-
-
-
-
-foreach(c=1:ncol(comb_mat)) %dopar% {  
-# for(c in 1:ncol(comb_mat)){  
- 
-  source("libs.R")
-  library(tidyverse)
-  library(edgeR)
-  library(dtplyr)
-  
-# c<-1 
-
-sample_info<-readRDS("ds/v10-per_sample_updated.rds")
-read_counts<-readRDS("ds/vm-02-filtered_rpkms.rds")
-  
-all_data<-read_counts%>%left_join(sample_info)%>%ungroup()%>%arrange(sample_id)
-  
-  
-  ##########################################################################
-  
-  
-  ga<-comb_mat[1,c]
-  gb<-comb_mat[2,c]
-  
-# ga
-# gb
-  
-  #sym() removes quotes. 
-  ct<-sym(category)
-  
-  
-  # !! before category allows it to be evaluated as an object for variable (column) selection. 
-  comp_info<-all_data%>%
-    group_by(sample_id)%>%slice(1)%>%ungroup()%>%
-    select(sample_id:last_col())%>%
-    select(-read_count, -rpkm, -total_reads)%>%
+# Split by antibody_name
+test_results <- fdf2 %>%
+  group_by(antibody_name) %>%
+  group_split() %>%
+  map_dfr(function(df) {
+    ab_name <- unique(df$antibody_name)
+    groups <- df %>%
+      group_by(sample_type) %>%
+      summarise(mean_val = mean(mean, na.rm = TRUE), .groups = "drop") %>%
+      arrange(desc(mean_val))
     
+    n_groups <- nrow(groups)
     
-    filter(!!ct==ga|!!ct==gb)
-  
-
-group_a_count<-comp_info%>%
-  filter(!!ct==ga)%>%count()%>%pull()
-
-group_b_count<-comp_info%>%
-  filter(!!ct==gb)%>%
-  count()%>%pull()
-
-tryCatch({
-if (group_a_count>=2) {
-  
-  print("group a size checked - moving on.")
-  
-  if (group_b_count>=2){
-  print("group b size checked - moving on.")
-
-
-
-
-comp_counts<-all_data%>%
-
-    #use sample_ids contained in comp_info to subset all reads to only samples included in comparison. 
-    semi_join(comp_info, by="sample_id")%>%
-
-    #select columns needed for comparison.
-    select(gene_name_ms, gene_id_ms, read_count, sample_id)%>%
+    # T-test (2 groups)
+    t_test_p <- if (n_groups == 2) {
+      tryCatch(t.test(mean ~ sample_type, data = df)$p.value, error = function(e) NA)
+    } else NA
     
-    #pivot df to wider format for input into edgeR. 
-    pivot_wider(names_from = sample_id,
-                values_from = read_count)%>%
+    # Fold-change (between top 2 sample types by mean)
+    fold_change <- if (n_groups >= 2) {
+      fc <- groups$mean_val[1] / groups$mean_val[2]
+      if (is.finite(fc)) fc else NA
+    } else NA
     
-    filter(!is.na(gene_name_ms))%>%
-    #ensure gene_ids are unique before setting rownames.
-    group_by(gene_name_ms)%>%slice(1)%>%ungroup()%>%
-    group_by(gene_id_ms)%>%slice(1)%>%ungroup()%>%
-    column_to_rownames("gene_name_ms")
-  
-  
-  ##################################################
-  
-  #make data formatted for dge. 
-  c_counts<-comp_counts%>%select(-gene_id_ms)
-  
-  c_genes<-comp_counts%>%select(gene_id_ms)
-  
-  c_group<-comp_info%>%
-    select(all_of(ct))%>%
-    mutate(model_bin=if_else(!!ct==ga, 0, 
-                             if_else(!!ct==gb, 1, NA_real_)))%>%
-    pull(model_bin)
-  
-  
-  #############################################
-  #make dge object and run analysis.
-  dge<-DGEList(counts=c_counts, 
-               genes =c_genes,
-               
-               group = c_group)
-  
-  
-  #run standard tests and filters.
-  keep <- filterByExpr(dge)
-  
-  #filter out some genes. 
-  dge <- dge[keep, , keep.lib.sizes=FALSE]
-  
-  #calculate normalization for gene counts. 
-  dge<-calcNormFactors(dge)
-  
-  #stats
-  dge<-estimateDisp(dge, design = model.matrix(~c_group))
-  
-  exacDGE<-exactTest(dge, pair = 1:2, dispersion = "auto", rejection.region = "doubletail")
-  
-  top<-topTags(exacDGE, n=100000)
-  
-  
-  ####################################
-  #reformat output of analysis, and rejoin to other info.
-  output1<-as.data.frame(top)%>%
-    rownames_to_column("gene_name_ms")%>%
-    as_tibble()
-  
-  
-  
-  output2<-output1%>%
-    left_join(all_data%>%select(gene_name_ms, rpkm, sample_id)%>%
-                semi_join(comp_info, by="sample_id"))%>%
 
-    pivot_wider(values_from = rpkm, names_from = sample_id, names_prefix = "rpkm_")
+    
+    tibble(
+      antibody_name = ab_name,
+      t_test_p = t_test_p,
+     
+      fold_change = fold_change
+    )
+  })
 
-  stop()
-  #save output file.
-  saveRDS(output2, paste0("m-dexps/", "dexp-", fs::path_sanitize(paste0(category, "-", ga,  " v. ", gb)), ".rds"))
-  
-  
-  
-  } else {
-    print("issue with group b size.")
-  }
-  
-} else {  
-  print("issue with group a size.")
-}  
-})  
-  
-  
 
-}
-}
-  
-}) 
 
+
+
+
+test_results <- fdf2 %>%
+  group_by(antibody_name) %>%
+  group_split() %>%
+  map_dfr(function(df) {
+    ab_name <- unique(df$antibody_name)
+    
+    # Summary stats per group
+    group_stats <- df %>%
+      group_by(sample_type) %>%
+      summarise(
+        n = n(),
+        mean_val = mean(mean, na.rm = TRUE),
+        sd_val = sd(mean, na.rm = TRUE),
+        .groups = "drop"
+      ) %>%
+      arrange(desc(mean_val))
+    
+    n_groups <- nrow(group_stats)
+    
+    # T-test (2 groups)
+    t_test_p <- if (n_groups == 2) {
+      tryCatch(t.test(mean ~ sample_type, data = df)$p.value, error = function(e) NA)
+    } else NA
+    
+    # Fold-change (between top 2 sample types by mean)
+    fold_change <- if (n_groups >= 2) {
+      fc <- group_stats$mean_val[1] / group_stats$mean_val[2]
+      if (is.finite(fc)) fc else NA
+    } else NA
+    
+    # Spread out stats using sample_type names as prefixes
+    group_cols <- group_stats %>%
+      pivot_longer(cols = c(n, mean_val, sd_val)) %>%
+      mutate(name = paste0(sample_type, "_", name)) %>%
+      select(name, value) %>%
+      pivot_wider(names_from = name, values_from = value)
+    
+    tibble(
+      antibody_name = ab_name,
+      t_test_p = t_test_p,
+      fold_change = fold_change
+    ) %>%
+      bind_cols(group_cols)
+  })
+
+
+
+
+
+
+
+#plot t-test distributions.
+ggplot(test_results, aes(x = t_test_p)) +
+  geom_density(linewidth=1,alpha=.2)
+
+
+
+
+
+test_results2 <- fdf2 %>%
+  group_by(antibody_name) %>%
+  group_split() %>%
+  map_dfr(function(df) {
+    ab_name2 <- unique(df$antibody_name)
+    
+    # Summary stats per group, using actual sample_type names
+    group_stats <- df %>%
+      group_by(sample_type) %>%
+      summarise(
+        n = sum(!is.na(mean_filtered)),
+        mean_val = mean(mean_filtered, na.rm = TRUE),
+        sd_val = sd(mean_filtered, na.rm = TRUE),
+        .groups = "drop"
+      ) %>%
+      arrange(desc(mean_val))
+    
+    n_groups <- nrow(group_stats)
+    
+    # T-test (2 groups only)
+    t_test_p2 <- if (n_groups == 2) {
+      tryCatch(t.test(mean_filtered ~ sample_type, data = df)$p.value, error = function(e) NA)
+    } else NA
+    
+    # Fold-change (between top 2 sample types by mean)
+    fold_change2 <- if (n_groups >= 2) {
+      fc <- group_stats$mean_val[1] / group_stats$mean_val[2]
+      if (is.finite(fc)) fc else NA
+    } else NA
+    
+    # Spread out stats using actual sample_type names as prefixes
+    group_cols <- group_stats %>%
+      pivot_longer(cols = c(n, mean_val, sd_val)) %>%
+      mutate(name = paste0(sample_type, "_", name)) %>%
+      select(name, value) %>%
+      pivot_wider(names_from = name, values_from = value)
+    
+    tibble(
+      antibody_name = ab_name2,
+      t_test_p = t_test_p2,
+      fold_change = fold_change2
+    ) %>%
+      bind_cols(group_cols)
+  })
+
+
+
+#plot t-test distributions.
+ggplot(test_results2, aes(x = t_test_p)) +
+  geom_density(linewidth=1,alpha=.2)
+
+
+
+
+test_results2.1 <- test_results2 %>%
+  select(sort(names(.))) %>%
+  relocate(antibody_name, t_test_p) %>%
+  mutate(across(everything(), ~ ifelse(is.nan(.), NA, .))) %>%
+  rename_with(~ ifelse(.x == "antibody_name", .x, paste0(.x, "_excl")))
+
+
+
+
+saveRDS(test_results2.1, "acral_sub_rppa/ds/stats_fr_threshold_var.rds")
+saveRDS(test_results, "acral_sub_rppa/ds/stats_no_exclusion.rds")
