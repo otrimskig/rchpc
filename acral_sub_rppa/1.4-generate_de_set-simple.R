@@ -64,22 +64,48 @@ vm3<-vm2%>%
 vm3$sample_num <- as.factor(vm3$sample_num)
 
 # plot
-ggplot(vm3, aes(x = rel_diff, y = sample_num, fill = ..x..)) +
-  geom_density_ridges_gradient(scale = 3, rel_min_height = 0.01) +
-  scale_fill_viridis(name = "Relative Diff", option = "C") +
+p_rel_diff<-ggplot(vm3, aes(x = rel_diff, y = sample_num, fill = ..x..)) +
+  geom_density_ridges_gradient(scale = 2, rel_min_height = 0.01, fill="black", color="white") +
+  #scale_fill_viridis(name = "Relative Diff", option = "E") +
   labs(
     title = "Distribution of Relative Differences by Sample",
     x = "Relative Difference",
     y = "Sample"
   ) +
-  theme_ipsum() +
+  theme_classic() +
   theme(
     legend.position = "right",
     panel.spacing = unit(0.1, "lines"),
     strip.text.x = element_text(size = 8)
-  )
+  )+
+  geom_vline(xintercept = 0.375, linetype = "dashed", color = "red", linewidth = 1.2)+
+  annotate("text",
+           x = 0.375, y = Inf, vjust = 3, hjust=-.05,
+           label = "relative difference cutoff", angle = 0,
+           size = 7, color = "red")
 
 
+ggsave("acral_sub_rppa/plots/rel_diff_cutoff.pdf",
+       
+       title=paste0("src: ",
+                    
+                    rstudioapi::getSourceEditorContext()$path%>%
+                      sub("/uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig/","",.)%>%
+                      sub("C:/Users/u1413890/OneDrive - University of Utah/garrett hl-onedrive/R/","",.),
+                    
+                    " at ", 
+                    
+                    lubridate::round_date(Sys.time(), "second")
+       ),
+       
+       plot=p_rel_diff,
+       limitsize = FALSE,
+       
+       
+       height=2,
+       width=2,
+       scale = 4
+       )
 
 
 ggplot(vm3, aes(x = rel_diff)) +
