@@ -122,6 +122,28 @@ filtered_diffs<-vm3%>%
 
 
 
+df_out<-filtered_diffs%>%
+  left_join(sample_info0%>%select(order, mouse_num))%>%
+  select(-order)%>%
+  relocate(antibody_name, mouse_num, sample_num, sample_type)%>%
+  select(-rppa_value, -rppa_filtered)%>%
+  rename(mean_rppa=mean, mean_rppa_filtered=mean_filtered)%>%
+  unique()%>%
+  arrange(antibody_name, mouse_num, sample_type, sample_num)
+
+
+
+
+
+writexl::write_xlsx(df_out, "acral_sub_rppa/ds/rppa_data_per_sample_ab.xlsx")
+
+
+
+
+
+
+
+
 hm_mat<-filtered_diffs%>%
   mutate(sample_num_type=paste0(sample_num, "_", sample_type))%>%
   select(antibody_name, sample_num_type, mean_filtered)%>%
@@ -245,9 +267,10 @@ test_results <- fdf2 %>%
     tibble(
       antibody_name = ab_name,
       t_test_p = t_test_p,
-      fold_change = fold_change
+      log2_fold_change = log2(fold_change)
     ) %>%
-      bind_cols(group_cols)
+      bind_cols(group_cols)%>%
+      relocate(antibody_name, t_test_p, log2_fold_change)
   })
 
 
@@ -304,9 +327,10 @@ test_results2 <- fdf2 %>%
     tibble(
       antibody_name = ab_name2,
       t_test_p = t_test_p2,
-      fold_change = fold_change2
+      log2_fold_change = log2(fold_change2)
     ) %>%
-      bind_cols(group_cols)
+      bind_cols(group_cols)%>%
+      relocate(antibody_name, t_test_p, log2_fold_change)
   })
 
 
@@ -320,12 +344,19 @@ ggplot(test_results2, aes(x = t_test_p)) +
 
 test_results2.1 <- test_results2 %>%
   select(sort(names(.))) %>%
-  relocate(antibody_name, t_test_p) %>%
+  relocate(antibody_name, t_test_p, log2_fold_change) %>%
   mutate(across(everything(), ~ ifelse(is.nan(.), NA, .))) %>%
-  rename_with(~ ifelse(.x == "antibody_name", .x, paste0(.x, "_excl")))
+  rename_with(~ ifelse(.x == "antibody_name", .x, paste0(.x, "_375_th")))
 
 
 
 
 saveRDS(test_results2.1, "acral_sub_rppa/ds/stats_fr_threshold_var.rds")
 saveRDS(test_results, "acral_sub_rppa/ds/stats_no_exclusion.rds")
+
+
+all_stats_dual<-left_join(test_results2.1, test_results)
+
+
+
+writexl::write_xlsx(all_stats_dual, "acral_sub_rppa/ds/rppa_stats_per_ab.xlsx")
