@@ -274,3 +274,38 @@ ggsave("nf1g/surv/pub/pub_plots/tumor_types-prop-tt_cohort.pdf",
 )  
 
 
+
+
+
+
+
+
+
+
+
+
+
+ggplot(df_props3) +
+  geom_col(aes(x = resultant_geno, 
+               fill = hist_cat_name,
+               y = perc),
+           width = 0.4,  
+           #position = position_dodge(0.5),
+           key_glyph = draw_square)  +
+  
+  # 
+  # geom_errorbar(aes(
+  #   x = hist_cat_name_numeric,
+  #   ymin = ifelse(perc > 0, perc - se_scaled, NA),
+  #   ymax = ifelse(perc > 0, perc + se_scaled, NA),
+  #   group = resultant_geno
+  # ),
+  # position = position_dodge(0.5),
+  # width = .2,
+  # linewidth = 1,
+  # alpha=.5)+
+  
+  
+  
+  
+  theme_classic()
