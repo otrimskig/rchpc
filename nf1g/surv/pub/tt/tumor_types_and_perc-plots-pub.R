@@ -363,11 +363,210 @@ ggsave("nf1g/surv/pub/tumor_types-perc2-v0.pdf",
 
 
 
+df_props_all<-df1%>%
+  
+  select(resultant_geno, hist_cat_name)%>%
+  group_by(resultant_geno,hist_cat_name)%>%
+  
+  #count occurrences of each hist_cat per geno.
+  reframe(n=n() )
+  
+  #calculate percentage/likelihood of hist_cat per geno.
+  group_by(resultant_geno)%>%
+  reframe(hist_cat_name, n=n,total_n=sum(n))%>%
+  mutate(perc=n/total_n*100)%>%
+  
+  #add in a dummy number for each hist_cat-geno combo to ensure consistency in plot display groups.
+  complete(resultant_geno, hist_cat_name, fill = list(perc = -.5))%>%
+  
+  #get back info for resultant_geno_name ("proper" cohort names), to use if desired.
+  left_join(coh1%>%select(resultant_geno, resultant_geno_name)%>%unique())%>%
+  mutate(resultant_geno = factor(resultant_geno, levels = names(col_map$resultant_geno)))%>%
+  mutate(resultant_geno_name = factor(resultant_geno_name, levels = names(col_map$resultant_geno_name)))
 
 
 
 
 
+
+  df_props_pen0 <- df_props %>%
+    mutate(tumor = if_else(hist_cat_name %in% c("No evidence of disease", "Excluded from histology (no event)", "Pretumorigenic"),
+                           "no tumor", "tumor"))%>%
+    mutate(perc=if_else(perc<0, NA, perc))%>%
+    filter(!is.na(perc))%>%
+  
+    group_by(resultant_geno) %>%
+    mutate(percent = 100 * perc / sum(perc)) %>%
+    ungroup()%>%
+    
+    group_by(resultant_geno, tumor) %>%
+    mutate(percent_group = 100 * n / sum(n)) %>%
+    ungroup()%>%
+    
+    mutate(resultant_geno_label=str_wrap(resultant_geno, width=8))%>%
+    
+    mutate(tumor=factor(tumor, levels=c("tumor", "no tumor")))
+
+
+
+
+  
+  
+  p4<-ggplot(df_props_pen0, aes(x = tumor, y = perc, fill=hist_cat_name)) +
+    geom_bar(stat = "identity", position = "stack", width = 0.9, color="black")+
+    facet_grid(~resultant_geno_label)+
+    
+    scale_fill_manual(values=col_map$hist_cat_name)+
+    
+    
+    theme_pubclean()+
+    theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 12),
+          guides(fill = guide_legend(nrow = 9)))+  # Adjust size as needed
+    labs(x = NULL,
+         y="% of cohort")
+  
+  
+
+  
+  metadata_text <- paste0("src: ", 
+                          rstudioapi::getSourceEditorContext()$path %>%
+                            sub("/uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig/","",.) %>%
+                            sub("C:/Users/u1413890/OneDrive - University of Utah/garrett hl-onedrive/R/","",.), 
+                          "\n", "time: ", 
+                          lubridate::round_date(Sys.time(), "second"))
+  
+  text_grob <- textGrob(metadata_text, x=.05, just="left", gp = gpar(fontsize = 9, col = "gray30"))
+  
+  p4src<-grid.arrange(p4, text_grob, ncol = 1, heights = c(3, 0.3))
+  
+  
+  
+  
+  
+  ggsave("nf1g/surv/pub/pub_plots/penetrance-stacked-v0.pdf",
+         
+         title=paste0("src: ",
+                      
+                      rstudioapi::getSourceEditorContext()$path%>%
+                        sub("/uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig/","",.)%>%
+                        sub("C:/Users/u1413890/OneDrive - University of Utah/garrett hl-onedrive/R/","",.),
+                      
+                      " at ", 
+                      
+                      lubridate::round_date(Sys.time(), "second")
+         ),
+         
+         plot=p4src,
+         limitsize = FALSE,
+         
+         
+         height=3,
+         width=5,
+         scale = 4,
+         dpi=600,
+         
+         
+         
+  )  
+  
+  
+  ggsave("nf1g/surv/pub/pub_plots/penetrance-stacked-v1.pdf",
+         
+         title=paste0("src: ",
+                      
+                      rstudioapi::getSourceEditorContext()$path%>%
+                        sub("/uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig/","",.)%>%
+                        sub("C:/Users/u1413890/OneDrive - University of Utah/garrett hl-onedrive/R/","",.),
+                      
+                      " at ", 
+                      
+                      lubridate::round_date(Sys.time(), "second")
+         ),
+         
+         plot=p4src,
+         limitsize = FALSE,
+         
+         
+         height=5,
+         width=3.5,
+         scale = 2,
+         dpi=600,
+         
+         
+         
+  )  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  df_props_pen0%>%
+    filter(resultant_geno=="nf1 KO; pten KO; ink KO; atrx KO")
+  
+
+   df_props_pen0%>%
+     group_by(resultant_geno, tumor)%>%
+     summarise(sum(perc))
+     
+  
+  scale_fill_manual(values=col_map$hist_cat_name)+
+  
+  theme(
+    axis.text.x = element_text(size=12,angle = 45, hjust = 1),
+    plot.margin = margin(100, 100, 100, 100)
+  ) +
+  ggtitle("Tumor type prevalence by cohort")+
+  labs(fill=NULL,
+       x=NULL,
+       y="% tumor incidence")+
+  
+  
+  
+  scale_x_continuous(
+    breaks = unique(df_props$resultant_geno_name_numeric),
+    labels = str_wrap(unique(df_props$resultant_geno_name), width = 45)  # Wrap long labels
+  )+
+  
+  
+  geom_segment(aes(
+    x = as.numeric(resultant_geno_name_numeric) - 0.1,   # Slightly offset from bars
+    xend = as.numeric(resultant_geno_name_numeric) + 0.1, # Slightly offset from bars
+    y = -2.5,   # Adjust as needed for the vertical position of the line
+    yend = -2.5,  # Keep line horizontal at the same position
+    color = resultant_geno_name  # Color the line based on resultant_geno_name
+  ), linewidth = 1.5) +  # Line width
+  scale_color_manual(values = col_map$resultant_geno_name) +
+  
+  guides(color = "none") 
 
 
 
