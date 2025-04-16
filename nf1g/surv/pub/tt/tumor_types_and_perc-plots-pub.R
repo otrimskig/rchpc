@@ -481,9 +481,9 @@ df_props_all<-df1%>%
     }) %>%
     arrange(fisher_p)
   
-  pairwise_tests%>%
-    arrange(group1, group2)%>%view()
-  
+  # pairwise_tests%>%
+  #   arrange(group1, group2)%>%view()
+  # 
 
   pairwise2tests<-pairwise_tests
 
@@ -655,9 +655,9 @@ df_props_all<-df1%>%
      }) %>%
      arrange(fisher_p)
    
-   pairwise_tests%>%
-     arrange(group1, group2)%>%view()
-   
+   # pairwise_tests%>%
+   #   arrange(group1, group2)%>%view()
+   # 
    
    
    pairwise3_tests<-pairwise_tests
