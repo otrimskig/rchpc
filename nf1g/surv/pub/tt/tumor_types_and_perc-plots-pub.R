@@ -28,12 +28,6 @@ filter(is.na(exclude))%>%
 aspectratio<-.6
 
 
-# genotypes<-df1%>%select(resultant_geno)%>%unique()%>%arrange()%>%pull()
-
-
-
-
-
 df_props<-df1%>%
 
   select(resultant_geno, hist_cat_name)%>%
@@ -54,8 +48,6 @@ df_props<-df1%>%
   left_join(coh1%>%select(resultant_geno, resultant_geno_name)%>%unique())%>%
   mutate(resultant_geno = factor(resultant_geno, levels = names(col_map$resultant_geno)))%>%
   mutate(resultant_geno_name = factor(resultant_geno_name, levels = names(col_map$resultant_geno_name)))
-
-
 
 
 df_props_w <- df_props %>%
@@ -114,19 +106,9 @@ result_df <- left_join(prop_df, SE_df, by = c("resultant_geno", "hist_cat_name")
 
 
 
-
-
-
-
 df_props1<-df_props%>%
   left_join(result_df)%>%
   janitor::clean_names()
-
-
-
-
-
-
 
 
 df_props1$hist_cat_name_numeric <- as.numeric(as.factor(df_props1$hist_cat_name))
@@ -134,6 +116,7 @@ cat_levels <- unique(df_props1$hist_cat_name)
 df_props1$hist_cat_name_numeric <- match(df_props1$hist_cat_name, cat_levels) * 0.6  # Adjust 0.8 to fine-tune spacing
 
 
+####### plot2 start ###########################################################
 
 p2<-ggplot(df_props1) +
   geom_col(aes(x = hist_cat_name_numeric, 
@@ -159,9 +142,6 @@ p2<-ggplot(df_props1) +
   
 
   theme_classic()+
-
-
-
 
   scale_fill_manual(values=col_map$resultant_geno_name,
                     
@@ -189,10 +169,6 @@ p2<-ggplot(df_props1) +
   
 guides(fill = guide_legend(byrow = TRUE))
   
-  
-p2
-
-
 
 
 metadata_text <- paste0("src: ", 
@@ -236,30 +212,10 @@ ggsave("nf1g/surv/pub/tumor_types-perc-v0.pdf",
 )  
 
 
+###########
 
 
-
-
-
-
-
-
-stop("next plot")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#######plot3 prep######
 
 df_props$resultant_geno_name_numeric <- as.numeric(as.factor(df_props$resultant_geno_name))
 geno_levels <- unique(df_props$resultant_geno_name)
@@ -267,8 +223,7 @@ df_props$resultant_geno_name_numeric <- match(df_props$resultant_geno_name, geno
 
 
 
-
-
+#######plot3 start#########################################
 
 p3<-ggplot(df_props) +
   geom_col(aes(x = resultant_geno_name_numeric, 
@@ -326,10 +281,6 @@ p3src<-grid.arrange(p3, text_grob, ncol = 1, heights = c(3, 0.3))
 
 
 
-
-
-
-
 ggsave("nf1g/surv/pub/tumor_types-perc2-v0.pdf",
        
        title=paste0("src: ",
@@ -351,17 +302,13 @@ ggsave("nf1g/surv/pub/tumor_types-perc2-v0.pdf",
        width=15,
        scale = 1,
        dpi=600,
-       
-       
+      
        
 )  
+###########
 
 
-
-
-
-
-
+#######plot4 prep####
 
 df_props_all<-df1%>%
   
@@ -369,7 +316,7 @@ df_props_all<-df1%>%
   group_by(resultant_geno,hist_cat_name)%>%
   
   #count occurrences of each hist_cat per geno.
-  reframe(n=n() )
+  reframe(n=n() )%>%
   
   #calculate percentage/likelihood of hist_cat per geno.
   group_by(resultant_geno)%>%
@@ -392,26 +339,28 @@ df_props_all<-df1%>%
   df_props_pen0 <- df_props %>%
     mutate(tumor = if_else(hist_cat_name %in% c("No evidence of disease", "Excluded from histology (no event)", "Pretumorigenic"),
                            "no tumor", "tumor"))%>%
+    
+    
     mutate(perc=if_else(perc<0, NA, perc))%>%
     filter(!is.na(perc))%>%
   
-    group_by(resultant_geno) %>%
-    mutate(percent = 100 * perc / sum(perc)) %>%
-    ungroup()%>%
+    # group_by(resultant_geno) %>%
+    # mutate(percent = 100 * perc / sum(perc)) %>%
+    # ungroup()%>%
     
-    group_by(resultant_geno, tumor) %>%
-    mutate(percent_group = 100 * n / sum(n)) %>%
-    ungroup()%>%
+    #group_by(resultant_geno, tumor) %>%
+    #mutate(percent_group = 100 * n / sum(n)) %>%
+    #ungroup()%>%
     
     mutate(resultant_geno_label=str_wrap(resultant_geno, width=8))%>%
     
     mutate(tumor=factor(tumor, levels=c("tumor", "no tumor")))
 
-
-
-
+  df_props_2group<-df_props_pen0
   
-  
+
+
+#######plot4 start####
   p4<-ggplot(df_props_pen0, aes(x = tumor, y = perc, fill=hist_cat_name)) +
     geom_bar(stat = "identity", position = "stack", width = 0.9, color="black")+
     facet_grid(~resultant_geno_label)+
@@ -496,329 +445,292 @@ df_props_all<-df1%>%
          
   )  
   
+#######plot4 stats#####
   
   
+  prop_tests_df<-df_props_pen0%>%
+    select(resultant_geno, hist_cat_name, n, tumor)%>%
+    group_by(resultant_geno, tumor)%>%
+    summarise(ncount=sum(n))%>%
+    pivot_wider(values_from = ncount,  names_from = tumor)%>%
+    janitor::clean_names()%>%
+    mutate(total_n=tumor+no_tumor)
   
   
+  # Pairwise comparisons with both tests
+  pairwise_tests <- combn(1:nrow(prop_tests_df), 2, simplify = FALSE) %>%
+    map_df(~{
+      g1 <- prop_tests_df[.x[1], ]
+      g2 <- prop_tests_df[.x[2], ]
+      
+      mat <- matrix(
+        c(g1$tumor, g1$no_tumor,
+          g2$tumor, g2$no_tumor),
+        nrow = 2, byrow = TRUE
+      )
+      
+      fisher_p <- fisher.test(mat)$p.value
+      chi_p <- chisq.test(mat, correct = FALSE)$p.value
+      
+      tibble(
+        group1 = as.character(g1$resultant_geno),
+        group2 = as.character(g2$resultant_geno),
+        fisher_p = fisher_p,
+        chisq_p = chi_p
+      )
+    }) %>%
+    arrange(fisher_p)
   
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  df_props_pen0%>%
-    filter(resultant_geno=="nf1 KO; pten KO; ink KO; atrx KO")
+  pairwise_tests%>%
+    arrange(group1, group2)%>%view()
   
 
-   df_props_pen0%>%
+  pairwise2tests<-pairwise_tests
+
+  
+###########
+
+
+#######plot 5 prep#############
+  
+  df_props_pen0 <- df_props %>%
+    mutate(tumor = if_else(hist_cat_name %in% c("No evidence of disease", "Excluded from histology (no event)"),
+                           "no tumor", "tumor"))%>%
+    
+    mutate(tumor = if_else(hist_cat_name %in% c("Pretumorigenic"),
+                           "pretumorigenic", tumor))%>%
+    
+    
+    mutate(perc=if_else(perc<0, NA, perc))%>%
+    filter(!is.na(perc))%>%
+    
+    # group_by(resultant_geno) %>%
+    # mutate(percent = 100 * perc / sum(perc)) %>%
+    # ungroup()%>%
+    
+    # group_by(resultant_geno, tumor) %>%
+    # mutate(percent_group = 100 * n / sum(n)) %>%
+    # ungroup()%>%
+    
+    mutate(resultant_geno_label=str_wrap(resultant_geno, width=8))%>%
+    
+    mutate(tumor=factor(tumor, levels=c("tumor", "pretumorigenic", "no tumor")))
+  
+  df_props_3group<-df_props_pen0
+  
+#######plot5 start###########################################################################  
+  
+  p5<-ggplot(df_props_pen0, aes(x = tumor, y = perc, fill=hist_cat_name)) +
+    geom_bar(stat = "identity", position = "stack", width = 0.9, color="black")+
+    facet_grid(~resultant_geno_label)+
+    
+    scale_fill_manual(values=col_map$hist_cat_name)+
+    
+    
+    theme_pubclean()+
+    theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 12),
+          guides(fill = guide_legend(nrow = 9)))+  # Adjust size as needed
+    labs(x = NULL,
+         y="% of cohort")
+  
+  
+  
+  
+  metadata_text <- paste0("src: ", 
+                          rstudioapi::getSourceEditorContext()$path %>%
+                            sub("/uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig/","",.) %>%
+                            sub("C:/Users/u1413890/OneDrive - University of Utah/garrett hl-onedrive/R/","",.), 
+                          "\n", "time: ", 
+                          lubridate::round_date(Sys.time(), "second"))
+  
+  text_grob <- textGrob(metadata_text, x=.05, just="left", gp = gpar(fontsize = 9, col = "gray30"))
+  
+  p5src<-grid.arrange(p5, text_grob, ncol = 1, heights = c(3, 0.3))
+  
+  
+  
+  
+  
+  ggsave("nf1g/surv/pub/pub_plots/penetrance-stacked-v0b.pdf",
+         
+         title=paste0("src: ",
+                      
+                      rstudioapi::getSourceEditorContext()$path%>%
+                        sub("/uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig/","",.)%>%
+                        sub("C:/Users/u1413890/OneDrive - University of Utah/garrett hl-onedrive/R/","",.),
+                      
+                      " at ", 
+                      
+                      lubridate::round_date(Sys.time(), "second")
+         ),
+         
+         plot=p5src,
+         limitsize = FALSE,
+         
+         
+         height=3,
+         width=5,
+         scale = 4,
+         dpi=600,
+         
+         
+         
+  )  
+  
+  
+  ggsave("nf1g/surv/pub/pub_plots/penetrance-stacked-v1b.pdf",
+         
+         title=paste0("src: ",
+                      
+                      rstudioapi::getSourceEditorContext()$path%>%
+                        sub("/uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig/","",.)%>%
+                        sub("C:/Users/u1413890/OneDrive - University of Utah/garrett hl-onedrive/R/","",.),
+                      
+                      " at ", 
+                      
+                      lubridate::round_date(Sys.time(), "second")
+         ),
+         
+         plot=p5src,
+         limitsize = FALSE,
+         
+         
+         height=5,
+         width=3.5,
+         scale = 2,
+         dpi=600,
+         
+         
+         
+  )  
+  
+  
+#######plot5 stats#####
+
+
+   prop_tests_df<-df_props_pen0%>%
+     select(resultant_geno, hist_cat_name, n, tumor)%>%
      group_by(resultant_geno, tumor)%>%
-     summarise(sum(perc))
+     summarise(ncount=sum(n))%>%
+     pivot_wider(values_from = ncount,  names_from = tumor)%>%
+     janitor::clean_names()%>%
+     mutate(total_n=tumor+no_tumor+pretumorigenic)
+   
+   
+   # Updated data with 3 categories
+   prop_tests_df <- tibble(
+     resultant_geno = factor(c(
+       "nf1 KO; pten KO; ink KO; atrx KO",
+       "nf1 KO; pten KO; ink KO; atrx wt",
+       "nf1 KO; pten wt; ink KO; atrx wt",
+       "nf1 KO; pten wt; ink wt; atrx wt",
+       "nf1 wt; pten KO; ink KO; atrx KO",
+       "nf1 wt; pten KO; ink KO; atrx wt"
+     )),
+     tumor = c(37, 83, 10, 5, 6, 5),
+     pretumorigenic = c(12, 11, 4, 16, 4, 11),
+     no_tumor = c(5, 7, 10, 1, 21, 16)
+   )
+   
+   # All pairwise 2x3 comparisons
+   pairwise_tests <- combn(1:nrow(prop_tests_df), 2, simplify = FALSE) %>%
+     map_df(~{
+       g1 <- prop_tests_df[.x[1], ]
+       g2 <- prop_tests_df[.x[2], ]
+       
+       mat <- rbind(
+         c(g1$tumor, g1$pretumorigenic, g1$no_tumor),
+         c(g2$tumor, g2$pretumorigenic, g2$no_tumor)
+       )
+       
+       fisher_p <- fisher.test(mat, simulate.p.value = TRUE, B = 1e5)$p.value
+       chi_p <- chisq.test(mat, correct = FALSE)$p.value
+       
+       tibble(
+         group1 = as.character(g1$resultant_geno),
+         group2 = as.character(g2$resultant_geno),
+         fisher_p = fisher_p,
+         chisq_p = chi_p
+       )
+     }) %>%
+     arrange(fisher_p)
+   
+   pairwise_tests%>%
+     arrange(group1, group2)%>%view()
+   
+   
+   
+   pairwise3_tests<-pairwise_tests
+
+   
+   
+###########   
+
+
+###########collate results and stats##############
+   
+pairwise_combo<-pairwise2tests%>%
+     rename(fisher_p_2group=fisher_p,
+            chisq_p_2group=chisq_p)%>%
+     left_join(pairwise3_tests)%>%
+     rename(fisher_p_3group=fisher_p,
+            chisq_p_3group=chisq_p)%>%
      
-  
-  scale_fill_manual(values=col_map$hist_cat_name)+
-  
-  theme(
-    axis.text.x = element_text(size=12,angle = 45, hjust = 1),
-    plot.margin = margin(100, 100, 100, 100)
-  ) +
-  ggtitle("Tumor type prevalence by cohort")+
-  labs(fill=NULL,
-       x=NULL,
-       y="% tumor incidence")+
-  
-  
-  
-  scale_x_continuous(
-    breaks = unique(df_props$resultant_geno_name_numeric),
-    labels = str_wrap(unique(df_props$resultant_geno_name), width = 45)  # Wrap long labels
-  )+
-  
-  
-  geom_segment(aes(
-    x = as.numeric(resultant_geno_name_numeric) - 0.1,   # Slightly offset from bars
-    xend = as.numeric(resultant_geno_name_numeric) + 0.1, # Slightly offset from bars
-    y = -2.5,   # Adjust as needed for the vertical position of the line
-    yend = -2.5,  # Keep line horizontal at the same position
-    color = resultant_geno_name  # Color the line based on resultant_geno_name
-  ), linewidth = 1.5) +  # Line width
-  scale_color_manual(values = col_map$resultant_geno_name) +
-  
-  guides(color = "none") 
-
-
-
-
-# 
-# 
-# 
-# 
-# p <- ggplot(df_props) +
-#   geom_col(aes(x = resultant_geno_name, 
-#                fill = hist_cat_name,
-#                y = perc),
-#            width = 0.4,  
-#            position = position_dodge(0.5)) +  
-#   theme_classic() +
-# 
-#   theme(
-#     axis.text.x = element_text(size=12,angle = 45, hjust = 1),
-#     plot.margin = margin(100, 100, 100, 100)
-#   ) +
-#   ggtitle("Tumor type prevalence by resultant genotype")+
-#   labs(fill="Tumor Type",
-#        x=NULL,
-#        y="% of Cohort")
-#   # scale_x_continuous(breaks = unique(df_props$resultant_geno_numeric),
-#   #                    labels = unique(df_props$resultant_geno_name))  # Keep original labels
-# 
-# p
-# 
-# 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- # coord_flip()+
-  
-  # facet_wrap(
-  #   vars(!!sym(split_plots_by)),
-  #   labeller = labeller(
-  #     .default = function(x) paste0(split_plots_clean, ": ", x)
-  #   )
-  # ) +
-  
-  # xlim(0,150)+
-  #ylim(0,1)+
-  
-  # scale_color_manual(values = colors_map)+
-                          
- 
-  #theme(legend.position = c(0.2, 0.2))
-  
-  # labs(title=paste0("Overall Survival ", "\n",
-  #                   "by: ",  split_curves_clean, "\n",
-  #                   "facet: ", split_plots_clean, "\n",
-  #                   "subset: ", plot_subset_clean, ": ", plot_subset_values[subset]),
-  #      x = "Days Post Injection",
-  #      y = "% Survival",
-  #      color=split_curves_clean
-  #      
-  # )+
-  # theme(plot.title = element_text(hjust = 0),
-  #       aspect.ratio=aspectratio,
-  #       plot.margin = margin(5, 5, 40, 5))+
-
-
-
-
-# prop_test_results <- df_props %>%
-#   group_by(hist_cat_name, resultant_geno) %>%
-#   reframe(
-#     p_value = tryCatch({
-#       test <- prop.test(x = n, n = total_n)
-#       test$p.value
-#     }, error = function(e) NA)  # Return NA if there's an error
-#   )
-
-
-
-
-
-
-
-
-###########################################################################
-# 
-# 
-# df_props$resultant_geno_name_numeric <- as.numeric(as.factor(df_props$resultant_geno_name))
-# geno_levels <- unique(df_props$resultant_geno_name)
-# df_props$resultant_geno_name_numeric <- match(df_props$resultant_geno_name, geno_levels) * 0.6  # Adjust 0.8 to fine-tune spacing
-# 
-# 
-# 
-# 
-# 
-# 
-# p <- ggplot(df_props) +
-#   geom_col(aes(x = resultant_geno_name, 
-#                fill = hist_cat_name,
-#                y = perc),
-#            width = 0.4,  
-#            position = position_dodge(0.5)) +  
-#   theme_classic() +
-# 
-#   theme(
-#     axis.text.x = element_text(size=12,angle = 45, hjust = 1),
-#     plot.margin = margin(100, 100, 100, 100)
-#   ) +
-#   ggtitle("Tumor type prevalence by resultant genotype")+
-#   labs(fill="Tumor Type",
-#        x=NULL,
-#        y="% of Cohort")
-#   # scale_x_continuous(breaks = unique(df_props$resultant_geno_numeric),
-#   #                    labels = unique(df_props$resultant_geno_name))  # Keep original labels
-# 
-# p
-# 
-# 
-# 
-# 
-# df_props$hist_cat_name
-# levels(df_props$hist_cat_name)
-# 
-# 
-# 
-# 
-# 
-# stop()
-# 
-# 
-# 
-# 
-# 
-#   
-#   
-# ggsave("nf1g/tumor_types/tumor_types.pdf",
-#        
-#        title=paste0("src: ",
-#                     
-#                     rstudioapi::getSourceEditorContext()$path%>%
-#                       sub("/uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig/","",.)%>%
-#                       sub("C:/Users/u1413890/OneDrive - University of Utah/garrett hl-onedrive/R/","",.),
-#                     
-#                     " at ", 
-#                     
-#                     lubridate::round_date(Sys.time(), "second")
-#        ),
-#        
-#        plot=p,
-#        limitsize = FALSE,
-#        
-#        
-#        height=10,
-#        width=10,
-#        scale = 1,
-#        dpi=600,
-#        
-#        
-#        
-# )  
-#   
-# 
-
-
-
-
-
-###############################################################
-
-
-
-
-# 
-# genotypes<-df1%>%select(resultant_geno)%>%unique()%>%arrange()%>%pull()
-# 
-# 
-# df_props<-df1%>%
-#   #filter(resultant_geno==genotypes[1]|resultant_geno==genotypes[2])%>%
-#   select(resultant_geno, hist_cat_name)%>%
-#   group_by(resultant_geno,hist_cat_name)%>%
-#   summarise(n=n(),
-#   )%>%
-#   ungroup()%>%
-#   group_by(resultant_geno)%>%
-#   summarize(hist_cat_name, n=n,total_n=sum(n))%>%
-#   mutate(perc=n/total_n*100)%>%
-#   ungroup()%>%
-#   complete(resultant_geno, hist_cat_name, fill = list(perc = -1))
-# 
-# 
-# 
-# df_props
-# 
-# 
-# prop_test_results <- df_props %>%
-#   group_by(hist_cat_name) %>%
-#   summarise(
-#     p_value = prop.test(
-#       x = n,  # The count of successes (e.g., number of "green" individuals)
-#       n = total_n  # The total sample size
-#     )$p.value  # Extract p.value directly from the result
-#   )
-# 
-
-
-###################################################
+     arrange(group1, group2)
+
+   
+ggplot(pairwise_combo, aes(x=group2, y=group1, size=-log10(fisher_p_2group)))+
+  geom_point(aes(color=if_else(fisher_p_2group<=.05, "sig", "ns")))
+   
+   
+props2_tumor<-df_props_2group%>%
+  select(-resultant_geno_name, 
+         -resultant_geno_label, 
+         -resultant_geno_name_numeric)%>%
+  group_by(resultant_geno, tumor)%>%
+  reframe(ncount=sum(n),
+            perc=sum(perc),
+            total_n=total_n)%>%
+  unique()
+
+
+
+props3_tumor<-df_props_3group%>%
+  select(-resultant_geno_name, 
+         -resultant_geno_label, 
+         -resultant_geno_name_numeric)%>%
+  group_by(resultant_geno, tumor)%>%
+  reframe(ncount=sum(n),
+          perc=sum(perc),
+          total_n=total_n)%>%
+  unique()
+
+
+
+
+
+
+   
+writexl::write_xlsx(list(`prop tests`=pairwise_combo,
+                         
+                         `2-group props hist`=df_props_2group%>%
+                           select(-resultant_geno_name,
+                                  -resultant_geno_label, 
+                                  -resultant_geno_name_numeric),
+                         
+                         `3-group props hist`=df_props_3group%>%
+                           select(-resultant_geno_name, 
+                                  -resultant_geno_label, 
+                                  -resultant_geno_name_numeric),
+                         
+                         `2-tumor props`=props2_tumor,
+                         
+                         `3-tumor props`=props3_tumor
+                         
+                         
+                         
+                         
+                         ), 
+                    
+                    
+                    "nf1g/surv/pub/tumor_penetrance_stats.xlsx")
