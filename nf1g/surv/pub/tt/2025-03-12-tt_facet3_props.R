@@ -38,10 +38,6 @@ df1%>%
   filter(hist=="PT"|hist=="3.1")%>%
   distinct()
 
-
-  
-#filter(is.na(exclude_hist))
-  #filter(as.numeric(hist_grade)>1)%>%
   
 
 ct_geno<-df1%>%
@@ -61,15 +57,12 @@ sum_df1<-df1%>%
   summarise(n_geno=n())%>%
   
   ungroup()%>%
-  
-  
-  
+
   arrange(resultant_geno, hist_cat_name, hist_grade_name)
  
   
    
   
-
 
 comp_1<-sum_df1%>%
   filter(grepl("\\d$", hist_grade_name))%>%
@@ -94,17 +87,8 @@ comp_2<-sum_df1%>%
 
 
 
-
-
 comp_3<-full_join(comp_1, comp_2)%>%
   mutate(hist_grade_name = factor(hist_grade_name, levels = names(col_map$hist_grade_name)))
-
-
-
-
-
-
-
 
 
 
@@ -129,16 +113,6 @@ sum_df2<-comp_3%>%
   relocate(n_total_hist, .after=n_total_geno)
   
   
-  
-
-
-
-
-
-
-# cat_levels <- unique(sum_df2$hist_grade_name)
-# sum_df2$hist_grade_name_numeric <- match(sum_df2$hist_grade_name_numeric, cat_levels) * 0.2  # Adjust 0.8 to fine-tune spacing
-
 
 
 
@@ -180,6 +154,7 @@ gg_data3<-sum_df2%>%
   
   complete(hist_grade_name, hist_cat_name, resultant_geno, fill=list(n_geno=0))
   
+
 gg_data4<-sum_df2%>%
   filter(grepl("^Excluded", hist_cat_name))%>%
   
@@ -198,19 +173,12 @@ gg_data5<-bind_rows(gg_data2, gg_data3, gg_data4)%>%
 
 
 
-
-
-
-
-
 gg_data<-bind_rows(gg_data1, gg_data5)%>%
   filter(grepl("\\d$",hist_grade_name))%>%
   mutate(across(where(is.factor), droplevels))%>%
   
   mutate(hist_grade_name_numeric=as.numeric(factor(hist_grade_name))*.3)%>%
   mutate(prop_geno_dummy=if_else(n_geno==0, -.5, prop_geno*100))
-
-
 
 
 
@@ -251,7 +219,6 @@ ggplot(gg_data) +
        x=NULL,
        y="% of Each Cohort",
        caption = "**Error bars represent standard error of proportion.")+
-  # 
 
   theme(
   axis.text.x = element_text(size=12,angle = 45, hjust = 1),
@@ -264,11 +231,6 @@ ggplot(gg_data) +
   panel.grid.minor = element_blank(),
   legend.position = "none" )
 
-
-
-
-
-# tt_facet$labels$title
 
 
 #save plot
@@ -305,4 +267,7 @@ ggsave(filename=plot_filename_output,
        ))
        
        
+
+
+
 
