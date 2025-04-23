@@ -38,10 +38,13 @@ df1%>%
   filter(hist=="PT"|hist=="3.1")%>%
   distinct()
 
+<<<<<<< HEAD
 
   
 #filter(is.na(exclude_hist))
   #filter(as.numeric(hist_grade)>1)%>%
+=======
+>>>>>>> 8e491e3908ab4fe9f9a1d231d2fc4cb8f62a3116
   
 
 ct_geno<-df1%>%
@@ -61,16 +64,23 @@ sum_df1<-df1%>%
   summarise(n_geno=n())%>%
   
   ungroup()%>%
+<<<<<<< HEAD
   
   
   
+=======
+
+>>>>>>> 8e491e3908ab4fe9f9a1d231d2fc4cb8f62a3116
   arrange(resultant_geno, hist_cat_name, hist_grade_name)
  
   
    
   
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 8e491e3908ab4fe9f9a1d231d2fc4cb8f62a3116
 comp_1<-sum_df1%>%
   filter(grepl("\\d$", hist_grade_name))%>%
   mutate(across(where(is.factor), droplevels))%>%
@@ -94,8 +104,11 @@ comp_2<-sum_df1%>%
 
 
 
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> 8e491e3908ab4fe9f9a1d231d2fc4cb8f62a3116
 comp_3<-full_join(comp_1, comp_2)%>%
   mutate(hist_grade_name = factor(hist_grade_name, levels = names(col_map$hist_grade_name)))
 
@@ -103,6 +116,7 @@ comp_3<-full_join(comp_1, comp_2)%>%
 
 
 
+<<<<<<< HEAD
 
 
 
@@ -110,6 +124,8 @@ comp_3<-full_join(comp_1, comp_2)%>%
 
 
 
+=======
+>>>>>>> 8e491e3908ab4fe9f9a1d231d2fc4cb8f62a3116
 sum_df2<-comp_3%>%
   ungroup%>%group_by(resultant_geno)%>%
   reframe(across(everything()),
@@ -129,6 +145,7 @@ sum_df2<-comp_3%>%
   relocate(n_total_hist, .after=n_total_geno)
   
   
+<<<<<<< HEAD
   
 
 
@@ -139,6 +156,8 @@ sum_df2<-comp_3%>%
 # cat_levels <- unique(sum_df2$hist_grade_name)
 # sum_df2$hist_grade_name_numeric <- match(sum_df2$hist_grade_name_numeric, cat_levels) * 0.2  # Adjust 0.8 to fine-tune spacing
 
+=======
+>>>>>>> 8e491e3908ab4fe9f9a1d231d2fc4cb8f62a3116
 
 
 
@@ -180,6 +199,10 @@ gg_data3<-sum_df2%>%
   
   complete(hist_grade_name, hist_cat_name, resultant_geno, fill=list(n_geno=0))
   
+<<<<<<< HEAD
+=======
+
+>>>>>>> 8e491e3908ab4fe9f9a1d231d2fc4cb8f62a3116
 gg_data4<-sum_df2%>%
   filter(grepl("^Excluded", hist_cat_name))%>%
   
@@ -198,11 +221,14 @@ gg_data5<-bind_rows(gg_data2, gg_data3, gg_data4)%>%
 
 
 
+<<<<<<< HEAD
 
 
 
 
 
+=======
+>>>>>>> 8e491e3908ab4fe9f9a1d231d2fc4cb8f62a3116
 gg_data<-bind_rows(gg_data1, gg_data5)%>%
   filter(grepl("\\d$",hist_grade_name))%>%
   mutate(across(where(is.factor), droplevels))%>%
@@ -213,8 +239,11 @@ gg_data<-bind_rows(gg_data1, gg_data5)%>%
 
 
 
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> 8e491e3908ab4fe9f9a1d231d2fc4cb8f62a3116
 #plot part 1
 tt_facet<-
 ggplot(gg_data) +
@@ -251,7 +280,10 @@ ggplot(gg_data) +
        x=NULL,
        y="% of Each Cohort",
        caption = "**Error bars represent standard error of proportion.")+
+<<<<<<< HEAD
   # 
+=======
+>>>>>>> 8e491e3908ab4fe9f9a1d231d2fc4cb8f62a3116
 
   theme(
   axis.text.x = element_text(size=12,angle = 45, hjust = 1),
@@ -266,11 +298,14 @@ ggplot(gg_data) +
 
 
 
+<<<<<<< HEAD
 
 
 # tt_facet$labels$title
 
 
+=======
+>>>>>>> 8e491e3908ab4fe9f9a1d231d2fc4cb8f62a3116
 #save plot
 plot_object_name_for_session<-"tt_facet"
 plot_filename_output<-"nf1g/surv/pub/pub_plots/tt_facet_3.pdf"
@@ -306,3 +341,9 @@ ggsave(filename=plot_filename_output,
        
        
 
+<<<<<<< HEAD
+=======
+
+
+
+>>>>>>> 8e491e3908ab4fe9f9a1d231d2fc4cb8f62a3116
