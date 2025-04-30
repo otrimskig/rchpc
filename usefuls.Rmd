@@ -21,6 +21,40 @@ knitr::opts_chunk$set(eval = FALSE)
 
 
 
+### add src metadata to rds output. 
+
+Add src metadata below plot to easily check (without having to look at title of pdf doc)
+
+
+
+```{r, eval=FALSE, class.source='klippy'}
+              
+
+output5<-list(meta=list(src=rstudioapi::getSourceEditorContext()$path%>%
+                              sub("/uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig/","",.)%>%
+                              sub("C:/Users/u1413890/OneDrive - University of Utah/garrett hl-onedrive/R/","",.),
+                            
+                          datetime=lubridate::round_date(Sys.time(), "second"),
+                
+                            subset1_name=f1_sub_name,
+                            
+                            comparison=list(groupa=ga, groupb=gb),
+                            group_a=group_a_ids,
+                            group_a_count=group_a_count,
+                            group_b=group_b_ids,
+                            group_b_count=group_b_count
+                            
+                            
+                            
+                            ),
+                            data=output2)
+              
+
+```
+
+
+
+
 ### add plot src metadata to plot output. 
 
 Add src metadata below plot to easily check (without having to look at title of pdf doc)
