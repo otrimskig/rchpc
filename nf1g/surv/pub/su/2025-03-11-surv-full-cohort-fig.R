@@ -311,7 +311,9 @@ plots[[plot_split_index]]<-plots[[plot_split_index]] +
 
 for(i in 1:length(plots)){
   
-  metadata_text <- paste0("src: ", 
+  metadata_text <- paste0("save loc: ", plot_output_loc,
+                                               plot_output_base, i, ".pdf", "\n", 
+                          "src: ", 
                           rstudioapi::getSourceEditorContext()$path %>%
                             sub("/uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig/","",.) %>%
                             sub("C:/Users/u1413890/OneDrive - University of Utah/garrett hl-onedrive/R/","",.), 
