@@ -12,6 +12,8 @@ r_folder_name<-"acral_paired"
 all_dexps<-"acral_paired/dexps/dexp-sample_type-acral v. subq.rds"
 
 
+data<-readRDS("acral_paired/dexps/dexp-sample_type-acral v. subq.rds")
+
 
 manual_file_name<-F
 new_file_name<-"set name here if nec."
