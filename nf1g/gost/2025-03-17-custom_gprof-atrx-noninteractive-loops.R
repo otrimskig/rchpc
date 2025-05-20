@@ -13,8 +13,7 @@ library(colorspace)
 
 set.seed(42)
 gost_v1<-readRDS("nf1g/atrx_comps/ds/gost_v1.rds")
-gost_v1<-gost_v1[3]
-
+#gost_v1<-gost_v1[3]
 
 
 
@@ -131,7 +130,7 @@ data3 <- left_join(pathway_list_factor,data2)%>%
     percentile = (1 - percent_rank(p_value)) * 100  # Convert to percentile (0-100 scale)
   )%>%
   
-  
+
 ######set labelling threshold############################################  
   mutate(g_label = if_else(-log10(p_value)>5 &
                             ((grepl("MHC", term_name)&group_percentile>=80) |group_rank<=5|group_percentile>=97),
@@ -139,6 +138,7 @@ data3 <- left_join(pathway_list_factor,data2)%>%
                            stringr::str_wrap(term_name, width=25),
                            
                            NA))
+
 
 ########################################################
 
@@ -169,38 +169,7 @@ limits_dynamic<-c(min(breaks_dynamic)-.25,
 
 
 
-
-
-
-
-label_data <- subset(data3, !is.na(g_label))
-
-# Step 2: Compute repelled positions manually
-repel_positions <- ggrepel:::calc_repel_positions(
-  data = label_data,
-  force = 5,
-  point.padding = 0.1,
-  box.padding = 0,
-  segment.length = 0,
-  max.iter = 2000,
-  direction = "both",
-  xlim = range(data3$your_x_var),
-  ylim = range(data3$your_y_var),
-  x.name = "your_x_var",
-  y.name = "your_y_var"
-)
-
-
-
-
-
-
-
-
-
-
-
-set.seed(123)
+set.seed(69)
 gost_v1[[de2]]$plot1 <- ggplot(data3, aes(x = group_x_coord*x_scale_factor_man+dist_from_group_x, 
                         y = -log10(p_value), 
                         label = g_label)) +
@@ -250,38 +219,6 @@ gost_v1[[de2]]$plot1 <- ggplot(data3, aes(x = group_x_coord*x_scale_factor_man+d
                    show.legend = FALSE)+
   
   
-  
-  
-  
-  geom_label_repel(data=subset(data3),
-                   aes(label = g_label,
-                       point.size = intersection_size
-                       ),
-                   color="black",
-                   
-                   point.padding = .1,
-                   #family="Open Sans",
-                   alpha=.7,
-                   
-                   size=3,
-                   
-                   #size=2,
-                   min.segment.length = 0,
-                   segment.alpha=.25,
-                   max.overlaps = 500000000,
-                   force = 5,
-                   hjust= 0.5,
-                   vjust=0.5,
-                   box.padding = 0,
-                   show.legend = FALSE)+  
-  
-  
-  
-  
-  
-
-  
-  
   geom_hline(yintercept = 5, alpha=.6, linetype='dotted')+
   
   
@@ -309,7 +246,7 @@ gost_v1[[de2]]$plot1 <- ggplot(data3, aes(x = group_x_coord*x_scale_factor_man+d
 
 
 
-gost_v1[[de2]]$plot1
+
 # 
 # 
 # 
