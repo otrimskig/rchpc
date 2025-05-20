@@ -11,8 +11,11 @@ library(grid)
 library(gridExtra)
 library(colorspace)
 
-
+set.seed(42)
 gost_v1<-readRDS("nf1g/atrx_comps/ds/gost_v1.rds")
+gost_v1<-gost_v1[3]
+
+
 
 
 pathway_list_sum<-tibble(pathway_list=NA, index=NA, index_index=NA, p_value=NA)
@@ -165,6 +168,39 @@ limits_dynamic<-c(min(breaks_dynamic)-.25,
 
 
 
+
+
+
+
+
+label_data <- subset(data3, !is.na(g_label))
+
+# Step 2: Compute repelled positions manually
+repel_positions <- ggrepel:::calc_repel_positions(
+  data = label_data,
+  force = 5,
+  point.padding = 0.1,
+  box.padding = 0,
+  segment.length = 0,
+  max.iter = 2000,
+  direction = "both",
+  xlim = range(data3$your_x_var),
+  ylim = range(data3$your_y_var),
+  x.name = "your_x_var",
+  y.name = "your_y_var"
+)
+
+
+
+
+
+
+
+
+
+
+
+set.seed(123)
 gost_v1[[de2]]$plot1 <- ggplot(data3, aes(x = group_x_coord*x_scale_factor_man+dist_from_group_x, 
                         y = -log10(p_value), 
                         label = g_label)) +
@@ -193,11 +229,17 @@ gost_v1[[de2]]$plot1 <- ggplot(data3, aes(x = group_x_coord*x_scale_factor_man+d
 
   geom_label_repel(data=subset(data3),
                    aes(label = g_label,
-                       point.size = intersection_size),
+                       point.size = intersection_size,
+                       fill=pathway_list),
+                   color="black",
+                   
                    point.padding = .1,
                    #family="Open Sans",
-                   alpha=.7,
-                   size=2,
+                   alpha=.2,
+                   
+                   size=3,
+                   
+                   #size=2,
                    min.segment.length = 0,
                    segment.alpha=.25,
                    max.overlaps = 500000000,
@@ -206,6 +248,39 @@ gost_v1[[de2]]$plot1 <- ggplot(data3, aes(x = group_x_coord*x_scale_factor_man+d
                    vjust=0.5,
                    box.padding = 0,
                    show.legend = FALSE)+
+  
+  
+  
+  
+  
+  geom_label_repel(data=subset(data3),
+                   aes(label = g_label,
+                       point.size = intersection_size
+                       ),
+                   color="black",
+                   
+                   point.padding = .1,
+                   #family="Open Sans",
+                   alpha=.7,
+                   
+                   size=3,
+                   
+                   #size=2,
+                   min.segment.length = 0,
+                   segment.alpha=.25,
+                   max.overlaps = 500000000,
+                   force = 5,
+                   hjust= 0.5,
+                   vjust=0.5,
+                   box.padding = 0,
+                   show.legend = FALSE)+  
+  
+  
+  
+  
+  
+
+  
   
   geom_hline(yintercept = 5, alpha=.6, linetype='dotted')+
   
@@ -230,6 +305,35 @@ gost_v1[[de2]]$plot1 <- ggplot(data3, aes(x = group_x_coord*x_scale_factor_man+d
   ) +
   coord_cartesian(clip = "off")+
   theme_classic()
+
+
+
+
+gost_v1[[de2]]$plot1
+# 
+# 
+# 
+# plotinloop<-gost_v1[[de2]]$plot1
+# 
+# 
+# built <- ggplot_build(plotinloop)
+# label_data <- built$data[[3]]  # contains x, y, label positions
+# 
+# 
+# 
+# 
+# 
+# 
+# plotinloop+
+# 
+# geom_label(data = label_data,
+#            aes(x = x, y = y, label = label),
+#            color = "black", size = 3) 
+# 
+# 
+
+
+
 
 
 
@@ -271,19 +375,6 @@ gost_v1[[de2]]$plot2 <- arrangeGrob(
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 # grid.newpage()
 # grid.draw(gost_v1[[7]]$plot1)
 # 
@@ -294,7 +385,7 @@ gost_v1[[de2]]$plot2 <- arrangeGrob(
 
 
 plot_output_base<-"gost-"
-plot_output_loc<-"nf1g/atrx_comps/plots/"  #include trailing slash
+plot_output_loc<-"nf1g/gost/plots/"  #include trailing slash
 
 
 # Loop through the outer list
@@ -360,7 +451,6 @@ for (ab in seq_along(names(gost_v1))) {
     cat(bold(green("Saved plot: ")), cyan(file_name, "\n"), blue("in "), plot_output_loc, "\n")
 
 }
-
 
 
 

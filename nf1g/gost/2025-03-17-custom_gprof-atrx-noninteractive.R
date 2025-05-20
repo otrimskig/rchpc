@@ -86,7 +86,7 @@ p2 <- ggplot(data3, aes(x = jittered_x,
                    aes(label = g_label,
                        point.size = intersection_size),
                        #color=pathway_list),
-                   #xlim=c(2.6,6),
+                   xlim=c(0,6),
                    #direction = "both",
                    point.padding = 0,
                    min.segment.length = 0,
@@ -96,6 +96,7 @@ p2 <- ggplot(data3, aes(x = jittered_x,
                    max.overlaps = 9,
                    force = 7,
                    hjust= 0,
+                   alpha=.3,
                    box.padding = 0,
                    show.legend = FALSE)+
   
@@ -123,7 +124,7 @@ p2 <- ggplot(data3, aes(x = jittered_x,
   
 
 
-
+p2
 
 # print(p2)
 
