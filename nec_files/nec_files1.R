@@ -27,7 +27,7 @@ if (!exists("n.cores")) {
 
 
 
-files<-fs::dir_ls("/uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig/nec_files/")%>%
+files<-fs::dir_ls("/uufs/chpc.utah.edu/common/home/holmen-group1/otrimskig/necfiles0/files0")%>%
   as_tibble()
 
 
@@ -44,6 +44,7 @@ all_files_list<-list()
 
 
 x<-foreach(i=1:length(files2$path)) %dopar% {
+  source("libs.R")
   library(tidyverse)
   library(readxl)
   library(janitor)
@@ -130,11 +131,11 @@ x4<-x3%>%
   mutate(additional_comments=if_else(additional_comments=="", NA, additional_comments))%>%
   
   
-  rename(bx=x)%>%
+  #rename(bx=x)
   
-  mutate(bd=if_else(is.na(bd), bx, bd))%>%
+  #mutate(bd=if_else(is.na(bd), bx, bd))
 
-  select(-bx)%>%
+  #select(-bx)%>%
   
   
   
@@ -250,7 +251,7 @@ select(where(~ !all(is.na(.))))
 
 
 
-saveRDS(x4, "nec_files/2024-11-14-combined_cleaned_necs.rds")
+saveRDS(x4, "nec_files/2026-06-23-combined_cleaned_necs.rds")
 
 
 
