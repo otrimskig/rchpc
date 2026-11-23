@@ -75,14 +75,6 @@ for (de1.5 in 1:length(gost_v1)){
 
 
 
-
-
-
-
-
-
-
-
 for (de2 in 1:length(gost_v1)){
 
 # de2<-3
@@ -198,13 +190,13 @@ gost_v1[[de2]]$plot1 <- ggplot(data3, aes(x = group_x_coord*x_scale_factor_man+d
 
   geom_label_repel(data=subset(data3),
                    aes(label = g_label,
-                       point.size = intersection_size,
-                       fill=pathway_list),
+                       point.size = intersection_size),
+                      # fill=pathway_list),
                    color="black",
                    
                    point.padding = .1,
                    #family="Open Sans",
-                   alpha=.2,
+                   alpha=.6,
                    
                    size=3,
                    
@@ -306,12 +298,6 @@ gost_v1[[de2]]$plot2 <- arrangeGrob(
 
 
 
-
-
-
-
-
-
 # grid.newpage()
 # grid.draw(gost_v1[[7]]$plot1)
 # 
@@ -388,8 +374,6 @@ for (ab in seq_along(names(gost_v1))) {
     cat(bold(green("Saved plot: ")), cyan(file_name, "\n"), blue("in "), plot_output_loc, "\n")
 
 }
-
-
 
 
 

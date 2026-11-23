@@ -1,60 +1,51 @@
 
-# Ensure sample names match matrix column names
-valid_a_samples <- intersect(group_a_samples, colnames(sub_matrix))
-valid_b_samples <- intersect(group_b_samples, colnames(sub_matrix))
 
-# Extract groups as matrices
-group_a_matrix <- sub_matrix[, valid_a_samples, drop = FALSE]
-group_b_matrix <- sub_matrix[, valid_b_samples, drop = FALSE]
+manual_legend<-
 
-# Compute mean per group
-mean_a <- rowMeans(group_a_matrix, na.rm = TRUE)
-mean_b <- rowMeans(group_b_matrix, na.rm = TRUE)
-
-# Compute fold change
-fold_changes <- mean_a - mean_b
-
-# Compute standard deviation per group
-std_a <- apply(group_a_matrix, 1, sd, na.rm = TRUE)
-std_b <- apply(group_b_matrix, 1, sd, na.rm = TRUE)
-
-# Apply t-test across all pathways (rows)
-p_values <- apply(sub_matrix, 1, function(row) {
-  a_values <- row[valid_a_samples]
-  b_values <- row[valid_b_samples]
+spec_df1 %>%
+  #arrange(p_value) %>%
+  mutate(group_label=resultant_geno)%>%
+  group_by(group_label)%>%
+  count(group_label)%>%
+  ungroup()%>%
   
-  # Ensure at least 2 non-NA values in both groups
-  if (sum(!is.na(a_values)) > 1 & sum(!is.na(b_values)) > 1) {
-    t.test(a_values, b_values)$p.value
-  } else {
-    NA  # Return NA if not enough data
-  }
-})
+  
+  mutate(
+    group_a = factor(group_label, levels = unique(group_label[order(group_label)])),
+    #group_b = factor(group_b, levels = unique(group_b[order(p_value)])),
+    row_id = row_number()
+  )%>%
+  
+  ggplot() +
+  
+  #set up tiles for comparisons.
+  #set up top/bottom color comparison.
+  geom_tile(aes(x = 0, y = 0), fill = "#ccffff", alpha = .0, width = 10, height = nrows) +  # Empty tile
+  geom_tile(aes(x = -5, y = nrows-row_id, fill = group_a), width = 1.25, height = 0.25, color = "#5c5c5c") +
+  #geom_tile(aes(x = -5, y = nrows-row_id-.2, fill = group_b), width = 1.25, height = 0.25, color = "#5c5c5c") +
+  
+  
+  #text for each comparison.
+  geom_text(aes(
+    x = -4, 
+    y = nrows-row_id, 
+    
+    label = group_a, 
+    ), 
+    color =  "black", 
+    size = 7, hjust = 0) +
 
-# Create results tibble
-results <- tibble(
-  Pathway = rownames(sub_matrix),
-  p_value = p_values,
-  mean_group_a = mean_a,
-  mean_group_b = mean_b,
-  std_group_a = std_a,
-  std_group_b = std_b
-) %>%
-  arrange(p_value)  # Sort by significance
-
-# Create the output list with metadata
-analysis_output <- list(
-  results = results,
-  metadata = list(
-    date = Sys.time(),
-    group_comparison = paste(group_factors[1], "vs", group_factors[2]),
-    group_a = paste(group_factors[1]),
-    group_b = paste(group_factors[2]),
-    group_a_samples = valid_a_samples,
-    group_b_samples = valid_b_samples
-  )
-)
-
-
-
-
+  scale_color_identity()+
+  
+  scale_fill_manual(values = col_map[[split_curves_by]]) +
+  theme_minimal() +
+  
+  theme(
+    axis.text.y = element_blank(),
+    axis.text.x = element_blank(),
+    axis.ticks = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    legend.position = "none",
+    plot.margin = margin(0, 0, 0, 0))+
+  coord_fixed(ratio = 1)
